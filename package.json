@@ -1,0 +1,96 @@
+{
+  "name": "urdf-visualizer",
+  "displayName": "URDF Visualizer",
+  "description": "A extension for visualizing the URDF file and xacro file.",
+  "version": "0.0.1",
+  "publisher": "morningfrog",
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:xml"
+  ],
+  "icon": "media/URDF-Visualizer.png",
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "urdf-visualizer.previewURDFXacro",
+        "title": "Preview URDF/Xacro",
+        "category": "Navigation",
+        "icon": "$(eye)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "urdf-visualizer.previewURDFXacro",
+          "when": "resourceExtname == .urdf || resourceExtname == .xacro || resourceExtname == .URDF",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "title": "URDF Visualizer",
+      "properties": {
+        "urdf-visualizer.packages": {
+          "type": "object",
+          "default": {},
+          "description": "The path of ROS/ROS2 packages, it is used for parse 'package://<package_name>' in URDF files."
+        },
+        "urdf-visualizer.renderOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Render the URDF/Xacro file when saving."
+        },
+        "urdf-visualizer.reRenderWhenSwitchFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Re render the URDF/Xacro file when switching active file."
+        },
+        "urdf-visualizer.backgroundColor": {
+          "type": "string",
+          "default": "#cccccc",
+          "description": "The background color of the 3D viewer.",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+          "patternErrorMessage": "The color must be a valid hex color code."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.7",
+    "@types/node": "20.x",
+    "@types/three": "^0.168.0",
+    "@types/vscode": "^1.93.0",
+    "@typescript-eslint/eslint-plugin": "^8.3.0",
+    "@typescript-eslint/parser": "^8.3.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.9.1",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.5.4",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "three": "^0.168.0",
+    "urdf-loader": "^0.12.3",
+    "xacro-parser": "^0.3.9"
+  }
+}
