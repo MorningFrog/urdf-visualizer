@@ -153,6 +153,10 @@ loader.packages = {};
 let showVisual = true;
 let showCollision = false;
 
+// 解析visual和collison
+loader.parseCollision = true;
+loader.parseVisual = true;
+
 // 设置 mesh 处理函数
 loader.loadMeshCb = function (
     path: string,
@@ -296,8 +300,6 @@ async function loadRobot() {
     jointAxes = {};
 
     // 解析 URDF
-    loader.parseCollision = showCollision;
-    loader.parseVisual = showVisual;
     robot = loader.parse(urdfText);
 
     // 添加到场景
@@ -317,6 +319,7 @@ async function loadRobot() {
             child.visible = showVisual;
         }
     });
+    // 为 collider 设置默认材质
     colliders.forEach((coll: typeof URDFRobot) => {
         coll.traverse((c: typeof URDFRobot) => {
             c.material = collisionMaterial;
@@ -380,6 +383,19 @@ function loadLinkAxes() {
 }
 
 /**
+ * 处理 Visual 和 Collision 的显示切换
+ */
+function showVisualCollison() {
+    robot.traverse((child: typeof URDFRobot) => {
+        if (child.isURDFCollider) {
+            child.visible = showCollision;
+        } else if (child.isURDFVisual) {
+            child.visible = showVisual;
+        }
+    });
+}
+
+/**
  * 处理窗口大小变化
  */
 function onResize() {
@@ -410,13 +426,13 @@ controlsToggle.addEventListener("click", () =>
 showVisualToggle.addEventListener("change", () => {
     // @ts-ignore
     showVisual = showVisualToggle.checked;
-    loadRobot();
+    showVisualCollison();
 });
 
 showCollisionToggle.addEventListener("change", () => {
     // @ts-ignore
     showCollision = showCollisionToggle.checked;
-    loadRobot();
+    showVisualCollison();
 });
 
 showJointsToggle.addEventListener("change", () => {
