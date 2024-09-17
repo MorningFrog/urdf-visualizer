@@ -19,6 +19,9 @@ const {
 const URDFLoader = require("urdf-loader").default;
 const { MeshLoadDoneFunc, URDFRobot, URDFJoint } = require("urdf-loader");
 
+// 导入自定义URDFDragControls
+const { CustomURDFDragControls } = require("./CustomURDFDragControls");
+
 // 获取可操作元素
 const reloadButton = document.getElementById("re-load");
 const controlsToggle = document.getElementById("toggle-controls"); // 切换控制按钮的显示
@@ -27,6 +30,8 @@ const showVisualToggle = document.getElementById("show-visual");
 const showCollisionToggle = document.getElementById("show-collision");
 const showJointsToggle = document.getElementById("show-joints");
 const jointSizeInput = document.getElementById("joint-size");
+const showLinksToggle = document.getElementById("show-links");
+const linkSizeInput = document.getElementById("link-size");
 
 // 确保所有元素都已加载
 if (
@@ -36,7 +41,9 @@ if (
     !showVisualToggle ||
     !showCollisionToggle ||
     !showJointsToggle ||
-    !jointSizeInput
+    !jointSizeInput ||
+    !showLinksToggle ||
+    !linkSizeInput
 ) {
     throw new Error("Element not found");
 }
@@ -113,6 +120,14 @@ const loaderOBJ = new OBJLoader(manager);
 const loaderCollada = new ColladaLoader(manager);
 const loaderSTL = new STLLoader(manager);
 
+// 创建自定义的 URDF 控制器
+const dragControls = new CustomURDFDragControls(
+    scene,
+    camera,
+    controls,
+    renderer.domElement
+);
+
 // 正在加载的 mesh 数量
 let numMeshLoading = 0;
 
@@ -126,6 +141,10 @@ let pathMapping: { [key: string]: string } = {};
 let pathsToResolve: string[] = [];
 // 显示关节轴
 let jointAxes: { [key: string]: THREE.AxesHelper } = {};
+let jointAxesSize = 1.0;
+// 显示link坐标系
+let linkAxes: { [key: string]: THREE.AxesHelper } = {};
+let linkAxesSize = 1.0;
 
 // 设置ROS功能包所在的目录
 loader.packages = {};
@@ -309,6 +328,8 @@ async function loadRobot() {
 
     // 添加关节轴
     loadJointAxes();
+    // 添加 link 坐标系
+    loadLinkAxes();
 
     render();
 }
@@ -325,13 +346,34 @@ function loadJointAxes() {
         }
         // @ts-ignore
         if (showJointsToggle.checked) {
-            const axes = new THREE.AxesHelper(1.0);
+            const axes = new THREE.AxesHelper(jointAxesSize);
             jointAxes[joint_name] = axes;
             joint.add(axes);
         } else {
             if (jointAxes[joint_name]) {
                 joint.remove(jointAxes[joint_name]);
                 delete jointAxes[joint_name];
+            }
+        }
+    });
+}
+
+/**
+ * 处理 link 坐标系显示
+ */
+function loadLinkAxes() {
+    Object.entries<{
+        [key: string]: typeof URDFRobot;
+    }>(robot?.links || {}).forEach(([link_name, link]) => {
+        // @ts-ignore
+        if (showLinksToggle.checked) {
+            const axes = new THREE.AxesHelper(linkAxesSize);
+            linkAxes[link_name] = axes;
+            link.add(axes);
+        } else {
+            if (linkAxes[link_name]) {
+                link.remove(linkAxes[link_name]);
+                delete linkAxes[link_name];
             }
         }
     });
@@ -385,8 +427,24 @@ showJointsToggle.addEventListener("change", () => {
 jointSizeInput.addEventListener("change", () => {
     // @ts-ignore
     const size = parseFloat(jointSizeInput.value);
+    jointAxesSize = size;
     Object.values(jointAxes).forEach((joint) => {
         joint.scale.set(size, size, size);
+    });
+    render();
+});
+
+showLinksToggle.addEventListener("change", () => {
+    loadLinkAxes();
+    render();
+});
+
+linkSizeInput.addEventListener("change", () => {
+    // @ts-ignore
+    const size = parseFloat(linkSizeInput.value);
+    linkAxesSize = size;
+    Object.values(linkAxes).forEach((link) => {
+        link.scale.set(size, size, size);
     });
     render();
 });

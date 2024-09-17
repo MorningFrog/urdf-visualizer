@@ -82,7 +82,7 @@ ul {
     font-weight: normal;
 }
 
-#controls #div-joint-size {
+#controls .div-frame-size {
     margin-left: 20px;
     margin-top: 5px;
 }

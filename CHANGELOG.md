@@ -8,5 +8,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 - 实现了基本的URDF显示功能
 - 可以实现visual和/或collision的显示
-- 可视化joint
+- 可视化joint和link坐标系
+- 鼠标悬浮时显示joint名称
+- 启用了关节的拖动控制
 - TODO: 实现Xacro解析

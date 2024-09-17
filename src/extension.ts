@@ -20,6 +20,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     let activePanel: vscode.WebviewPanel | null = null; // 保存当前打开的 Webview panel
 
+    let previousDocument: vscode.TextDocument | null = null; // 保存上一个document
+
     // 将 Webview 的内容替换为绝对路径
     function getWebviewContent(): string | undefined {
         const extensionPath = context.extensionPath;
@@ -118,13 +120,18 @@ export function activate(context: vscode.ExtensionContext) {
                         } else if (message.type === "getNewURDF") {
                             // 获取新的 URDF 文件内容
                             const editor = vscode.window.activeTextEditor;
+                            let document = previousDocument;
                             if (editor && checkURDFXacroFile(editor.document)) {
+                                document = editor.document;
+                                previousDocument = document;
+                            }
+                            if (document) {
                                 activePanel?.webview.postMessage({
                                     type: "urdf",
-                                    urdfText: editor.document.getText(),
+                                    urdfText: document.getText(),
                                     packages: config.get<object>("packages"),
                                     workingPath: path.dirname(
-                                        editor.document.fileName
+                                        document.fileName
                                     ),
                                 });
                             }
@@ -158,13 +165,19 @@ export function activate(context: vscode.ExtensionContext) {
     // 监听活动编辑器变化
     const editorChangeListener = vscode.window.onDidChangeActiveTextEditor(
         (editor) => {
+            if (!editor) {
+                return;
+            }
+            if (previousDocument && previousDocument === editor.document) {
+                return;
+            }
             if (
                 config.get<boolean>("reRenderWhenSwitchFile", true) &&
                 activePanel &&
-                editor &&
                 editor.document.languageId === "xml" &&
                 checkURDFXacroFile(editor.document)
             ) {
+                previousDocument = editor.document;
                 activePanel.webview.postMessage({
                     type: "urdf",
                     urdfText: editor.document.getText(),

@@ -40,12 +40,34 @@
                         />
                         <label for="show-joints">Show Joint Frames</label>
                     </div>
-                    <div id="div-joint-size">
+                    <div class="div-frame-size">
                         <label for="joint-size">Joint Frame Size</label>
                         <input
                             type="range"
                             name="joint-size"
                             id="joint-size"
+                            min="0.01"
+                            max="5.0"
+                            step="0.01"
+                            value="1.0"
+                        />
+                    </div>
+                </div>
+                <div>
+                    <div>
+                        <input
+                            type="checkbox"
+                            name="show-links"
+                            id="show-links"
+                        />
+                        <label for="show-links">Show Link Frames</label>
+                    </div>
+                    <div class="div-frame-size">
+                        <label for="link-size">Link Frame Size</label>
+                        <input
+                            type="range"
+                            name="link-size"
+                            id="link-size"
                             min="0.01"
                             max="5.0"
                             step="0.01"
