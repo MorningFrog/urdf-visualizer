@@ -53,7 +53,7 @@ const webviewConfig = {
 
     entry: "./src/webview/preview.ts", // the entry point for the webview
     output: {
-        path: path.resolve(__dirname, "src/webview"), // output directory for the webview bundle
+        path: path.resolve(__dirname, "dist/webview"), // output directory for the webview bundle
         filename: "preview.js",
     },
     resolve: {

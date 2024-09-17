@@ -331,11 +331,13 @@ controlsToggle.addEventListener("click", () =>
 );
 
 showVisualToggle.addEventListener("change", () => {
+    // @ts-ignore
     showVisual = showVisualToggle.checked;
     loadRobot();
 });
 
 showCollisionToggle.addEventListener("change", () => {
+    // @ts-ignore
     showCollision = showCollisionToggle.checked;
     loadRobot();
 });
