@@ -4,13 +4,40 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 
+/**
+ * 获取文件扩展名
+ * @param fileName 文件名
+ * @returns 文件扩展名
+ */
+function getExt(fileName: string): string | null {
+    // 扩展名
+    const ext = fileName.split(/\./g)?.pop()?.toLowerCase();
+    if (!ext) {
+        return null;
+    }
+    return ext;
+}
+
 function checkURDFXacroFile(document: vscode.TextDocument) {
+    const ext = getExt(document.fileName);
     return (
+        ext &&
         document.languageId === "xml" &&
-        (document.fileName.endsWith(".urdf") ||
-            document.fileName.endsWith(".URDF") ||
-            document.fileName.endsWith(".xacro"))
+        (ext === "urdf" || ext === "xacro")
     );
+}
+
+/**
+ * 判断是否为 Xacro 文件
+ * @param document 文档
+ * @returns 是否为 Xacro 文件
+ */
+function isXacroFile(document: vscode.TextDocument): boolean {
+    const ext = getExt(document.fileName);
+    if (!ext) {
+        return false;
+    }
+    return ext === "xacro";
 }
 
 // This method is called when your extension is activated
@@ -87,7 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
 
                     // 发送初始的 URDF 文件内容到 Webview
                     activePanel.webview.postMessage({
-                        type: "urdf",
+                        type: isXacroFile(editor.document) ? "xacro" : "urdf",
                         urdfText: editor.document.getText(),
                         packages: config.get<object>("packages"),
                         workingPath: path.dirname(editor.document.fileName),
@@ -127,7 +154,9 @@ export function activate(context: vscode.ExtensionContext) {
                             }
                             if (document) {
                                 activePanel?.webview.postMessage({
-                                    type: "urdf",
+                                    type: isXacroFile(document)
+                                        ? "xacro"
+                                        : "urdf",
                                     urdfText: document.getText(),
                                     packages: config.get<object>("packages"),
                                     workingPath: path.dirname(
@@ -153,7 +182,7 @@ export function activate(context: vscode.ExtensionContext) {
                 checkURDFXacroFile(document)
             ) {
                 activePanel.webview.postMessage({
-                    type: "urdf",
+                    type: isXacroFile(document) ? "xacro" : "urdf",
                     urdfText: document.getText(),
                     packages: config.get<object>("packages"),
                     workingPath: path.dirname(document.fileName),
@@ -179,7 +208,7 @@ export function activate(context: vscode.ExtensionContext) {
             ) {
                 previousDocument = editor.document;
                 activePanel.webview.postMessage({
-                    type: "urdf",
+                    type: isXacroFile(editor.document) ? "xacro" : "urdf",
                     urdfText: editor.document.getText(),
                     packages: config.get<object>("packages"),
                     workingPath: path.dirname(editor.document.fileName),

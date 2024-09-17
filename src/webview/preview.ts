@@ -17,6 +17,7 @@ const {
     OrbitControls,
 } = require("three/examples/jsm/controls/OrbitControls.js");
 const URDFLoader = require("urdf-loader").default;
+const { XacroParser } = require("xacro-parser");
 const { MeshLoadDoneFunc, URDFRobot, URDFJoint } = require("urdf-loader");
 
 // 导入自定义URDFDragControls
@@ -157,6 +158,9 @@ let showCollision = false;
 loader.parseCollision = true;
 loader.parseVisual = true;
 
+// xacro 加载器
+const xacroLoader = new XacroParser();
+
 // 设置 mesh 处理函数
 loader.loadMeshCb = function (
     path: string,
@@ -251,7 +255,7 @@ function waitForNumMeshLoadingToZero(max_wait_time = 5000) {
 // 监听来自 vscode 的消息
 window.addEventListener("message", (event) => {
     const message = event.data;
-    if (message.type === "urdf") {
+    if (message.type === "urdf" || message.type === "xacro") {
         if (message.packages) {
             loader.packages = message.packages;
         }
@@ -263,15 +267,33 @@ window.addEventListener("message", (event) => {
             }
         }
         if (message.urdfText) {
-            urdfText = message.urdfText;
-            loadRobot();
+            if (message.type === "urdf") {
+                urdfText = message.urdfText;
+                loadRobot();
 
-            if (pathsToResolve.length > 0) {
-                vscode.postMessage({
-                    type: "resolvePaths",
-                    pathsToResolve: pathsToResolve,
+                if (pathsToResolve.length > 0) {
+                    vscode.postMessage({
+                        type: "resolvePaths",
+                        pathsToResolve: pathsToResolve,
+                    });
+                    pathsToResolve = [];
+                }
+            } else {
+                urdfText = "";
+                // xacro
+                xacroLoader.parse(message.urdfText).then((text: Node) => {
+                    // Convert Document to string
+                    const serializer = new XMLSerializer();
+                    urdfText = serializer.serializeToString(text);
+                    loadRobot();
+                    if (pathsToResolve.length > 0) {
+                        vscode.postMessage({
+                            type: "resolvePaths",
+                            pathsToResolve: pathsToResolve,
+                        });
+                        pathsToResolve = [];
+                    }
                 });
-                pathsToResolve = [];
             }
         }
     } else if (message.type === "resolvedPaths") {
