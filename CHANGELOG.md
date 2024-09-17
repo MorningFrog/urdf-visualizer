@@ -8,4 +8,5 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 - 实现了基本的URDF显示功能
 - 可以实现visual和/或collision的显示
+- 可视化joint
 - TODO: 实现Xacro解析

@@ -17,7 +17,7 @@ const {
     OrbitControls,
 } = require("three/examples/jsm/controls/OrbitControls.js");
 const URDFLoader = require("urdf-loader").default;
-const { MeshLoadDoneFunc, URDFRobot } = require("urdf-loader");
+const { MeshLoadDoneFunc, URDFRobot, URDFJoint } = require("urdf-loader");
 
 // 获取可操作元素
 const reloadButton = document.getElementById("re-load");
@@ -25,6 +25,8 @@ const controlsToggle = document.getElementById("toggle-controls"); // 切换控�
 const controlsel = document.getElementById("controls");
 const showVisualToggle = document.getElementById("show-visual");
 const showCollisionToggle = document.getElementById("show-collision");
+const showJointsToggle = document.getElementById("show-joints");
+const jointSizeInput = document.getElementById("joint-size");
 
 // 确保所有元素都已加载
 if (
@@ -32,7 +34,9 @@ if (
     !controlsToggle ||
     !controlsel ||
     !showVisualToggle ||
-    !showCollisionToggle
+    !showCollisionToggle ||
+    !showJointsToggle ||
+    !jointSizeInput
 ) {
     throw new Error("Element not found");
 }
@@ -120,6 +124,8 @@ let robot: typeof URDFRobot | null = null;
 let pathMapping: { [key: string]: string } = {};
 // 待映射的路径
 let pathsToResolve: string[] = [];
+// 显示关节轴
+let jointAxes: { [key: string]: THREE.AxesHelper } = {};
 
 // 设置ROS功能包所在的目录
 loader.packages = {};
@@ -268,6 +274,8 @@ async function loadRobot() {
     if (robot) {
         scene.remove(robot);
     }
+    jointAxes = {};
+
     // 解析 URDF
     loader.parseCollision = showCollision;
     loader.parseVisual = showVisual;
@@ -299,7 +307,34 @@ async function loadRobot() {
 
     // robot.updateMatrixWorld(true);
 
+    // 添加关节轴
+    loadJointAxes();
+
     render();
+}
+
+/**
+ * 处理关节轴显示
+ */
+function loadJointAxes() {
+    Object.entries<{
+        [key: string]: typeof URDFJoint;
+    }>(robot?.joints || {}).forEach(([joint_name, joint]) => {
+        if (joint.jointType === "fixed") {
+            return;
+        }
+        // @ts-ignore
+        if (showJointsToggle.checked) {
+            const axes = new THREE.AxesHelper(1.0);
+            jointAxes[joint_name] = axes;
+            joint.add(axes);
+        } else {
+            if (jointAxes[joint_name]) {
+                joint.remove(jointAxes[joint_name]);
+                delete jointAxes[joint_name];
+            }
+        }
+    });
 }
 
 /**
@@ -340,4 +375,18 @@ showCollisionToggle.addEventListener("change", () => {
     // @ts-ignore
     showCollision = showCollisionToggle.checked;
     loadRobot();
+});
+
+showJointsToggle.addEventListener("change", () => {
+    loadJointAxes();
+    render();
+});
+
+jointSizeInput.addEventListener("change", () => {
+    // @ts-ignore
+    const size = parseFloat(jointSizeInput.value);
+    Object.values(jointAxes).forEach((joint) => {
+        joint.scale.set(size, size, size);
+    });
+    render();
 });

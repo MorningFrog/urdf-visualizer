@@ -24,7 +24,7 @@ ul {
     display: flex;
     flex-direction: column;
     max-height: 100%;
-    width: 150px;
+    width: 180px;
     margin: 20px;
     padding: 10px;
     background-color: rgba(255, 255, 255, 0.5);
@@ -74,4 +74,15 @@ ul {
 
 #controls.hidden #toggle-controls {
     opacity: 0.5;
+}
+
+#controls #head-joints {
+    text-align: center;
+    font-size: 16px;
+    font-weight: normal;
+}
+
+#controls #div-joint-size {
+    margin-left: 20px;
+    margin-top: 5px;
 }

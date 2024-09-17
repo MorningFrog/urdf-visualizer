@@ -31,6 +31,32 @@
                     />
                     <label for="show-collision">Show Collision</label>
                 </div>
+                <div>
+                    <div>
+                        <input
+                            type="checkbox"
+                            name="show-joints"
+                            id="show-joints"
+                        />
+                        <label for="show-joints">Show Joint Frames</label>
+                    </div>
+                    <div id="div-joint-size">
+                        <label for="joint-size">Joint Frame Size</label>
+                        <input
+                            type="range"
+                            name="joint-size"
+                            id="joint-size"
+                            min="0.01"
+                            max="5.0"
+                            step="0.01"
+                            value="1.0"
+                        />
+                    </div>
+                </div>
+                <!-- <div>
+                    <h1 id="head-joints">Joints<h1>
+                    <ul id="ul-joints"></ul>
+                </div> -->
             </div>
         </div>
         <div id="urdf-viewer"></div>
