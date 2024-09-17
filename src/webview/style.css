@@ -1,0 +1,77 @@
+html,
+body,
+#urdf-viewer {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+body {
+    color: black;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    width: 150px;
+    margin: 20px;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+#menu > button {
+    margin: 5px 0;
+}
+
+#controls {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    transition: 0.5s opacity ease;
+    overflow: hidden;
+}
+
+#controls > * {
+    margin: 5px 0;
+}
+
+#controls #toggle-controls {
+    text-align: center;
+    transition: 0.1s opacity linear;
+}
+
+#controls #toggle-controls:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#controls #toggle-controls:before {
+    content: "hide controls";
+    font-size: 12px;
+    font-weight: normal;
+}
+
+/* hidden state */
+#controls.hidden #toggle-controls:before {
+    content: "show controls";
+}
+
+#controls.hidden > *:not(#toggle-controls) {
+    display: none;
+}
+
+#controls.hidden #toggle-controls {
+    opacity: 0.5;
+}

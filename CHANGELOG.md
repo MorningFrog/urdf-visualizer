@@ -7,4 +7,5 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## [Unreleased]
 
 - 实现了基本的URDF显示功能
+- 可以实现visual和/或collision的显示
 - TODO: 实现Xacro解析

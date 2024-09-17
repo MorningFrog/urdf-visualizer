@@ -1,19 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-    <title>URDF/Xacro Preview with Three.js</title>
-    <style>
-        html, body {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-    </style>
-</head>
-<body>
-    <script src="preview.js"></script>
-</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no"
+        />
+        <title>URDF/Xacro Preview with Three.js</title>
+        <link href="./style.css" rel="stylesheet" />
+    </head>
+    <body>
+        <div id="menu">
+            <button id="re-load">ReLoad</button>
+            <div id="controls" class="hidden">
+                <div id="toggle-controls"></div>
+                <div>
+                    <input
+                        type="checkbox"
+                        name="show-visual"
+                        id="show-visual"
+                        checked
+                    />
+                    <label for="show-visual">Show Visual</label>
+                </div>
+                <div>
+                    <input
+                        type="checkbox"
+                        name="show-collision"
+                        id="show-collision"
+                    />
+                    <label for="show-collision">Show Collision</label>
+                </div>
+            </div>
+        </div>
+        <div id="urdf-viewer"></div>
+        <script src="preview.js"></script>
+    </body>
 </html>

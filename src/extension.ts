@@ -115,6 +115,19 @@ export function activate(context: vscode.ExtensionContext) {
                                 type: "resolvedPaths",
                                 pathMapping: pathMapping,
                             });
+                        } else if (message.type === "getNewURDF") {
+                            // 获取新的 URDF 文件内容
+                            const editor = vscode.window.activeTextEditor;
+                            if (editor && checkURDFXacroFile(editor.document)) {
+                                activePanel?.webview.postMessage({
+                                    type: "urdf",
+                                    urdfText: editor.document.getText(),
+                                    packages: config.get<object>("packages"),
+                                    workingPath: path.dirname(
+                                        editor.document.fileName
+                                    ),
+                                });
+                            }
                         }
                     });
                 }
