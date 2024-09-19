@@ -27,7 +27,7 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 鼠标悬浮时显示 joint 名称
 - 能直接拖动控制关节角度
 
-## Extension Settings
+## 扩展设置
 
 该扩展包括以下设置:
 
@@ -45,6 +45,12 @@ A VSCode extension for visualizing URDF files and xacro files.
 - `urdf-visualizer.renderOnSave`: 是否在文件保存时自动重新渲染.
 - `urdf-visualizer.reRenderWhenSwitchFile`: 是否在激活的文件切换时自动重新渲染.
 - `urdf-visualizer.backgroundColor`: 设置背景颜色, 需要为 `#` 开头的十六进制颜色代码.
+
+## 操作说明
+
+- 转动视角: 在空白处按住鼠标左键并拖动
+- 移动视角: 按住鼠标右键拖动
+- 转动/移动关节: 在关节直接连接的link上按住鼠标左键并拖动 
 
 ## Release Notes
 

@@ -46,6 +46,12 @@ This extension contributes the following settings:
 - `urdf-visualizer.reRenderWhenSwitchFile`: Whether to automatically re-render when switching between active files.
 - `urdf-visualizer.backgroundColor`: Set the background color; it needs to be a hexadecimal color code starting with `#`.
 
+## Operating Instructions
+
+- Rotate perspective: Hold down the left mouse button and drag in the blank space
+- Moving perspective: Hold down the right mouse button and drag
+- Rotate/Move Joint: Hold down the left mouse button and drag on the link directly connected to the joint
+
 ## Release Notes
 
 ### 1.0.0
