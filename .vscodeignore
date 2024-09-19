@@ -3,6 +3,8 @@
 out/**
 node_modules/**
 src/**
+!src/webview/preview.html
+!src/webview/style.css
 .gitignore
 .yarnrc
 webpack.config.js
