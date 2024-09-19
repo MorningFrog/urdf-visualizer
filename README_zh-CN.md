@@ -3,7 +3,7 @@
 
 # Urdf Visualizer
 
-English / [简体中文](./README_zh-CN.md)
+[English](./README.md) / 简体中文
 
 A VSCode extension for visualizing URDF files and xacro files.
 用于可视化 URDF 和 xacro 文件的 VSCode 扩展.
@@ -16,21 +16,21 @@ A VSCode extension for visualizing URDF files and xacro files.
 ![Stars](https://img.shields.io/github/stars/MorningFrog/urdf-visualizer?style=social)
 </div>
 
-## Features
+## 特性
 
 ![demonstration](media/demonstration.gif)
 
-- Visualization of URDF and Xacro files
-- Switch the display of visual and/or collision
-- Visualize joint and/or link coordinate systems
-- Display the joint name when hovering the mouse
-- Drag and control joint angles
+- URDF 和 Xacro 文件的可视化
+- 切换 visual 和/或 collision 的显示
+- 可视化 joint 和/或 link 坐标系
+- 鼠标悬浮时显示 joint 名称
+- 能直接拖动控制关节角度
 
 ## Extension Settings
 
-This extension contributes the following settings:
+该扩展包括以下设置:
 
-- `urdf-visualizer.packages`: The root directory of ROS/ROS2 packages, used to resolve the `package://<package_name>` paths in URDF/Xacro files. It is recommended to set this in the `.vscode/settings.json` of your workspace as an object, where the key is the package name and the value is its path. Example:
+- `urdf-visualizer.packages`: ROS/ROS2 功能包的根目录, 用于定位 URDF/Xacro 文件中的 `package://<package_name>` 路径. 建议在工作空间的 `.vscode/settings.json` 中设置, 为一个对象, key 为功能包名称, value 为其路径, 例:
   ```json
   // settings.json
   {
@@ -41,9 +41,9 @@ This extension contributes the following settings:
     // other settings
   }
   ```
-- `urdf-visualizer.renderOnSave`: Whether to automatically re-render when the file is saved.
-- `urdf-visualizer.reRenderWhenSwitchFile`: Whether to automatically re-render when switching between active files.
-- `urdf-visualizer.backgroundColor`: Set the background color; it needs to be a hexadecimal color code starting with `#`.
+- `urdf-visualizer.renderOnSave`: 是否在文件保存时自动重新渲染.
+- `urdf-visualizer.reRenderWhenSwitchFile`: 是否在激活的文件切换时自动重新渲染.
+- `urdf-visualizer.backgroundColor`: 设置背景颜色, 需要为 `#` 开头的十六进制颜色代码.
 
 ## Release Notes
 

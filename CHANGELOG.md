@@ -1,10 +1,6 @@
 # Change Log
 
-All notable changes to the "urdf-visualizer" extension will be documented in this file.
-
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
-## [Unreleased]
+## [1.0.0]
 
 - 实现了基本的URDF显示功能
 - 可以实现visual和/或collision的显示

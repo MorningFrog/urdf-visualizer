@@ -1,7 +1,11 @@
 {
   "name": "urdf-visualizer",
   "displayName": "URDF Visualizer",
-  "description": "A VSCode extension for visualizing the URDF file and xacro file.",
+  "description": "A VSCode extension for visualizing URDF files and xacro files.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MorningFrog/urdf-visualizer"
+  },
   "version": "0.0.1",
   "publisher": "morningfrog",
   "engines": {
