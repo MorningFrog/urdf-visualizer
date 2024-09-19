@@ -52,6 +52,13 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 移动视角: 按住鼠标右键拖动
 - 转动/移动关节: 在关节直接连接的link上按住鼠标左键并拖动 
 
+## 安装
+
+有三种安装方式:
+- 在 VSCode 的扩展中搜索 URDF Visualizer 并安装
+- 在 VSCode 中使用 `Ctrl+Shift+P` 打开命令栏, 输入 `ext install morningfrog.urdf-visualizer`
+- 在该仓库的 Release 中下载 `.vsix` 文件, 然后在 VSCode 的扩展右上角选择 "从VISX安装", 选择下载的 `.vsix` 文件进行安装
+
 ## Release Notes
 
 ### 1.0.0

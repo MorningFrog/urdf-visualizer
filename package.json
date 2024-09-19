@@ -75,7 +75,9 @@
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "vscode:package": "npx @vscode/vsce package --no-dependencies",
+    "vscode:publish": "npx @vscode/vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@eslint-community/eslint-utils": "^4.4.0",
