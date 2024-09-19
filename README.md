@@ -5,9 +5,9 @@
 
 English / [简体中文](./README_zh-CN.md)
 
-A VSCode extension for visualizing URDF files and xacro files.
+<p>A VSCode extension for visualizing URDF files and xacro files.</p>
 
-用于可视化 URDF 和 xacro 文件的 VSCode 扩展.
+<p>用于可视化 URDF 和 xacro 文件的 VSCode 扩展.</p>
 
 ![License](https://img.shields.io/github/license/MorningFrog/urdf-visualizer?color=blue)
 ![Installs](https://img.shields.io/visual-studio-marketplace/i/morningfrog.urdf-visualizer?color=blue)
