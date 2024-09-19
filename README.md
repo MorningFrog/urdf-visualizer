@@ -59,12 +59,6 @@ There are three installation methods:
 - In VSCode, use `Ctrl+Shift+P` to open the Command Panel and enter `ext install morningfrog.urdf-visualizer`
 - Download the `.vsix` file in the Release of the repository, then select `Install from VISX` in the upper right corner of the VSCode extension, and choose the downloaded `.vsix` file for installation
 
-
-有三种安装方式:
-- 在 VSCode 的扩展中搜索 URDF Visualizer 并安装
-- 在 VSCode 中使用 `Ctrl+Shift+P` 打开命令栏, 输入 `ext install morningfrog.urdf-visualizer`
-- 在该仓库的 Release 中下载 `.vsix` 文件, 然后在 VSCode 的扩展右上角选择 "从VISX安装", 选择下载的 `.vsix` 文件进行安装
-
 ## Release Notes
 
 ### 1.0.0
