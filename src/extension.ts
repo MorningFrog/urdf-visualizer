@@ -3,6 +3,11 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
+const { XacroParser } = require("xacro-parser");
+const { JSDOM } = require("jsdom");
+const { XMLSerializer, XMLDocument } = require("xmldom");
+
+global.DOMParser = new JSDOM().window.DOMParser;
 
 /**
  * 获取文件扩展名
@@ -48,6 +53,39 @@ export function activate(context: vscode.ExtensionContext) {
     let activePanel: vscode.WebviewPanel | null = null; // 保存当前打开的 Webview panel
 
     let previousDocument: vscode.TextDocument | null = null; // 保存上一个document
+
+    const xacroParser = new XacroParser(); // xacro 解析器
+    const serializer = new XMLSerializer(); // XML 序列化器
+
+    xacroParser.getFileContents = (filePath: string) => {
+        return fs.readFileSync(filePath, { encoding: "utf8" });
+    };
+
+    // 向 webview 发送完整的 URDF 文件内容
+    function sendURDFContent(document: vscode.TextDocument) {
+        if (!activePanel) {
+            return;
+        }
+        if (isXacroFile(document)) {
+            const workingPath = path.dirname(document.fileName);
+            // console.log(document.getText());
+            xacroParser.workingPath = workingPath;
+            xacroParser.parse(document.getText()).then((data: XMLDocument) => {
+                sendURDF(serializer.serializeToString(data), workingPath);
+            });
+        } else {
+            sendURDF(document.getText(), path.dirname(document.fileName));
+        }
+        // 发送 URDF 文件内容
+        function sendURDF(urdfText: string, workingPath: string) {
+            activePanel?.webview.postMessage({
+                type: "urdf",
+                urdfText: urdfText,
+                packages: config.get<object>("packages"),
+                workingPath: workingPath,
+            });
+        }
+    }
 
     // 将 Webview 的内容替换为绝对路径
     function getWebviewContent(): string | undefined {
@@ -113,12 +151,7 @@ export function activate(context: vscode.ExtensionContext) {
                     );
 
                     // 发送初始的 URDF 文件内容到 Webview
-                    activePanel.webview.postMessage({
-                        type: isXacroFile(editor.document) ? "xacro" : "urdf",
-                        urdfText: editor.document.getText(),
-                        packages: config.get<object>("packages"),
-                        workingPath: path.dirname(editor.document.fileName),
-                    });
+                    sendURDFContent(editor.document);
 
                     // 发送背景颜色
                     activePanel.webview.postMessage({
@@ -153,16 +186,7 @@ export function activate(context: vscode.ExtensionContext) {
                                 previousDocument = document;
                             }
                             if (document) {
-                                activePanel?.webview.postMessage({
-                                    type: isXacroFile(document)
-                                        ? "xacro"
-                                        : "urdf",
-                                    urdfText: document.getText(),
-                                    packages: config.get<object>("packages"),
-                                    workingPath: path.dirname(
-                                        document.fileName
-                                    ),
-                                });
+                                sendURDFContent(document);
                             }
                         }
                     });
@@ -181,12 +205,7 @@ export function activate(context: vscode.ExtensionContext) {
                 document.languageId === "xml" &&
                 checkURDFXacroFile(document)
             ) {
-                activePanel.webview.postMessage({
-                    type: isXacroFile(document) ? "xacro" : "urdf",
-                    urdfText: document.getText(),
-                    packages: config.get<object>("packages"),
-                    workingPath: path.dirname(document.fileName),
-                });
+                sendURDFContent(document);
             }
         }
     );
@@ -207,12 +226,7 @@ export function activate(context: vscode.ExtensionContext) {
                 checkURDFXacroFile(editor.document)
             ) {
                 previousDocument = editor.document;
-                activePanel.webview.postMessage({
-                    type: isXacroFile(editor.document) ? "xacro" : "urdf",
-                    urdfText: editor.document.getText(),
-                    packages: config.get<object>("packages"),
-                    workingPath: path.dirname(editor.document.fileName),
-                });
+                sendURDFContent(editor.document);
             }
         }
     );

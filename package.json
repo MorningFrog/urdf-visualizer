@@ -89,8 +89,11 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "expr-eval": "^2.0.2",
+    "jsdom": "^25.0.0",
     "three": "^0.168.0",
     "urdf-loader": "^0.12.3",
-    "xacro-parser": "^0.3.9"
+    "xacro-parser": "^0.3.9",
+    "xmldom": "^0.6.0"
   }
 }
