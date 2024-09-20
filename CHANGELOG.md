@@ -1,5 +1,10 @@
 # Change Log
 
+## [2.0.2]
+
+- 修复了 `urdf-visualizer.packages` 设置中包含 `${workspaceFolder}` 无法解析的问题
+- 修复了 joint 名称中包含 `/` 导致无法创建关节列表的问题
+
 ## [2.0.1]
 
 - 修复关节轴能被拖动导致难以选中某些link的问题

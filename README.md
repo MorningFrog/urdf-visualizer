@@ -42,6 +42,10 @@ This extension contributes the following settings:
     // other settings
   }
   ```
+  > [!NOTE]
+  > Currently, only `${workspaceFolder}` and `${env:<environment_variables>}` are supported as special symbols in the path:
+  > - `${workspaceFolder}` represents the absolute path of the workspace
+  > - `${env:<environment_variables>}` represents the value of the environment variable `<environment_variables>`
 - `urdf-visualizer.renderOnSave`: Whether to automatically re-render when the file is saved.
 - `urdf-visualizer.reRenderWhenSwitchFile`: Whether to automatically re-render when switching between active files.
 - `urdf-visualizer.backgroundColor`: Set the background color; it needs to be a hexadecimal color code starting with `#`.
@@ -59,7 +63,15 @@ There are three installation methods:
 - In VSCode, use `Ctrl+Shift+P` to open the Command Panel and enter `ext install morningfrog.urdf-visualizer`.
 - Download the `.vsix` file in the Release of the repository, then select `Install from VISX` in the upper right corner of the VSCode extension, and choose the downloaded `.vsix` file for installation.
 
+## Known Issues
+
+When the loaded mesh file is in a format such as `.dae` that contains multiple subfiles, the loading may fail.
+
 ## Release Notes
+
+### 2.0.2
+
+Fixed some known issues such as `urdf-visualizer.packages` containing `${workspaceFolder}`.
 
 ### 2.0.1
 

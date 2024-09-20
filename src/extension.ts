@@ -3,6 +3,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
+import { resolveVariablesInObject } from "./extension_utils";
 const { XacroParser } = require("xacro-parser");
 const { JSDOM } = require("jsdom");
 const { XMLSerializer, XMLDocument } = require("xmldom");
@@ -49,6 +50,11 @@ function isXacroFile(document: vscode.TextDocument): boolean {
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
     let config = vscode.workspace.getConfiguration("urdf-visualizer"); // 插件设置
+    let packagesResolved = resolveVariablesInObject(
+        // @ts-ignore
+        config.get<object>("packages"),
+        vscode.workspace.workspaceFolders?.[0]
+    ); // ROS 功能包路径
 
     let activePanel: vscode.WebviewPanel | null = null; // 保存当前打开的 Webview panel
 
@@ -57,8 +63,20 @@ export function activate(context: vscode.ExtensionContext) {
     const xacroParser = new XacroParser(); // xacro 解析器
     const serializer = new XMLSerializer(); // XML 序列化器
 
+    // 在 xacroParser 中使用 fs 读取文件内容
     xacroParser.getFileContents = (filePath: string) => {
+        console.log("filePath", filePath);
         return fs.readFileSync(filePath, { encoding: "utf8" });
+    };
+    // 设置 ROS 功能包路径
+    xacroParser.rospackCommands = {
+        find: function (pkg: string) {
+            if (packagesResolved && packagesResolved[pkg]) {
+                return packagesResolved[pkg];
+            } else {
+                return "";
+            }
+        },
     };
 
     // 向 webview 发送完整的 URDF 文件内容
@@ -81,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
             activePanel?.webview.postMessage({
                 type: "urdf",
                 urdfText: urdfText,
-                packages: config.get<object>("packages"),
+                packages: packagesResolved,
                 workingPath: workingPath,
             });
         }
@@ -241,10 +259,15 @@ export function activate(context: vscode.ExtensionContext) {
         (event) => {
             config = vscode.workspace.getConfiguration("urdf-visualizer");
             if (event.affectsConfiguration("urdf-visualizer.packages")) {
+                packagesResolved = resolveVariablesInObject(
+                    // @ts-ignore
+                    config.get<object>("packages"),
+                    vscode.workspace.workspaceFolders?.[0]
+                );
                 if (activePanel) {
                     activePanel.webview.postMessage({
                         type: "urdf",
-                        packages: config.get<object>("packages"),
+                        packages: packagesResolved,
                     });
                 }
             }

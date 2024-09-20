@@ -42,6 +42,10 @@ A VSCode extension for visualizing URDF files and xacro files.
     // other settings
   }
   ```
+  > [!NOTE]
+  > 当前只支持 `${workspaceFolder}` 和 `${env:<environment_variables>}` 作为特殊符号出现在路径中: 
+  > - `${workspaceFolder}` 表示工作空间路径
+  > - `${env:<environment_variables>}` 表示环境变量 `<environment_variables>` 的值
 - `urdf-visualizer.renderOnSave`: 是否在文件保存时自动重新渲染.
 - `urdf-visualizer.reRenderWhenSwitchFile`: 是否在激活的文件切换时自动重新渲染.
 - `urdf-visualizer.backgroundColor`: 设置背景颜色, 需要为 `#` 开头的十六进制颜色代码.
@@ -59,7 +63,15 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 在 VSCode 中使用 `Ctrl+Shift+P` 打开命令栏, 输入 `ext install morningfrog.urdf-visualizer`.
 - 在该仓库的 Release 中下载 `.vsix` 文件, 然后在 VSCode 的扩展右上角选择 "从VISX安装", 选择下载的 `.vsix` 文件进行安装.
 
+## 已知问题
+
+当加载的 mesh 文件为 `.dae` 等包含多个子文件的格式时, 加载可能失败.
+
 ## Release Notes
+
+### 2.0.2
+
+修复了部分已知问题, 如 `urdf-visualizer.packages` 包含 `${workspaceFolder}` 的问题.
 
 ### 2.0.1
 

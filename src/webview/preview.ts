@@ -417,6 +417,14 @@ function showVisualCollison() {
 }
 
 /**
+ * 处理 id 和 class, 将其中的 `/` 替换为 `__`
+ * @param str
+ */
+function postprocessIdAndClass(str: string) {
+    return str.replace(/\//g, "__");
+}
+
+/**
  * 更新关节列表
  */
 function updateJointList() {
@@ -431,7 +439,8 @@ function updateJointList() {
         }
 
         const li = document.createElement("li"); // 列表项
-        li.id = "joint_" + joint_name;
+        const joint_name_processed = postprocessIdAndClass(joint_name);
+        li.id = `joint_${joint_name_processed}`;
         li.innerHTML = `
         <div>
         <label>${joint_name}</label>
@@ -440,8 +449,8 @@ function updateJointList() {
             <div>
                 <input
                     type="range"
-                    name="slider_joint_${joint_name}"
-                    id="slider_joint_${joint_name}"
+                    name="slider_joint_${joint_name_processed}"
+                    id="slider_joint_${joint_name_processed}"
                     class="slider-joint"
                     min="${joint.limit.lower}"
                     max="${joint.limit.upper}"
@@ -452,7 +461,7 @@ function updateJointList() {
             <div class="div-scale">
                 <div class="div-scale-item lower-limit">
                     <div>|</div>
-                    <div id="joint_${joint_name}_limit_lower"></div>
+                    <div id="joint_${joint_name_processed}_limit_lower"></div>
                 </div>
                 <div class="div-scale-item" style="left: ${
                     ((0 - joint.limit.lower) /
@@ -463,14 +472,14 @@ function updateJointList() {
                 </div>
                 <div class="div-scale-item upper-limit">
                     <div>|</div>
-                    <div id="joint_${joint_name}_limit_upper"></div>
+                    <div id="joint_${joint_name_processed}_limit_upper"></div>
                 </div>
             </div>
         </div>
         `;
         // 绑定滑块事件
         const slider = li.querySelector(
-            `#slider_joint_${joint_name}`
+            `#slider_joint_${joint_name_processed}`
         ) as HTMLInputElement;
         if (slider) {
             // 更新关节角度
@@ -514,11 +523,13 @@ function updateDegreeRadians() {
             return;
         }
 
+        const joint_name_processed = postprocessIdAndClass(joint_name);
+
         const joint_limit_upper = document.getElementById(
-            `joint_${joint_name}_limit_upper`
+            `joint_${joint_name_processed}_limit_upper`
         ) as HTMLInputElement;
         const joint_limit_lower = document.getElementById(
-            `joint_${joint_name}_limit_lower`
+            `joint_${joint_name_processed}_limit_lower`
         ) as HTMLInputElement;
         if (isDegree) {
             joint_limit_upper.innerText = Math.round(
@@ -539,9 +550,10 @@ function updateDegreeRadians() {
  */
 function updateJointCallback(joint: typeof URDFJoint, angle: number) {
     const joint_name = joint.name;
+    const joint_name_processed = postprocessIdAndClass(joint_name);
     console.log("angle", angle);
     const slider = document.getElementById(
-        `slider_joint_${joint_name}`
+        `slider_joint_${joint_name_processed}`
     ) as HTMLInputElement;
     if (slider) {
         slider.value = angle.toString();
