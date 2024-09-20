@@ -61,6 +61,10 @@ There are three installation methods:
 
 ## Release Notes
 
+### 2.0.0
+
+Add the visualization of joint angles.
+
 ### 1.0.0
 
 Initial release of URDF Visualizer.

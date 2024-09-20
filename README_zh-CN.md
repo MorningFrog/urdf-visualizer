@@ -61,6 +61,10 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
+### 2.0.0
+
+添加了关节角度的可视化.
+
 ### 1.0.0
 
 Initial release of URDF Visualizer.
