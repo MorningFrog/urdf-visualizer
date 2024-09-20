@@ -70,6 +70,7 @@ const camera = new THREE.PerspectiveCamera();
 camera.position.set(10, 10, 10);
 camera.up.set(0, 0, 1);
 camera.lookAt(0, 0, 0);
+camera.layers.enable(1); // 显示关节轴
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setClearColor(0xffffff);
@@ -367,6 +368,7 @@ function loadJointAxes() {
         // @ts-ignore
         if (showJointsToggle.checked) {
             const axes = new THREE.AxesHelper(jointAxesSize);
+            axes.layers.set(1); // 让 axes 不被 Raycaster 检测到
             jointAxes[joint_name] = axes;
             joint.add(axes);
         } else {

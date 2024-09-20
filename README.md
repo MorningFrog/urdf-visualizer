@@ -61,6 +61,10 @@ There are three installation methods:
 
 ## Release Notes
 
+### 2.0.1
+
+Fix the problem of dragging of links while visualizing frames. 
+
 ### 2.0.0
 
 Add the visualization of joint angles.
