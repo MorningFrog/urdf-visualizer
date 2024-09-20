@@ -55,9 +55,9 @@ This extension contributes the following settings:
 ## Install
 
 There are three installation methods:
-- Search for "URDF Visualizer" in VSCode extensions and install it
-- In VSCode, use `Ctrl+Shift+P` to open the Command Panel and enter `ext install morningfrog.urdf-visualizer`
-- Download the `.vsix` file in the Release of the repository, then select `Install from VISX` in the upper right corner of the VSCode extension, and choose the downloaded `.vsix` file for installation
+- Search for "URDF Visualizer" in VSCode extensions and install it.
+- In VSCode, use `Ctrl+Shift+P` to open the Command Panel and enter `ext install morningfrog.urdf-visualizer`.
+- Download the `.vsix` file in the Release of the repository, then select `Install from VISX` in the upper right corner of the VSCode extension, and choose the downloaded `.vsix` file for installation.
 
 ## Release Notes
 

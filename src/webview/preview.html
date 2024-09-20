@@ -42,15 +42,17 @@
                     </div>
                     <div class="div-frame-size">
                         <label for="joint-size">Joint Frame Size</label>
-                        <input
-                            type="range"
-                            name="joint-size"
-                            id="joint-size"
-                            min="0.01"
-                            max="5.0"
-                            step="0.01"
-                            value="1.0"
-                        />
+                        <div class="width_wrapper">
+                            <input
+                                type="range"
+                                name="joint-size"
+                                id="joint-size"
+                                min="0.01"
+                                max="5.0"
+                                step="0.01"
+                                value="1.0"
+                            />
+                        </div>
                     </div>
                 </div>
                 <div>
@@ -64,24 +66,36 @@
                     </div>
                     <div class="div-frame-size">
                         <label for="link-size">Link Frame Size</label>
-                        <input
-                            type="range"
-                            name="link-size"
-                            id="link-size"
-                            min="0.01"
-                            max="5.0"
-                            step="0.01"
-                            value="1.0"
-                        />
+                        <div class="width_wrapper">
+                            <input
+                                type="range"
+                                name="link-size"
+                                id="link-size"
+                                min="0.01"
+                                max="5.0"
+                                step="0.01"
+                                value="1.0"
+                            />
+                        </div>
                     </div>
                 </div>
-                <!-- <div>
-                    <h1 id="head-joints">Joints<h1>
+                <div>
+                    <h1 id="head-joints">Joints</h1>
+                    <div class="switch-container">
+                        <div>
+                            <button id="switch-degrees">Degrees</button>
+                            <button id="switch-radians" class="checked">
+                                Radians
+                            </button>
+                        </div>
+                    </div>
                     <ul id="ul-joints"></ul>
-                </div> -->
+                </div>
             </div>
         </div>
         <div id="urdf-viewer"></div>
+        <div id="tooltip"></div>
+        <!-- 悬浮提示框 -->
         <script src="../../dist/webview/preview.js"></script>
     </body>
 </html>

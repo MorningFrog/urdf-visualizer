@@ -32,6 +32,14 @@ const showJointsToggle = document.getElementById("show-joints");
 const jointSizeInput = document.getElementById("joint-size");
 const showLinksToggle = document.getElementById("show-links");
 const linkSizeInput = document.getElementById("link-size");
+const ulJoints = document.getElementById("ul-joints");
+const tooltip = document.getElementById("tooltip") as HTMLDivElement;
+const radiansButton = document.getElementById(
+    "switch-radians"
+) as HTMLButtonElement;
+const degreesButton = document.getElementById(
+    "switch-degrees"
+) as HTMLButtonElement;
 
 // 确保所有元素都已加载
 if (
@@ -43,7 +51,11 @@ if (
     !showJointsToggle ||
     !jointSizeInput ||
     !showLinksToggle ||
-    !linkSizeInput
+    !linkSizeInput ||
+    !ulJoints ||
+    !tooltip ||
+    !radiansButton ||
+    !degreesButton
 ) {
     throw new Error("Element not found");
 }
@@ -125,7 +137,8 @@ const dragControls = new CustomURDFDragControls(
     scene,
     camera,
     controls,
-    renderer.domElement
+    renderer.domElement,
+    updateJointCallback
 );
 
 // 正在加载的 mesh 数量
@@ -145,6 +158,8 @@ let jointAxesSize = 1.0;
 // 显示link坐标系
 let linkAxes: { [key: string]: THREE.AxesHelper } = {};
 let linkAxesSize = 1.0;
+// 角度制/弧度制
+let isDegree = false;
 
 // 设置ROS功能包所在的目录
 loader.packages = {};
@@ -333,6 +348,8 @@ async function loadRobot() {
     loadJointAxes();
     // 添加 link 坐标系
     loadLinkAxes();
+    // 更新关节列表
+    updateJointList();
 
     render();
 }
@@ -396,6 +413,162 @@ function showVisualCollison() {
 }
 
 /**
+ * 更新关节列表
+ */
+function updateJointList() {
+    if (ulJoints) {
+        ulJoints.innerHTML = "";
+    }
+    Object.entries<{
+        [key: string]: typeof URDFJoint;
+    }>(robot?.joints || {}).forEach(([joint_name, joint]) => {
+        if (joint.jointType === "fixed") {
+            return;
+        }
+
+        const li = document.createElement("li"); // 列表项
+        li.id = "joint_" + joint_name;
+        li.innerHTML = `
+        <div>
+        <label>${joint_name}</label>
+        </div>
+        <div class="div-slider width_wrapper">
+            <div>
+                <input
+                    type="range"
+                    name="slider_joint_${joint_name}"
+                    id="slider_joint_${joint_name}"
+                    class="slider-joint"
+                    min="${joint.limit.lower}"
+                    max="${joint.limit.upper}"
+                    step="0.01"
+                    value="0.0"
+                />
+            </div>
+            <div class="div-scale">
+                <div class="div-scale-item lower-limit">
+                    <div>|</div>
+                    <div id="joint_${joint_name}_limit_lower"></div>
+                </div>
+                <div class="div-scale-item" style="left: ${
+                    ((0 - joint.limit.lower) /
+                        (joint.limit.upper - joint.limit.lower)) *
+                    100
+                }%;">
+                    <div>|</div>
+                </div>
+                <div class="div-scale-item upper-limit">
+                    <div>|</div>
+                    <div id="joint_${joint_name}_limit_upper"></div>
+                </div>
+            </div>
+        </div>
+        `;
+        // 绑定滑块事件
+        const slider = li.querySelector(
+            `#slider_joint_${joint_name}`
+        ) as HTMLInputElement;
+        if (slider) {
+            // 更新关节角度
+            slider.addEventListener("input", () => {
+                updateJointValueFromSlider(slider.value, joint_name);
+            });
+            // 显示值
+            slider.addEventListener("mouseover", (event) => {
+                const value = slider.value;
+                updateTooltipText(parseFloat(value));
+                tooltip.style.display = "block";
+                tooltip.style.left = `${event.pageX}px`;
+                const slider_top = slider.getBoundingClientRect().top;
+                tooltip.style.top = `${slider_top - 30}px`;
+            });
+            // 隐藏值
+            slider.addEventListener("mouseout", () => {
+                tooltip.style.display = "none";
+            });
+            // 更改位置
+            slider.addEventListener("mousemove", (event) => {
+                tooltip.style.left = `${event.pageX}px`;
+                const slider_top = slider.getBoundingClientRect().top;
+                tooltip.style.top = `${slider_top - 30}px`;
+            });
+        }
+
+        ulJoints?.appendChild(li);
+    });
+    updateDegreeRadians();
+}
+
+/**
+ * 根据显示弧度制和角度制切换显示
+ */
+function updateDegreeRadians() {
+    Object.entries<{
+        [key: string]: typeof URDFJoint;
+    }>(robot?.joints || {}).forEach(([joint_name, joint]) => {
+        if (joint.jointType === "fixed") {
+            return;
+        }
+
+        const joint_limit_upper = document.getElementById(
+            `joint_${joint_name}_limit_upper`
+        ) as HTMLInputElement;
+        const joint_limit_lower = document.getElementById(
+            `joint_${joint_name}_limit_lower`
+        ) as HTMLInputElement;
+        if (isDegree) {
+            joint_limit_upper.innerText = Math.round(
+                (joint.limit.upper * 180) / Math.PI
+            ).toString();
+            joint_limit_lower.innerText = Math.round(
+                (joint.limit.lower * 180) / Math.PI
+            ).toString();
+        } else {
+            joint_limit_upper.innerText = joint.limit.upper.toFixed(2);
+            joint_limit_lower.innerText = joint.limit.lower.toFixed(2);
+        }
+    });
+}
+
+/**
+ * 处理拖动导致的关节角度变化
+ */
+function updateJointCallback(joint: typeof URDFJoint, angle: number) {
+    const joint_name = joint.name;
+    console.log("angle", angle);
+    const slider = document.getElementById(
+        `slider_joint_${joint_name}`
+    ) as HTMLInputElement;
+    if (slider) {
+        slider.value = angle.toString();
+    }
+}
+
+/**
+ * 处理滑块导致的关节角度变化
+ */
+function updateJointValueFromSlider(value: string, joint_name: string) {
+    const joint = robot?.joints[joint_name];
+    if (joint) {
+        const angle = parseFloat(value);
+        joint.setJointValue(angle);
+
+        updateTooltipText(angle);
+    }
+}
+
+/**
+ * 更新 tooltip 显示的文本
+ */
+function updateTooltipText(angle: number) {
+    if (isDegree) {
+        tooltip.textContent = Math.round((angle * 180) / Math.PI).toString();
+    } else {
+        tooltip.textContent = angle.toFixed(2);
+    }
+}
+
+/**
  * 处理窗口大小变化
  */
 function onResize() {
@@ -440,7 +613,7 @@ showJointsToggle.addEventListener("change", () => {
     render();
 });
 
-jointSizeInput.addEventListener("change", () => {
+jointSizeInput.addEventListener("input", () => {
     // @ts-ignore
     const size = parseFloat(jointSizeInput.value);
     jointAxesSize = size;
@@ -455,7 +628,7 @@ showLinksToggle.addEventListener("change", () => {
     render();
 });
 
-linkSizeInput.addEventListener("change", () => {
+linkSizeInput.addEventListener("input", () => {
     // @ts-ignore
     const size = parseFloat(linkSizeInput.value);
     linkAxesSize = size;
@@ -463,4 +636,24 @@ linkSizeInput.addEventListener("change", () => {
         link.scale.set(size, size, size);
     });
     render();
+});
+
+radiansButton.addEventListener("click", () => {
+    if (!isDegree) {
+        return;
+    }
+    isDegree = false;
+    radiansButton.classList.add("checked");
+    degreesButton.classList.remove("checked");
+    updateDegreeRadians();
+});
+
+degreesButton.addEventListener("click", () => {
+    if (isDegree) {
+        return;
+    }
+    isDegree = true;
+    degreesButton.classList.add("checked");
+    radiansButton.classList.remove("checked");
+    updateDegreeRadians();
 });

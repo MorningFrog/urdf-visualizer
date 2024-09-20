@@ -12,9 +12,10 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         scene: THREE.Scene,
         camera: THREE.Camera,
         controls: typeof OrbitControls,
-        domElement: HTMLElement
+        rendererDom: HTMLElement, // 传入渲染器的 DOM 元素
+        updateJointCallback?: (joint: typeof URDFJoint, angle: number) => void
     ) {
-        super(scene, camera, domElement);
+        super(scene, camera, rendererDom);
 
         this.controls = controls;
 
@@ -28,10 +29,15 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         document.body.appendChild(this.label);
 
         // 绑定事件,使名称跟随鼠标移动
-        domElement.addEventListener(
+        rendererDom.addEventListener(
             "mousemove",
             this.updateLabelPosition.bind(this)
         );
+
+        // 绑定回调函数
+        if (updateJointCallback) {
+            this.updateJointCallback = updateJointCallback;
+        }
     }
 
     onHover(joint: typeof URDFJoint) {
@@ -59,8 +65,17 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
 
     // 更新标签位置
     updateLabelPosition(event: MouseEvent) {
-        this.label.style.left = `${event.clientX + 10}px`; // 偏移鼠标位置
+        this.label.style.left = `${event.clientX}px`; // 偏移鼠标位置
         this.label.style.top = `${event.clientY + 10}px`;
+    }
+
+    // 更新关节角度
+    updateJoint(joint: typeof URDFJoint, angle: number) {
+        super.updateJoint(joint, angle);
+        // 执行自定义操作
+        if (this.updateJointCallback) {
+            this.updateJointCallback(joint, angle);
+        }
     }
 
     // 清理事件监听器

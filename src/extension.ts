@@ -117,6 +117,8 @@ export function activate(context: vscode.ExtensionContext) {
                 if (activePanel) {
                     // 如果已有Webview panel,则直接重新显示
                     activePanel.reveal(vscode.ViewColumn.Beside);
+                    // 更新 previousDocument
+                    previousDocument = editor.document;
                 } else {
                     activePanel = vscode.window.createWebviewPanel(
                         "urdfVisualizer",
@@ -158,6 +160,9 @@ export function activate(context: vscode.ExtensionContext) {
                         type: "settings",
                         backgroundColor: config.get<string>("backgroundColor"),
                     });
+
+                    // 更新 previousDocument
+                    previousDocument = editor.document;
 
                     // 监听 Webview 发送的消息
                     activePanel.webview.onDidReceiveMessage((message) => {

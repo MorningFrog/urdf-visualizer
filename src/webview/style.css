@@ -19,14 +19,16 @@ ul {
 
 #menu {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 20px;
+    left: 20px;
     display: flex;
     flex-direction: column;
-    max-height: 100%;
-    width: 180px;
-    margin: 20px;
+    overflow-x: visible;
+    overflow-y: hidden;
+    width: 200px;
+    margin: 0;
     padding: 10px;
+    max-height: calc(100vh - 60px);
     background-color: rgba(255, 255, 255, 0.5);
 }
 
@@ -40,7 +42,9 @@ ul {
     flex-direction: column;
     width: 100%;
     transition: 0.5s opacity ease;
-    overflow: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #bbb #f1f1f1;
 }
 
 #controls > * {
@@ -85,4 +89,111 @@ ul {
 #controls .div-frame-size {
     margin-left: 20px;
     margin-top: 5px;
+}
+
+#ul-joints li {
+    font-size: 12px;
+    font-weight: normal;
+}
+
+.width_wrapper {
+    width: 90%;
+}
+
+/* 隐藏默认的滑块样式 */
+input[type="range"] {
+    -webkit-appearance: none; /* Chrome, Safari, Opera */
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    background: #bbb;
+    outline: none;
+    border-radius: 4px;
+}
+
+/* 自定义滑块的样式 */
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: dodgerblue;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* 自定义当鼠标悬浮在滑块上时的样式 */
+input[type="range"]:hover::-webkit-slider-thumb {
+    background: blueviolet;
+}
+
+.div-slider {
+    position: relative;
+    left: 8px;
+}
+
+.slider-joint {
+    margin-bottom: 0;
+}
+
+.div-scale {
+    margin-top: 0;
+    width: calc(100% - 12px);
+    height: 20px;
+    position: relative;
+    left: 8px;
+}
+
+.div-scale-item {
+    text-align: center;
+    color: gray;
+    width: 30px;
+    height: 20px;
+    position: absolute;
+    top: -4px;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.div-scale-item div:first-child {
+    font-size: 8px;
+}
+
+.div-scale-item.lower-limit {
+    left: 0;
+}
+
+.div-scale-item.upper-limit {
+    left: 100%;
+}
+
+#tooltip {
+    position: absolute;
+    background: rgba(200, 200, 230, 0.7);
+    border: white 1px solid;
+    color: black;
+    padding: 5px;
+    border-radius: 4px;
+    transform: translateX(-50%);
+    display: none; /* 初始隐藏 */
+}
+
+.switch-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.switch-container button {
+    margin: 0;
+    border: black 1px solid;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.switch-container button.checked {
+    background-color: dodgerblue;
+    color: white;
+    border-color: dodgerblue;
 }
