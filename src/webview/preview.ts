@@ -102,6 +102,7 @@ scene.add(ambientLight);
 
 // 创建坐标系
 const axesHelper = new THREE.AxesHelper(5); // 5 是坐标轴的长度
+axesHelper.layers.set(1);
 scene.add(axesHelper);
 
 // 默认碰撞体材料
@@ -390,6 +391,7 @@ function loadLinkAxes() {
         // @ts-ignore
         if (showLinksToggle.checked) {
             const axes = new THREE.AxesHelper(linkAxesSize);
+            axes.layers.set(1); // 让 axes 不被 Raycaster 检测到
             linkAxes[link_name] = axes;
             link.add(axes);
         } else {
