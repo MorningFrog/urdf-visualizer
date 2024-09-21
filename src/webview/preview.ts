@@ -297,13 +297,6 @@ window.addEventListener("message", (event) => {
                 pathsToResolve = [];
             }
         }
-    } else if (message.type === "resolvedPaths") {
-        if (message.pathMapping) {
-            // 在 pathMapping 中添加新的映射
-            // pathMapping = { ...pathMapping, ...message.pathMapping };
-        }
-        // 重新加载 URDF 模型
-        loadRobot();
     } else if (message.type === "settings") {
         if (message.backgroundColor) {
             scene.background = new THREE.Color(message.backgroundColor);

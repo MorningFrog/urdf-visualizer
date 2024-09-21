@@ -183,23 +183,7 @@ export function activate(context: vscode.ExtensionContext) {
 
                     // 监听 Webview 发送的消息
                     activePanel.webview.onDidReceiveMessage((message) => {
-                        if (message.type === "resolvePaths") {
-                            let pathMapping: { [key: string]: string } = {};
-                            for (const pathToResolve of message.pathsToResolve) {
-                                const webviewPath =
-                                    activePanel?.webview.asWebviewUri(
-                                        vscode.Uri.file(pathToResolve)
-                                    );
-                                if (webviewPath) {
-                                    pathMapping[pathToResolve] =
-                                        webviewPath.toString();
-                                }
-                            }
-                            activePanel?.webview.postMessage({
-                                type: "resolvedPaths",
-                                pathMapping: pathMapping,
-                            });
-                        } else if (message.type === "getNewURDF") {
+                        if (message.type === "getNewURDF") {
                             // 获取新的 URDF 文件内容
                             const editor = vscode.window.activeTextEditor;
                             let document = previousDocument;
