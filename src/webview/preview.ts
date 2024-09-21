@@ -126,7 +126,7 @@ onResize();
 window.addEventListener("resize", onResize);
 render();
 
-// load URDF model
+// mesh文件加载器
 const manager = new THREE.LoadingManager();
 const loader = new URDFLoader(manager);
 const loaderGLTF = new GLTFLoader(manager);
@@ -134,24 +134,14 @@ const loaderOBJ = new OBJLoader(manager);
 const loaderCollada = new ColladaLoader(manager);
 const loaderSTL = new STLLoader(manager);
 
-// 创建自定义的 URDF 控制器
-const dragControls = new CustomURDFDragControls(
-    scene,
-    camera,
-    controls,
-    renderer.domElement,
-    updateJointCallback
-);
-
 // 正在加载的 mesh 数量
 let numMeshLoading = 0;
-
 // URDF 文本
 let urdfText = "";
 // 机器人
 let robot: typeof URDFRobot | null = null;
 // 路径映射: 绝对路径 -> webview 资源路径
-let pathMapping: { [key: string]: string } = {};
+// let pathMapping: { [key: string]: string } = {};
 // 待映射的路径
 let pathsToResolve: string[] = [];
 // 显示关节轴
@@ -162,17 +152,38 @@ let linkAxes: { [key: string]: THREE.AxesHelper } = {};
 let linkAxesSize = 1.0;
 // 角度制/弧度制
 let isDegree = false;
-
 // 设置ROS功能包所在的目录
 loader.packages = {};
-
 // 是否显示 visual 和 collision
 let showVisual = true;
 let showCollision = false;
-
 // 解析visual和collison
 loader.parseCollision = true;
 loader.parseVisual = true;
+
+// 设置 manager 报错时的处理
+manager.onError = (url: string) => {
+    vscode.postMessage({
+        type: "error",
+        message: `Failed to load ${url}`,
+    });
+};
+
+// 设置资源处理函数
+manager.setURLModifier((url: string): string => {
+    // 删除其中的 `file://`
+    url = url.replace("file://", "");
+    return "https://file%2B.vscode-resource.vscode-cdn.net" + url;
+});
+
+// 创建自定义的 URDF 控制器
+const dragControls = new CustomURDFDragControls(
+    scene,
+    camera,
+    controls,
+    renderer.domElement,
+    updateJointCallback
+);
 
 // 设置 mesh 处理函数
 loader.loadMeshCb = function (
@@ -180,75 +191,70 @@ loader.loadMeshCb = function (
     manager: LoadingManager,
     onComplete: typeof MeshLoadDoneFunc
 ) {
-    if (path in pathMapping) {
-        numMeshLoading += 1;
-        const webview_path = pathMapping[path];
-        // 扩展名
-        const ext = webview_path?.split(/\./g)?.pop()?.toLowerCase();
-        switch (ext) {
-            case "gltf":
-            case "glb":
-                loaderGLTF.load(
-                    webview_path,
-                    (result: any) => {
-                        onComplete(result.scene);
-                        numMeshLoading -= 1;
-                    },
-                    null,
-                    (err: Error) => {
-                        onComplete(null, err);
-                        numMeshLoading -= 1;
-                    }
-                );
-                break;
-            case "obj":
-                loaderOBJ.load(
-                    webview_path,
-                    (result: any) => {
-                        onComplete(result);
-                        numMeshLoading -= 1;
-                    },
-                    null,
-                    (err: Error) => {
-                        onComplete(null, err);
-                        numMeshLoading -= 1;
-                    }
-                );
-                break;
-            case "dae":
-                loaderCollada.load(
-                    webview_path,
-                    (result: any) => {
-                        onComplete(result.scene);
-                        numMeshLoading -= 1;
-                    },
-                    null,
-                    (err: Error) => {
-                        onComplete(null, err);
-                        numMeshLoading -= 1;
-                    }
-                );
-                break;
-            case "stl":
-                loaderSTL.load(
-                    webview_path,
-                    (result: any) => {
-                        const material = new THREE.MeshPhongMaterial();
-                        const mesh = new THREE.Mesh(result, material);
-                        onComplete(mesh);
-                        numMeshLoading -= 1;
-                    },
-                    null,
-                    (err: Error) => {
-                        onComplete(null, err);
-                        numMeshLoading -= 1;
-                    }
-                );
-                break;
-        }
-    } else {
-        pathsToResolve.push(path);
-        onComplete(null);
+    numMeshLoading += 1;
+    const webview_path = path;
+    // 扩展名
+    const ext = webview_path?.split(/\./g)?.pop()?.toLowerCase();
+    switch (ext) {
+        case "gltf":
+        case "glb":
+            loaderGLTF.load(
+                webview_path,
+                (result: any) => {
+                    onComplete(result.scene);
+                    numMeshLoading -= 1;
+                },
+                null,
+                (err: Error) => {
+                    onComplete(null, err);
+                    numMeshLoading -= 1;
+                }
+            );
+            break;
+        case "obj":
+            loaderOBJ.load(
+                webview_path,
+                (result: any) => {
+                    onComplete(result);
+                    numMeshLoading -= 1;
+                },
+                null,
+                (err: Error) => {
+                    onComplete(null, err);
+                    numMeshLoading -= 1;
+                }
+            );
+            break;
+        case "dae":
+            loaderCollada.load(
+                webview_path,
+                (result: any) => {
+                    onComplete(result.scene);
+                    numMeshLoading -= 1;
+                },
+                null,
+                (err: Error) => {
+                    onComplete(null, err);
+                    numMeshLoading -= 1;
+                }
+            );
+            break;
+        case "stl":
+            loaderSTL.load(
+                webview_path,
+                (result: any) => {
+                    const material = new THREE.MeshPhongMaterial();
+                    const mesh = new THREE.Mesh(result, material);
+                    onComplete(mesh);
+                    numMeshLoading -= 1;
+                },
+                null,
+                (err: Error) => {
+                    onComplete(null, err);
+                    numMeshLoading -= 1;
+                }
+            );
+            break;
     }
 };
 
@@ -294,7 +300,7 @@ window.addEventListener("message", (event) => {
     } else if (message.type === "resolvedPaths") {
         if (message.pathMapping) {
             // 在 pathMapping 中添加新的映射
-            pathMapping = { ...pathMapping, ...message.pathMapping };
+            // pathMapping = { ...pathMapping, ...message.pathMapping };
         }
         // 重新加载 URDF 模型
         loadRobot();
@@ -551,7 +557,6 @@ function updateDegreeRadians() {
 function updateJointCallback(joint: typeof URDFJoint, angle: number) {
     const joint_name = joint.name;
     const joint_name_processed = postprocessIdAndClass(joint_name);
-    console.log("angle", angle);
     const slider = document.getElementById(
         `slider_joint_${joint_name_processed}`
     ) as HTMLInputElement;

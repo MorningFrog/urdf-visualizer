@@ -63,11 +63,11 @@ There are three installation methods:
 - In VSCode, use `Ctrl+Shift+P` to open the Command Panel and enter `ext install morningfrog.urdf-visualizer`.
 - Download the `.vsix` file in the Release of the repository, then select `Install from VISX` in the upper right corner of the VSCode extension, and choose the downloaded `.vsix` file for installation.
 
-## Known Issues
-
-When the loaded mesh file is in a format such as `.dae` that contains multiple subfiles, the loading may fail.
-
 ## Release Notes
+
+### 2.0.3
+
+Fix the problem of loading mesh files containing subfiles.
 
 ### 2.0.2
 

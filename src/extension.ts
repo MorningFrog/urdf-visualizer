@@ -65,7 +65,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     // 在 xacroParser 中使用 fs 读取文件内容
     xacroParser.getFileContents = (filePath: string) => {
-        console.log("filePath", filePath);
         return fs.readFileSync(filePath, { encoding: "utf8" });
     };
     // 设置 ROS 功能包路径
@@ -211,6 +210,9 @@ export function activate(context: vscode.ExtensionContext) {
                             if (document) {
                                 sendURDFContent(document);
                             }
+                        } else if (message.type === "error") {
+                            // 报错
+                            vscode.window.showErrorMessage(message.message);
                         }
                     });
                 }

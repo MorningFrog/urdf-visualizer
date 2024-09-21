@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.0.3]
+
+- 修复了 mesh 文件中包含其他文件时无法加载的问题.
+
 ## [2.0.2]
 
 - 修复了 `urdf-visualizer.packages` 设置中包含 `${workspaceFolder}` 无法解析的问题
