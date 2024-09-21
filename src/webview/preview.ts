@@ -173,6 +173,12 @@ manager.onError = (url: string) => {
 manager.setURLModifier((url: string): string => {
     // 删除其中的 `file://`
     url = url.replace("file://", "");
+    // 替换其中的 `\` 为 `/`
+    url = url.replace(/\\/g, "/");
+    // 对于 Windows 系统, 添加 `/` 前缀
+    if (!url.startsWith("/")) {
+        url = "/" + url;
+    }
     return "https://file%2B.vscode-resource.vscode-cdn.net" + url;
 });
 

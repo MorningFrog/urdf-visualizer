@@ -50,8 +50,12 @@ A VSCode extension for visualizing URDF files and xacro files.
 - `urdf-visualizer.reRenderWhenSwitchFile`: 是否在激活的文件切换时自动重新渲染.
 - `urdf-visualizer.backgroundColor`: 设置背景颜色, 需要为 `#` 开头的十六进制颜色代码.
 
-## 操作说明
+## 说明
 
+> [!IMPORTANT]
+> 在文件夹下打开 VSCode, 文件夹下应当包含 URDF/Xacro 文件所需的所有资源文件. 仅用 VSCode 打开单个文件会让其找不到 mesh 文件.
+
+操作:
 - 转动视角: 在空白处按住鼠标左键并拖动
 - 移动视角: 按住鼠标右键拖动
 - 转动/移动关节: 在关节直接连接的link上按住鼠标左键并拖动 
@@ -63,7 +67,12 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 在 VSCode 中使用 `Ctrl+Shift+P` 打开命令栏, 输入 `ext install morningfrog.urdf-visualizer`.
 - 在该仓库的 Release 中下载 `.vsix` 文件, 然后在 VSCode 的扩展右上角选择 "从VISX安装", 选择下载的 `.vsix` 文件进行安装.
 
+
 ## Release Notes
+
+### 2.0.4
+
+修复了在 Windows 系统上打开 mesh 文件的问题.
 
 ### 2.0.3
 

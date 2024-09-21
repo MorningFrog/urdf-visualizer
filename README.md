@@ -50,8 +50,12 @@ This extension contributes the following settings:
 - `urdf-visualizer.reRenderWhenSwitchFile`: Whether to automatically re-render when switching between active files.
 - `urdf-visualizer.backgroundColor`: Set the background color; it needs to be a hexadecimal color code starting with `#`.
 
-## Operating Instructions
+## Instructions
 
+> [!IMPORTANT]
+> Open VSCode in the folder contains all files required by the urdf/xacro file. Open VSCode only with the urdf/xacro file will make it uneble to find mesh files.
+
+Operations:
 - Rotate perspective: Hold down the left mouse button and drag in the blank space
 - Moving perspective: Hold down the right mouse button and drag
 - Rotate/Move Joint: Hold down the left mouse button and drag on the link directly connected to the joint
@@ -64,6 +68,10 @@ There are three installation methods:
 - Download the `.vsix` file in the Release of the repository, then select `Install from VISX` in the upper right corner of the VSCode extension, and choose the downloaded `.vsix` file for installation.
 
 ## Release Notes
+
+### 2.0.4
+
+Fix the problem of loading mesh files in Windows OS.
 
 ### 2.0.3
 
