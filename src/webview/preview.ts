@@ -160,6 +160,8 @@ let showCollision = false;
 // 解析visual和collison
 loader.parseCollision = true;
 loader.parseVisual = true;
+// 资源路径前缀
+let uriPrefix = "https://file%2B.vscode-resource.vscode-cdn.net";
 
 // 设置 manager 报错时的处理
 manager.onError = (url: string) => {
@@ -179,7 +181,8 @@ manager.setURLModifier((url: string): string => {
     if (!url.startsWith("/")) {
         url = "/" + url;
     }
-    return "https://file%2B.vscode-resource.vscode-cdn.net" + url;
+    // console.log("url", url);
+    return uriPrefix + url;
 });
 
 // 创建自定义的 URDF 控制器
@@ -307,6 +310,17 @@ window.addEventListener("message", (event) => {
         if (message.backgroundColor) {
             scene.background = new THREE.Color(message.backgroundColor);
             render();
+        }
+    } else if (message.type === "uriPrefix") {
+        if (message.uriPrefix) {
+            // console.log("uriPrefix", uriPrefix);
+            // 去除末尾的 `/`
+            if (message.uriPrefix.endsWith("/")) {
+                uriPrefix = message.uriPrefix.slice(0, -1);
+            } else {
+                uriPrefix = message.uriPrefix;
+            }
+            uriPrefix = "https://" + uriPrefix;
         }
     }
 });

@@ -69,6 +69,10 @@ There are three installation methods:
 
 ## Release Notes
 
+### 2.0.5
+
+Fix the problem of loading mesh files in DevContainers (tested in Docker container).
+
 ### 2.0.4
 
 Fix the problem of loading mesh files in Windows OS.

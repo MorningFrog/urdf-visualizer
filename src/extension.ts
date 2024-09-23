@@ -169,6 +169,16 @@ export function activate(context: vscode.ExtensionContext) {
                         )
                     );
 
+                    // 发送 uriPrefix
+                    activePanel.webview.postMessage({
+                        type: "uriPrefix",
+                        uriPrefix: activePanel.webview.asWebviewUri(
+                            vscode.Uri.file(
+                                path.dirname(editor.document.fileName)
+                            )
+                        ).authority,
+                    });
+
                     // 发送初始的 URDF 文件内容到 Webview
                     sendURDFContent(editor.document);
 
