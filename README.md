@@ -69,29 +69,9 @@ There are three installation methods:
 
 ## Release Notes
 
-### 2.0.6
+### 2.1.0
 
-Added failure prompt.
-
-### 2.0.5
-
-Fix the problem of loading mesh files in DevContainers (tested in Docker container).
-
-### 2.0.4
-
-Fix the problem of loading mesh files in Windows OS.
-
-### 2.0.3
-
-Fix the problem of loading mesh files containing subfiles.
-
-### 2.0.2
-
-Fixed some known issues such as `urdf-visualizer.packages` containing `${workspaceFolder}`.
-
-### 2.0.1
-
-Fix the problem of dragging of links while visualizing frames. 
+The field of view will match the size of the model.
 
 ### 2.0.0
 

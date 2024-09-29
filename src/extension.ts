@@ -79,7 +79,10 @@ export function activate(context: vscode.ExtensionContext) {
     };
 
     // 向 webview 发送完整的 URDF 文件内容
-    function sendURDFContent(document: vscode.TextDocument) {
+    function sendURDFContent(
+        document: vscode.TextDocument,
+        other_params: object = {}
+    ) {
         if (!activePanel) {
             return;
         }
@@ -105,6 +108,7 @@ export function activate(context: vscode.ExtensionContext) {
                 urdfText: urdfText,
                 packages: packagesResolved,
                 workingPath: workingPath,
+                ...other_params,
             });
         }
     }
@@ -185,7 +189,7 @@ export function activate(context: vscode.ExtensionContext) {
                     });
 
                     // 发送初始的 URDF 文件内容到 Webview
-                    sendURDFContent(editor.document);
+                    sendURDFContent(editor.document, { reset_camera: true });
 
                     // 发送背景颜色
                     activePanel.webview.postMessage({
@@ -207,7 +211,9 @@ export function activate(context: vscode.ExtensionContext) {
                                 previousDocument = document;
                             }
                             if (document) {
-                                sendURDFContent(document);
+                                sendURDFContent(document, {
+                                    reset_camera: true,
+                                });
                             }
                         } else if (message.type === "error") {
                             // 报错
@@ -250,7 +256,7 @@ export function activate(context: vscode.ExtensionContext) {
                 checkURDFXacroFile(editor.document)
             ) {
                 previousDocument = editor.document;
-                sendURDFContent(editor.document);
+                sendURDFContent(editor.document, { reset_camera: true });
             }
         }
     );

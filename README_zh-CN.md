@@ -70,29 +70,9 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
-### 2.0.6
+### 2.1.0
 
-增加了失败时的提示
-
-### 2.0.5
-
-修复了容器中加载 mesh 文件的问题 (在 Docker 容器中测试通过).
-
-### 2.0.4
-
-修复了在 Windows 系统上打开 mesh 文件的问题.
-
-### 2.0.3
-
-修复了 mesh 文件中包含其他文件时无法加载的问题.
-
-### 2.0.2
-
-修复了部分已知问题, 如 `urdf-visualizer.packages` 包含 `${workspaceFolder}` 的问题.
-
-### 2.0.1
-
-修复关节轴能被拖动导致难以选中某些link的问题.
+视野范围将与模型尺寸相匹配.
 
 ### 2.0.0
 

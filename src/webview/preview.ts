@@ -157,6 +157,8 @@ loader.packages = {};
 // 是否显示 visual 和 collision
 let showVisual = true;
 let showCollision = false;
+// 是否刷新视野
+let resetCamera = false;
 // 解析visual和collison
 loader.parseCollision = true;
 loader.parseVisual = true;
@@ -306,6 +308,9 @@ window.addEventListener("message", (event) => {
                 loader.workingPath = message.workingPath + "/";
             }
         }
+        if (message.reset_camera && message.reset_camera === true) {
+            resetCamera = true;
+        }
         if (message.urdfText) {
             urdfText = message.urdfText;
             loadRobot();
@@ -375,6 +380,9 @@ async function loadRobot() {
         });
     });
 
+    // 设置视野
+    resetCameraView();
+
     // robot.updateMatrixWorld(true);
 
     // 添加关节轴
@@ -385,6 +393,47 @@ async function loadRobot() {
     updateJointList();
 
     render();
+}
+
+/**
+ * 处理重置视野
+ */
+function resetCameraView() {
+    if (!resetCamera) {
+        return;
+    }
+    // 1. 计算物体的包围盒
+    const box = new THREE.Box3().setFromObject(robot);
+
+    // 2. 获取包围盒的中心和尺寸
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size); // 获取物体的大小
+    box.getCenter(center); // 获取物体的中心
+
+    // 3. 计算包围盒对角线长度,用于确定摄像机的合适距离
+    const maxSize = Math.max(size.x, size.y, size.z);
+    const distance = maxSize / (2 * Math.tan((camera.fov * Math.PI) / 360)); // 摄像机距离
+    const offset = 1.0; // 添加偏移量,确保物体完全在视野内
+
+    // 4. 设置摄像机位置并使其看向物体的中心
+    camera.position.set(
+        center.x + distance * offset,
+        center.y + distance * offset,
+        center.z + distance * offset
+    );
+    camera.lookAt(center);
+
+    // 5. 更新摄像机的投影矩阵
+    camera.updateProjectionMatrix();
+
+    // 6. 设置OrbitControls的目标为物体中心
+    controls.target.set(center.x, center.y, center.z);
+
+    // 7. 更新OrbitControls
+    controls.update();
+
+    resetCamera = false;
 }
 
 /**
