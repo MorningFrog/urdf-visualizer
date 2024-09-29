@@ -70,6 +70,10 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
+### 2.0.6
+
+增加了失败时的提示
+
 ### 2.0.5
 
 修复了容器中加载 mesh 文件的问题 (在 Docker 容器中测试通过).

@@ -171,6 +171,18 @@ manager.onError = (url: string) => {
     });
 };
 
+// 重写 console.error
+// 保存原始的 console.error
+const originalConsoleError = console.error;
+console.error = function (...args) {
+    vscode.postMessage({
+        type: "error",
+        message: args.join(" "),
+    });
+
+    originalConsoleError.apply(console, args); // 继续调用原始的 console.error 输出到控制台
+};
+
 // 设置资源处理函数
 manager.setURLModifier((url: string): string => {
     // 删除其中的 `file://`

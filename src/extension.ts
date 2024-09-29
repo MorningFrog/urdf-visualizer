@@ -87,9 +87,14 @@ export function activate(context: vscode.ExtensionContext) {
             const workingPath = path.dirname(document.fileName);
             // console.log(document.getText());
             xacroParser.workingPath = workingPath;
-            xacroParser.parse(document.getText()).then((data: XMLDocument) => {
-                sendURDF(serializer.serializeToString(data), workingPath);
-            });
+            xacroParser
+                .parse(document.getText())
+                .catch((error: { message: string }) => {
+                    vscode.window.showErrorMessage(error.message);
+                })
+                .then((data: XMLDocument) => {
+                    sendURDF(serializer.serializeToString(data), workingPath);
+                });
         } else {
             sendURDF(document.getText(), path.dirname(document.fileName));
         }
