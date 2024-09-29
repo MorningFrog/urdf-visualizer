@@ -101,7 +101,7 @@ ambientLight.position.set(0, 0, 1);
 scene.add(ambientLight);
 
 // 创建坐标系
-const axesHelper = new THREE.AxesHelper(5); // 5 是坐标轴的长度
+const axesHelper = new THREE.AxesHelper(1); // 1 是坐标轴的长度
 axesHelper.layers.set(1);
 scene.add(axesHelper);
 
@@ -433,7 +433,12 @@ function resetCameraView() {
     // 7. 更新OrbitControls
     controls.update();
 
+    // 8. 清除重置视野标志
     resetCamera = false;
+
+    // 重设坐标系尺寸
+    const max_coord = Math.max(box.max.x, box.max.y, box.max.z) * 1.5;
+    axesHelper.scale.set(max_coord, max_coord, max_coord);
 }
 
 /**
