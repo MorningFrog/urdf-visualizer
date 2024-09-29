@@ -69,6 +69,10 @@ There are three installation methods:
 
 ## Release Notes
 
+### 2.1.1
+
+The length of the coordinate system will automatically match the model size.
+
 ### 2.1.0
 
 The field of view will match the size of the model.

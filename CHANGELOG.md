@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## [2.1.1]
 
 - 坐标系的长度会自动匹配模型尺寸.
 
