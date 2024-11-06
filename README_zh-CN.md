@@ -70,6 +70,10 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
+### 2.1.2
+
+预览窗口标题将显示文件名.
+
 ### 2.1.1
 
 坐标系的长度会自动匹配模型尺寸.

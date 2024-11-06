@@ -86,6 +86,9 @@ export function activate(context: vscode.ExtensionContext) {
         if (!activePanel) {
             return;
         }
+        // 设置 Webview 标题为当前文件名+Preview
+        activePanel.title = path.basename(document.fileName) + " Preview";
+
         if (isXacroFile(document)) {
             const workingPath = path.dirname(document.fileName);
             // console.log(document.getText());

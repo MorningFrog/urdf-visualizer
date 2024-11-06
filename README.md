@@ -53,7 +53,7 @@ This extension contributes the following settings:
 ## Instructions
 
 > [!IMPORTANT]
-> Open VSCode in the folder contains all files required by the urdf/xacro file. Open VSCode only with the urdf/xacro file will make it uneble to find mesh files.
+> Open VSCode in the folder contains all files required by the urdf/xacro file. Open VSCode only with the urdf/xacro file will make it unable to find mesh files.
 
 Operations:
 - Rotate perspective: Hold down the left mouse button and drag in the blank space
@@ -68,6 +68,10 @@ There are three installation methods:
 - Download the `.vsix` file in the Release of the repository, then select `Install from VISX` in the upper right corner of the VSCode extension, and choose the downloaded `.vsix` file for installation.
 
 ## Release Notes
+
+### 2.1.2
+
+The title of the preview window will display the file name.
 
 ### 2.1.1
 
