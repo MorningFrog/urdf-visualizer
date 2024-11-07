@@ -22,6 +22,9 @@ const { MeshLoadDoneFunc, URDFRobot, URDFJoint } = require("urdf-loader");
 // 导入自定义URDFDragControls
 const { CustomURDFDragControls } = require("./CustomURDFDragControls");
 
+// 导入测量模块
+const { Measure, MeasureMode } = require("./Measure");
+
 // 获取可操作元素
 const reloadButton = document.getElementById("re-load");
 const controlsToggle = document.getElementById("toggle-controls"); // 切换控制按钮的显示
@@ -128,7 +131,7 @@ render();
 
 // mesh文件加载器
 const manager = new THREE.LoadingManager();
-const loader = new URDFLoader(manager);
+const loaderURDF = new URDFLoader(manager);
 const loaderGLTF = new GLTFLoader(manager);
 const loaderOBJ = new OBJLoader(manager);
 const loaderCollada = new ColladaLoader(manager);
@@ -153,15 +156,15 @@ let linkAxesSize = 1.0;
 // 角度制/弧度制
 let isDegree = false;
 // 设置ROS功能包所在的目录
-loader.packages = {};
+loaderURDF.packages = {};
 // 是否显示 visual 和 collision
 let showVisual = true;
 let showCollision = false;
 // 是否刷新视野
 let resetCamera = false;
 // 解析visual和collison
-loader.parseCollision = true;
-loader.parseVisual = true;
+loaderURDF.parseCollision = true;
+loaderURDF.parseVisual = true;
 // 资源路径前缀
 let uriPrefix = "https://file%2B.vscode-resource.vscode-cdn.net";
 
@@ -208,8 +211,31 @@ const dragControls = new CustomURDFDragControls(
     updateJointCallback
 );
 
+// 测量工具
+const measureDistanceTool = new Measure(
+    renderer,
+    scene,
+    camera,
+    controls,
+    MeasureMode.Distance
+);
+const measureAreaTool = new Measure(
+    renderer,
+    scene,
+    camera,
+    controls,
+    MeasureMode.Area
+);
+const measureAngleTool = new Measure(
+    renderer,
+    scene,
+    camera,
+    controls,
+    MeasureMode.Angle
+);
+
 // 设置 mesh 处理函数
-loader.loadMeshCb = function (
+loaderURDF.loadMeshCb = function (
     path: string,
     manager: LoadingManager,
     onComplete: typeof MeshLoadDoneFunc
@@ -299,13 +325,13 @@ window.addEventListener("message", (event) => {
     const message = event.data;
     if (message.type === "urdf") {
         if (message.packages) {
-            loader.packages = message.packages;
+            loaderURDF.packages = message.packages;
         }
         if (message.workingPath) {
             if (message.workingPath.endsWith("/")) {
-                loader.workingPath = message.workingPath;
+                loaderURDF.workingPath = message.workingPath;
             } else {
-                loader.workingPath = message.workingPath + "/";
+                loaderURDF.workingPath = message.workingPath + "/";
             }
         }
         if (message.reset_camera && message.reset_camera === true) {
@@ -353,7 +379,7 @@ async function loadRobot() {
     jointAxes = {};
 
     // 解析 URDF
-    robot = loader.parse(urdfText);
+    robot = loaderURDF.parse(urdfText);
 
     // 添加到场景
     scene.add(robot);

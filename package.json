@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/MorningFrog/urdf-visualizer"
   },
-  "version": "2.1.2",
+  "version": "3.0.0",
   "publisher": "morningfrog",
   "engines": {
     "vscode": "^1.70.0"
@@ -17,7 +17,7 @@
   "activationEvents": [
     "onLanguage:xml"
   ],
-  "icon": "media/URDF-Visualizer.png",
+  "icon": "media/icons/URDF-Visualizer.png",
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
