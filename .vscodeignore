@@ -3,6 +3,7 @@
 out/**
 node_modules/**
 src/**
+release/**
 !src/webview/preview.html
 !src/webview/style.css
 .gitignore
