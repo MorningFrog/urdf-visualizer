@@ -1,5 +1,5 @@
 <div align="center"> 
-<img src="./media/URDF-Visualizer-banner.jpg" alt="icon"/>
+<img src="./media/images/URDF-Visualizer-banner.jpg" alt="icon"/>
 
 <h1>Urdf Visualizer</h1>
 
@@ -19,7 +19,7 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## 特性
 
-![demonstration](media/demonstration.gif)
+![demonstration](media/images/demonstration.gif)
 
 - URDF 和 Xacro 文件的可视化
 - 切换 visual 和/或 collision 的显示

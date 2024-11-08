@@ -1,5 +1,5 @@
 <div align="center"> 
-<img src="./media/URDF-Visualizer-banner.jpg" alt="icon"/>
+<img src="./media/images/URDF-Visualizer-banner.jpg" alt="icon"/>
 
 <h1>Urdf Visualizer</h1>
 
@@ -19,7 +19,7 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Features
 
-![demonstration](media/demonstration.gif)
+![demonstration](media/images/demonstration.gif)
 
 - Visualization of URDF and Xacro files
 - Switch the display of visual and/or collision

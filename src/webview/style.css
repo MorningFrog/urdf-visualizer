@@ -197,3 +197,12 @@ input[type="range"]:hover::-webkit-slider-thumb {
     color: white;
     border-color: dodgerblue;
 }
+
+/* 测量相关 */
+/* button#measure {
+    margin: 5px 0;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 4px;
+    cursor: pointer;
+} */

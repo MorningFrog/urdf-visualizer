@@ -177,6 +177,7 @@ export function activate(context: vscode.ExtensionContext) {
                         path.join(
                             context.extensionPath,
                             "media",
+                            "icons",
                             "URDF-Visualizer.png"
                         )
                     );
