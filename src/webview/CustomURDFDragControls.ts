@@ -28,6 +28,8 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         this.label.style.display = "none"; // 初始隐藏
         document.body.appendChild(this.label);
 
+        this.enabled = true; // 默认启用
+
         // 绑定事件,使名称跟随鼠标移动
         rendererDom.addEventListener(
             "mousemove",
@@ -41,22 +43,34 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
     }
 
     onHover(joint: typeof URDFJoint) {
+        if (!this.enabled) {
+            return;
+        }
         // 显示关节名称
         this.label.innerText = `Joint: ${joint.name}`;
         this.label.style.display = "block";
     }
 
     onUnhover(joint: typeof URDFJoint) {
+        if (!this.enabled) {
+            return;
+        }
         // 隐藏关节名称
         this.label.style.display = "none";
     }
 
     onDragStart(joint: typeof URDFJoint) {
+        if (!this.enabled) {
+            return;
+        }
         // 关闭视角运动
         this.controls.enabled = false;
     }
 
     onDragEnd(joint: typeof URDFJoint) {
+        if (!this.enabled) {
+            return;
+        }
         // 开启视角运动
         this.controls.enabled = true;
         // 隐藏关节名称
@@ -71,6 +85,9 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
 
     // 更新关节角度
     updateJoint(joint: typeof URDFJoint, angle: number) {
+        if (!this.enabled) {
+            return;
+        }
         super.updateJoint(joint, angle);
         // 执行自定义操作
         if (this.updateJointCallback) {
@@ -82,5 +99,16 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
     dispose() {
         super.dispose();
         document.body.removeChild(this.label); // 移除标签元素
+    }
+
+    // 禁用和启用
+    set_enable(enabled: boolean) {
+        this.enabled = enabled;
+        if (!enabled) {
+            // 隐藏标签
+            this.label.style.display = "none";
+            // 开启视角运动
+            this.controls.enabled = true;
+        }
     }
 }

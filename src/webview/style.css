@@ -198,11 +198,84 @@ input[type="range"]:hover::-webkit-slider-thumb {
     border-color: dodgerblue;
 }
 
-/* 测量相关 */
-/* button#measure {
+/*********/
+/* 右边栏 */
+/*********/
+
+#operation {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow-x: visible;
+    overflow-y: hidden;
+    /* width: 200px; */
+    margin: 0;
+    padding: 0;
+    max-height: calc(100vh - 60px);
+}
+
+/* 测量容器 */
+#div-measure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     margin: 5px 0;
     padding: 5px;
-    border: 1px solid black;
+    border: 2px solid #bbb;
     border-radius: 4px;
+}
+
+div.div-measure-button {
+    display: block;
+    margin: 5px 0;
+    border-left: 2px solid rgba(0, 0, 0, 0);
+}
+
+button.measure {
+    display: block;
+    width: 30px;
+    height: 30px;
+    /* border-radius: 50%; */
+    /* border: 2px solid #bbb; */
+    background-color: dodgerblue;
     cursor: pointer;
-} */
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+button.measure:hover {
+    background-color: #222;
+}
+
+button#measure-distance {
+    mask: url("../../media/icons/measure-distance.svg") no-repeat center / auto
+        90%;
+    /* background-image: url("../../media/icons/measure-distance.svg");
+    background-size: auto 90%; */
+}
+
+button#measure-angle {
+    mask: url("../../media/icons/measure-angle.svg") no-repeat center / auto 68%;
+    /* background-image: url("../../media/icons/measure-angle.svg");
+    background-size: auto 68%; */
+}
+
+button#measure-area {
+    mask: url("../../media/icons/measure-area.svg") no-repeat center / auto 68%;
+    /* background-image: url("../../media/icons/measure-area.svg");
+    background-size: auto 68%; */
+}
+
+button.measure.checked {
+    background-color: #222;
+}
+
+div.div-measure-button:has(> button.measure.checked) {
+    border-left-color: #222;
+}
+
+div.div-measure-button:has(> button.measure.checked):hover {
+    border-left-style: dashed;
+}

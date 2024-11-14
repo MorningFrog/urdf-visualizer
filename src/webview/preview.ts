@@ -43,6 +43,15 @@ const radiansButton = document.getElementById(
 const degreesButton = document.getElementById(
     "switch-degrees"
 ) as HTMLButtonElement;
+const measureDistanceButton = document.getElementById(
+    "measure-distance"
+) as HTMLButtonElement;
+const measureAreaButton = document.getElementById(
+    "measure-area"
+) as HTMLButtonElement;
+const measureAngleButton = document.getElementById(
+    "measure-angle"
+) as HTMLButtonElement;
 
 // 确保所有元素都已加载
 if (
@@ -58,7 +67,10 @@ if (
     !ulJoints ||
     !tooltip ||
     !radiansButton ||
-    !degreesButton
+    !degreesButton ||
+    !measureDistanceButton ||
+    !measureAreaButton ||
+    !measureAngleButton
 ) {
     throw new Error("Element not found");
 }
@@ -217,21 +229,24 @@ const measureDistanceTool = new Measure(
     scene,
     camera,
     controls,
-    MeasureMode.Distance
+    MeasureMode.Distance,
+    clearMeaure
 );
 const measureAreaTool = new Measure(
     renderer,
     scene,
     camera,
     controls,
-    MeasureMode.Area
+    MeasureMode.Area,
+    clearMeaure
 );
 const measureAngleTool = new Measure(
     renderer,
     scene,
     camera,
     controls,
-    MeasureMode.Angle
+    MeasureMode.Angle,
+    clearMeaure
 );
 
 // 设置 mesh 处理函数
@@ -338,6 +353,7 @@ window.addEventListener("message", (event) => {
             resetCamera = true;
         }
         if (message.urdfText) {
+            clearMeaure();
             urdfText = message.urdfText;
             loadRobot();
 
@@ -783,3 +799,111 @@ degreesButton.addEventListener("click", () => {
     radiansButton.classList.remove("checked");
     updateDegreeRadians();
 });
+
+measureDistanceButton.addEventListener("click", () => {
+    if (measureDistanceButton.classList.contains("checked")) {
+        handleMeasureDistance(false);
+    } else {
+        handleMeasureDistance(true);
+    }
+});
+
+function handleMeasureDistance(isMeasureDistance: boolean) {
+    if (isMeasureDistance) {
+        if (measureDistanceButton.classList.contains("checked")) {
+            return;
+        }
+        measureDistanceButton.classList.add("checked");
+        if (measureAreaButton.classList.contains("checked")) {
+            measureAreaButton.classList.remove("checked");
+            measureAreaTool.close();
+        }
+        if (measureAngleButton.classList.contains("checked")) {
+            measureAngleButton.classList.remove("checked");
+            measureAngleTool.close();
+        }
+        measureDistanceTool.open();
+        dragControls.set_enable(false);
+    } else {
+        if (!measureDistanceButton.classList.contains("checked")) {
+            return;
+        }
+        measureDistanceButton.classList.remove("checked");
+        measureDistanceTool.close();
+        dragControls.set_enable(true);
+    }
+}
+
+measureAreaButton.addEventListener("click", () => {
+    if (measureAreaButton.classList.contains("checked")) {
+        handleMeasureArea(false);
+    } else {
+        handleMeasureArea(true);
+    }
+});
+
+function handleMeasureArea(isMeasureArea: boolean) {
+    if (isMeasureArea) {
+        if (measureAreaButton.classList.contains("checked")) {
+            return;
+        }
+        measureAreaButton.classList.add("checked");
+        if (measureDistanceButton.classList.contains("checked")) {
+            measureDistanceButton.classList.remove("checked");
+            measureDistanceTool.close();
+        }
+        if (measureAngleButton.classList.contains("checked")) {
+            measureAngleButton.classList.remove("checked");
+            measureAngleTool.close();
+        }
+        measureAreaTool.open();
+        dragControls.set_enable(false);
+    } else {
+        if (!measureAreaButton.classList.contains("checked")) {
+            return;
+        }
+        measureAreaButton.classList.remove("checked");
+        measureAreaTool.close();
+        dragControls.set_enable(true);
+    }
+}
+
+measureAngleButton.addEventListener("click", () => {
+    if (measureAngleButton.classList.contains("checked")) {
+        handleMeasureAngle(false);
+    } else {
+        handleMeasureAngle(true);
+    }
+});
+
+function handleMeasureAngle(isMeasureAngle: boolean) {
+    if (isMeasureAngle) {
+        if (measureAngleButton.classList.contains("checked")) {
+            return;
+        }
+        measureAngleButton.classList.add("checked");
+        if (measureDistanceButton.classList.contains("checked")) {
+            measureDistanceButton.classList.remove("checked");
+            measureDistanceTool.close();
+        }
+        if (measureAreaButton.classList.contains("checked")) {
+            measureAreaButton.classList.remove("checked");
+            measureAreaTool.close();
+        }
+        measureAngleTool.open();
+        dragControls.set_enable(false);
+    } else {
+        if (!measureAngleButton.classList.contains("checked")) {
+            return;
+        }
+        measureAngleButton.classList.remove("checked");
+        measureAngleTool.close();
+        dragControls.set_enable(true);
+    }
+}
+
+function clearMeaure() {
+    handleMeasureDistance(false);
+    handleMeasureArea(false);
+    handleMeasureAngle(false);
+}

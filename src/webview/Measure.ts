@@ -17,10 +17,29 @@ export enum MeasureMode {
     Angle = "Angle",
 }
 
-export default class Measure {
+// 创建文字的 canvas 纹理
+function createTextTexture(text: string, scale: number): THREE.Texture {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d")!;
+    canvas.width = 256 * scale;
+    canvas.height = 128 * scale;
+
+    context.font = `${50 * scale}px Arial`;
+    context.fillStyle = "black";
+    context.textAlign = "center";
+    context.textBaseline = "bottom";
+    context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+
+    return texture;
+}
+
+export class Measure {
     readonly LINE_MATERIAL = new THREE.LineBasicMaterial({
         color: 0xff0000,
-        linewidth: 3,
+        linewidth: 1,
         opacity: 0.8,
         transparent: true,
         side: THREE.DoubleSide,
@@ -29,11 +48,12 @@ export default class Measure {
     });
     readonly POINT_MATERIAL = new THREE.PointsMaterial({
         color: 0xff5000,
-        size: 1,
+        size: 10,
         opacity: 0.6,
         transparent: true,
         depthWrite: false,
         depthTest: false,
+        sizeAttenuation: false, // do not change point size when zooming
     });
     readonly MESH_MATERIAL = new THREE.MeshBasicMaterial({
         color: 0x87cefa,
@@ -43,7 +63,8 @@ export default class Measure {
         depthWrite: false,
         depthTest: false,
     });
-    readonly MAX_POINTS = 100; // TODO: better to remove this limitation
+
+    readonly MAX_POINTS = 50; // TODO: better to remove this limitation
     readonly MAX_DISTANCE = 500; // when intersected object's distance is too far away, then ignore it
     readonly OBJ_NAME = "object_for_measure";
     readonly LABEL_NAME = "label_for_measure";
@@ -55,7 +76,6 @@ export default class Measure {
     controls: typeof OrbitControls;
     dragControls?: typeof DragControls; // enable objects(labels) to be dragged
     raycaster?: THREE.Raycaster;
-    font?: typeof Font;
     mouseMoved = false;
     isCompleted = false;
     points?: THREE.Points; // used for measure distance and area
@@ -65,27 +85,28 @@ export default class Measure {
     tempPoints?: THREE.Points; // used to store temporary Points
     tempLine?: THREE.Line; // used to store temporary line, which is useful for drawing line as mouse moves
     tempLineForArea?: THREE.Line; // used to store temporary line, which is useful for drawing area as mouse moves
-    tempLabel?: THREE.Mesh; // used to store temporary label as mouse moves
+    tempLabel?: THREE.Sprite; // used to store temporary label as mouse moves
     pointCount = 0; // used to store how many points user have been picked
     pointArray: THREE.Vector3[] = [];
-    fontSize?: number = 0; // used to dymanically calculate a font size
-    tempFontSize?: number = 0; // used to dymanically calculate a font size
     lastClickTime?: number; // save the last click time, in order to detect double click event
+
+    cancleCallback: () => void; // callback function when user cancels the measurement
 
     constructor(
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
         camera: THREE.Camera,
         controls: typeof OrbitControls,
-        mode: MeasureMode = MeasureMode.Distance
+        mode: MeasureMode = MeasureMode.Distance,
+        cancleCallback?: () => void
     ) {
         this.mode = mode;
         this.renderer = renderer;
         this.scene = scene;
         this.camera = camera;
         this.controls = controls;
-        this.loadFont();
         this.initDragControls();
+        this.cancleCallback = cancleCallback;
     }
 
     get canvas(): HTMLCanvasElement {
@@ -118,7 +139,6 @@ export default class Measure {
         }
         this.isCompleted = false;
         this.renderer.domElement.style.cursor = "crosshair";
-        this.fontSize = 0;
     }
 
     /**
@@ -134,6 +154,7 @@ export default class Measure {
         this.tempPoints && this.scene.remove(this.tempPoints);
         this.tempLine && this.scene.remove(this.tempLine);
         this.tempLineForArea && this.scene.remove(this.tempLineForArea);
+        this.tempLabel && this.scene.remove(this.tempLabel);
         this.points && this.scene.remove(this.points);
         this.polyline && this.scene.remove(this.polyline);
         this.faces && this.scene.remove(this.faces);
@@ -143,9 +164,9 @@ export default class Measure {
         this.tempPoints = undefined;
         this.tempLine = undefined;
         this.tempLineForArea = undefined;
+        this.tempLabel = undefined;
         this.points = undefined;
         this.polyline = undefined;
-        this.fontSize = 0;
         this.renderer.domElement.style.cursor = "";
         this.clearDraggableObjects();
     }
@@ -217,18 +238,13 @@ export default class Measure {
                 const label = `${this.numberToString(
                     area
                 )} ${this.getUnitString()}`;
-                const distance = p1.distanceTo(p0);
-                const d = distance * 0.4; // distance from label to p0
-                const position = p0
-                    .clone()
-                    .add(new THREE.Vector3(dir1.x * d, dir1.y * d, dir1.z * d));
-                this.addOrUpdateLabel(
-                    this.polyline,
-                    label,
-                    position,
-                    dir1,
-                    distance
-                );
+                // 将尺寸标签置于多边形的中心
+                const position = new THREE.Vector3();
+                for (let i = 0; i < count; i++) {
+                    position.add(this.pointArray[i]);
+                }
+                position.divideScalar(count);
+                this.addOrUpdateLabel(this.polyline, label, position);
             } else {
                 clearPoints = true;
                 clearPolyline = true;
@@ -264,13 +280,7 @@ export default class Measure {
                 const position = p1
                     .clone()
                     .add(new THREE.Vector3(dir1.x * d, dir1.y * d, dir1.z * d));
-                this.addOrUpdateLabel(
-                    this.polyline,
-                    label,
-                    position,
-                    dir1,
-                    distance
-                );
+                this.addOrUpdateLabel(this.polyline, label, position);
 
                 const arcP0 = p1
                     .clone()
@@ -307,13 +317,13 @@ export default class Measure {
         this.tempPoints && this.scene.remove(this.tempPoints);
         this.tempLine && this.scene.remove(this.tempLine);
         this.tempLineForArea && this.scene.remove(this.tempLineForArea);
-        this.fontSize = 0;
     }
 
     /**
      * Draw canceled
      */
     cancel() {
+        this.cancleCallback();
         this.close();
     }
 
@@ -324,8 +334,15 @@ export default class Measure {
     mousemove = (e: MouseEvent) => {
         this.mouseMoved = true;
 
-        const point = this.getClosestIntersection(e);
+        const point = this.getClosestIntersection(e); // 获取垂直屏幕过鼠标点的线与模型最近的交点
         if (!point) {
+            // 没有交点, 则清除临时点和线
+            this.tempPoints && this.scene.remove(this.tempPoints);
+            this.tempLine && this.scene.remove(this.tempLine);
+            this.tempLineForArea && this.scene.remove(this.tempLineForArea);
+            this.tempPoints = undefined;
+            this.tempLine = undefined;
+            this.tempLineForArea = undefined;
             return;
         }
 
@@ -383,7 +400,11 @@ export default class Measure {
                 geom.setDrawRange(0, range);
                 pos.needsUpdate = true;
             }
-            if (this.mode === MeasureMode.Distance) {
+            // 在测量距离模式下, 添加距离标签
+            if (
+                this.mode === MeasureMode.Distance &&
+                this.pointArray.length > 0
+            ) {
                 const dist = p0.distanceTo(point);
                 const label = `${this.numberToString(
                     dist
@@ -393,18 +414,7 @@ export default class Measure {
                     (point.y + p0.y) / 2,
                     (point.z + p0.z) / 2
                 );
-                const direction = new THREE.Vector3(
-                    point.x - p0.x,
-                    point.y - p0.y,
-                    point.z - p0.z
-                ).normalize();
-                this.addOrUpdateLabel(
-                    line,
-                    label,
-                    position,
-                    direction,
-                    point.distanceTo(p0)
-                );
+                this.addOrUpdateLabel(line, label, position);
             }
             if (!this.tempLine) {
                 this.scene.add(line); // just add to scene once
@@ -426,16 +436,18 @@ export default class Measure {
     };
 
     onMouseClicked = (e: MouseEvent) => {
-        if (
-            !this.raycaster ||
-            !this.camera ||
-            !this.scene ||
-            this.isCompleted
-        ) {
+        if (!this.raycaster || !this.camera || !this.scene) {
             return;
         }
 
-        const point = this.getClosestIntersection(e);
+        // if the draw is completed, then re-open it
+        if (this.isCompleted) {
+            this.close();
+            this.open();
+            return;
+        }
+
+        const point = this.getClosestIntersection(e); // 获取垂直屏幕过鼠标点的线与模型最近的交点
         if (!point) {
             return;
         }
@@ -480,9 +492,6 @@ export default class Measure {
                 if (this.tempLabel) {
                     // also add text for the line
                     this.polyline.add(this.tempLabel);
-                }
-                if (this.fontSize === 0) {
-                    this.fontSize = this.tempFontSize;
                 }
             } else {
                 console.error(
@@ -549,7 +558,7 @@ export default class Measure {
     };
 
     /**
-     * The the closest intersection
+     * 获取垂直屏幕过鼠标点的线与模型最近的交点
      * @param e
      */
     getClosestIntersection = (e: MouseEvent) => {
@@ -585,77 +594,39 @@ export default class Measure {
     };
 
     /**
-     * Loads font
-     */
-    loadFont() {
-        new FontLoader().load(
-            "media/fonts/helvetiker_regular.typeface.json",
-            (font: typeof Font) => {
-                this.font = font;
-            }
-        );
-    }
-
-    /**
      * Adds or update label
      */
     addOrUpdateLabel(
         obj: THREE.Object3D,
         label: string,
-        position: THREE.Vector3,
-        direction: THREE.Vector3,
-        distance: number
+        position: THREE.Vector3
     ) {
-        if (!this.font) {
-            console.warn("Font is not loaded yet!");
-            return;
-        }
         if (this.tempLabel) {
-            // we have to remvoe the old text and create a new one, threejs doesn't support to change it dynamically
+            // we have to remove the old text and create a new one, threejs doesn't support to change it dynamically
             obj.remove(this.tempLabel);
         }
-        // make font size between 0.5 - 5
-        // And, once font size is settled, all labels should have the same size
-        let fontSize = this.fontSize;
-        if (fontSize === 0) {
-            fontSize = distance / 40;
-            fontSize = Math.max(0.5, fontSize);
-            fontSize = Math.min(5, fontSize);
-            this.tempFontSize = fontSize;
-        }
-        this.tempLabel = this.createLabel(this.font, label, fontSize);
-        const axisX = new THREE.Vector3(1, 0, 0);
-        const axisY = new THREE.Vector3(0, 1, 0);
-        const dirXZ = direction.clone().setY(0); // direction on XZ plane
-        let angle = dirXZ.angleTo(axisX); // in XZ plane, the angle to x-axis
-        if (dirXZ.z > 0) {
-            angle = -angle;
-        }
-        this.tempLabel.rotateOnAxis(axisY, angle);
-        this.tempLabel.position.set(position.x, position.y, position.z);
+
+        this.tempLabel = this.createLabel(label, position);
         obj.add(this.tempLabel);
     }
 
     /**
      * Creates label with proper style
      */
-    createLabel(font: typeof Font, label: string, size?: number) {
-        const textGeom = new TextGeometry(label, {
-            font: font,
-            size: size,
-            height: (size || 0) / 3,
-            curveSegments: 1,
-            bevelEnabled: false,
-            bevelThickness: 0,
-            bevelSize: 0,
-            bevelSegments: 1,
-        });
-        const textMat = new THREE.MeshNormalMaterial({
-            flatShading: false,
+    createLabel(label: string, position: THREE.Vector3) {
+        // 创建文本并设置其位置
+        const scale = 1; // 用于让文本更清晰, 越大越清晰
+        const spriteMaterial = new THREE.SpriteMaterial({
+            map: createTextTexture(label, scale),
             transparent: true,
-            opacity: 0.6,
+            sizeAttenuation: false,
+            depthTest: false,
+            depthWrite: false,
         });
-        const obj = new THREE.Mesh(textGeom, textMat);
+        const obj = new THREE.Sprite(spriteMaterial);
+        obj.raycast = () => {}; // disable raycast
+        obj.scale.set(0.1, 0.05, 1.0);
+        obj.position.copy(position);
         obj.name = this.LABEL_NAME;
         return obj;
     }
@@ -784,13 +755,13 @@ export default class Measure {
 
     addDraggableObjects(objects: THREE.Object3D) {
         if (this.dragControls) {
-            this.dragControls.getObjects().push(objects);
+            this.dragControls.objects.push(objects);
         }
     }
 
     clearDraggableObjects() {
         if (this.dragControls) {
-            const objects = this.dragControls.getObjects();
+            const objects = this.dragControls.objects;
             objects.splice(0, objects.length);
         }
     }

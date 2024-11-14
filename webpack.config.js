@@ -55,6 +55,8 @@ const webviewConfig = {
     output: {
         path: path.resolve(__dirname, "dist/webview"), // output directory for the webview bundle
         filename: "preview.js",
+        libraryTarget: "module",
+        chunkFormat: "module",
     },
     resolve: {
         // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
@@ -74,6 +76,9 @@ const webviewConfig = {
         ],
     },
     devtool: "nosources-source-map",
+    experiments: {
+        outputModule: true,
+    },
 };
 
 module.exports = [extensionConfig, webviewConfig];

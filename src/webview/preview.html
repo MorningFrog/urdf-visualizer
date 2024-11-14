@@ -96,7 +96,29 @@
         <!-- 左侧菜单 -->
 
         <div id="operation">
-            <button id="measure"></button>
+            <div id="div-measure">
+                <div class="div-measure-button">
+                    <button
+                        id="measure-distance"
+                        class="measure"
+                        title="measure distance"
+                    ></button>
+                </div>
+                <div class="div-measure-button">
+                    <button
+                        id="measure-angle"
+                        class="measure"
+                        title="measure angle"
+                    ></button>
+                </div>
+                <div class="div-measure-button">
+                    <button
+                        id="measure-area"
+                        class="measure"
+                        title="measure area"
+                    ></button>
+                </div>
+            </div>
         </div>
         <!-- 右侧菜单 -->
 
@@ -106,6 +128,6 @@
         <div id="tooltip"></div>
         <!-- 悬浮提示框 -->
 
-        <script src="../../dist/webview/preview.js"></script>
+        <script type="module" src="../../dist/webview/preview.js"></script>
     </body>
 </html>

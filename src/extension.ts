@@ -3,7 +3,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { resolveVariablesInObject } from "./extension_utils";
+import { resolveVariablesInObject, getWebviewContent } from "./extension_utils";
 const { XacroParser } = require("xacro-parser");
 const { JSDOM } = require("jsdom");
 const { XMLSerializer, XMLDocument } = require("xmldom");
@@ -116,28 +116,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
-    // 将 Webview 的内容替换为绝对路径
-    function getWebviewContent(): string | undefined {
-        const extensionPath = context.extensionPath;
-        // 找到你的 index.html 所在文件夹的绝对路径
-        const htmlRoot = path.join(extensionPath, "src", "webview");
-        const htmlIndexPath = path.join(htmlRoot, "preview.html");
-        const html = fs
-            .readFileSync(htmlIndexPath, "utf-8")
-            ?.replace(
-                /(<link.+?href="|<script.+?src="|<img.+?src=")(.+?)"/g,
-                (m: string, $1: string, $2: string) => {
-                    const absLocalPath = path.resolve(htmlRoot, $2);
-                    const webviewUri = activePanel?.webview.asWebviewUri(
-                        vscode.Uri.file(absLocalPath)
-                    );
-                    const replaceHref = $1 + webviewUri?.toString() + '"';
-                    return replaceHref;
-                }
-            );
-        return html;
-    }
-
     const previewCommand = vscode.commands.registerCommand(
         "urdf-visualizer.previewURDFXacro", // 预览 URDF 或 Xacro 文件
         () => {
@@ -165,7 +143,7 @@ export function activate(context: vscode.ExtensionContext) {
                     });
 
                     // 渲染 HTML
-                    const htmlContent = getWebviewContent();
+                    const htmlContent = getWebviewContent(context, activePanel);
                     if (!htmlContent) {
                         vscode.window.showErrorMessage(
                             "Failed to load preview"
