@@ -61,6 +61,7 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 移动视角: 按住鼠标右键拖动
 - 转动/移动关节: 在关节直接连接的link上按住鼠标左键并拖动 
 - 测量距离/角度/面积: 鼠标左键单击右上方三个按钮中的一个开始测量
+
 ![measure](media/images/measure.gif)
 
 ## 安装

@@ -61,6 +61,7 @@ Operations:
 - Moving perspective: Hold down the right mouse button and drag
 - Rotate/Move Joint: Hold down the left mouse button and drag on the link directly connected to the joint
 - Measure distance/angle/area: Click the button on one of the three buttons in the upper right corner to start measuring
+
 ![measure](media/images/measure.gif)
 
 ## Install
