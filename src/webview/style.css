@@ -237,8 +237,6 @@ button.measure {
     display: block;
     width: 30px;
     height: 30px;
-    /* border-radius: 50%; */
-    /* border: 2px solid #bbb; */
     background-color: dodgerblue;
     cursor: pointer;
     background-repeat: no-repeat;
@@ -252,20 +250,14 @@ button.measure:hover {
 button#measure-distance {
     mask: url("../../media/icons/measure-distance.svg") no-repeat center / auto
         90%;
-    /* background-image: url("../../media/icons/measure-distance.svg");
-    background-size: auto 90%; */
 }
 
 button#measure-angle {
     mask: url("../../media/icons/measure-angle.svg") no-repeat center / auto 68%;
-    /* background-image: url("../../media/icons/measure-angle.svg");
-    background-size: auto 68%; */
 }
 
 button#measure-area {
     mask: url("../../media/icons/measure-area.svg") no-repeat center / auto 68%;
-    /* background-image: url("../../media/icons/measure-area.svg");
-    background-size: auto 68%; */
 }
 
 button.measure.checked {
@@ -278,4 +270,105 @@ div.div-measure-button:has(> button.measure.checked) {
 
 div.div-measure-button:has(> button.measure.checked):hover {
     border-left-style: dashed;
+}
+
+/************/
+/* 右下消息栏 */
+/************/
+
+#notify-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    max-height: calc(100vh - 60px);
+    user-select: none;
+    pointer-events: none;
+}
+
+.notify-item {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    /* border: 2px solid #bbb; */
+    /* border-radius: 4px; */
+    height: 30px;
+    width: auto;
+    font-size: 12px;
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+.notify-item .notify-icon {
+    display: inline-block;
+    aspect-ratio: 1 / 1;
+    height: 100%;
+    background-color: black;
+    background-repeat: no-repeat;
+    background-position: center;
+    padding: 0;
+    margin: 0;
+}
+
+.notify-item .notify-icon.mouse-drag {
+    mask: url("../../media/icons/mouse-drag.svg") no-repeat center / auto 80%;
+}
+
+.notify-item .notify-icon.mouse-click {
+    mask: url("../../media/icons/mouse-click.svg") no-repeat center / auto 80%;
+}
+
+.notify-item .notify-icon.mouse-dblclick {
+    mask: url("../../media/icons/mouse-dblclick.svg") no-repeat center / auto
+        80%;
+}
+
+.notify-item .notify-icon.key-enter {
+    mask: url("../../media/icons/key-enter.svg") no-repeat center / auto 70%;
+}
+
+.notify-item .notify-icon.key-esc {
+    mask: url("../../media/icons/key-esc.svg") no-repeat center / auto 80%;
+}
+
+.notify-item .notify-content {
+    display: inline-block;
+    height: 100%;
+    line-height: 30px;
+    padding: 0;
+    margin: 0;
+    text-wrap: none;
+}
+
+/* 不显示的情况 */
+.notify-item.hidden {
+    display: none;
+}
+
+/* 显示但无效的情况 */
+.notify-item.disabled .notify-icon {
+    background-color: gray;
+}
+
+.notify-item.disabled .notify-content {
+    color: gray;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(20px);
+    }
 }

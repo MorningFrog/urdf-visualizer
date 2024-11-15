@@ -91,6 +91,12 @@ export class Measure {
     lastClickTime?: number; // save the last click time, in order to detect double click event
 
     cancleCallback: () => void; // callback function when user cancels the measurement
+    startMeasureCallback: () => void; // callback function when user starts the measurement
+    continueMeasureCallback: () => void; // callback function when user continues the measurement
+    completeMeasureCallback: () => void; // callback function when user completes the measurement
+    closeMeasureCallback: () => void; // callback function when user closes the measurement
+    onHoverCallback: () => void; // callback function when user hovers on the object
+    onUnhoverCallback: () => void; // callback function when user unhovers on the object
 
     constructor(
         renderer: THREE.WebGLRenderer,
@@ -98,7 +104,13 @@ export class Measure {
         camera: THREE.Camera,
         controls: typeof OrbitControls,
         mode: MeasureMode = MeasureMode.Distance,
-        cancleCallback?: () => void
+        cancleCallback = () => {},
+        startMeasureCallback = () => {}, // 开始测量时的回调函数
+        continueMeasureCallback = () => {}, // 继续测量时的回调函数
+        completeMeasureCallback = () => {}, // 完成测量时的回调函数
+        closeMeasureCallback = () => {}, // 取消测量时的回调函数
+        onHoverCallback = () => {}, // 鼠标悬停在模型上的回调函数
+        onUnhoverCallback = () => {} // 鼠标离开模型时的回调函数
     ) {
         this.mode = mode;
         this.renderer = renderer;
@@ -107,6 +119,12 @@ export class Measure {
         this.controls = controls;
         this.initDragControls();
         this.cancleCallback = cancleCallback;
+        this.startMeasureCallback = startMeasureCallback;
+        this.continueMeasureCallback = continueMeasureCallback;
+        this.completeMeasureCallback = completeMeasureCallback;
+        this.closeMeasureCallback = closeMeasureCallback;
+        this.onHoverCallback = onHoverCallback;
+        this.onUnhoverCallback = onUnhoverCallback;
     }
 
     get canvas(): HTMLCanvasElement {
@@ -139,6 +157,8 @@ export class Measure {
         }
         this.isCompleted = false;
         this.renderer.domElement.style.cursor = "crosshair";
+
+        this.startMeasureCallback();
     }
 
     /**
@@ -169,6 +189,8 @@ export class Measure {
         this.polyline = undefined;
         this.renderer.domElement.style.cursor = "";
         this.clearDraggableObjects();
+
+        this.closeMeasureCallback();
     }
 
     /**
@@ -209,12 +231,15 @@ export class Measure {
     /**
      * Draw completed
      */
-    complete() {
+    complete(
+        checkAndReload: boolean = false // 是否需要检查是否正常完成, 非正常完成则重新加载
+    ) {
         if (this.isCompleted) {
             return; // avoid re-entry
         }
         let clearPoints = false;
         let clearPolyline = false;
+        let reload = false;
         // for measure area, we need to make a close surface, then add area label
         const count = this.pointArray.length;
         if (this.mode === MeasureMode.Area && this.polyline) {
@@ -248,11 +273,13 @@ export class Measure {
             } else {
                 clearPoints = true;
                 clearPolyline = true;
+                checkAndReload && (reload = true);
             }
         }
         if (this.mode === MeasureMode.Distance) {
             if (count < 2) {
                 clearPoints = true;
+                checkAndReload && (reload = true);
             }
         }
         if (this.mode === MeasureMode.Angle && this.polyline) {
@@ -276,23 +303,28 @@ export class Measure {
                     angle
                 )} ${this.getUnitString()}`;
                 const distance = Math.min(p0.distanceTo(p1), p2.distanceTo(p1));
-                const d = distance * 0.2; // distance from label to p1
-                const position = p1
+                let d = distance * 0.4; // distance from label to p1
+                let position = p1
                     .clone()
                     .add(new THREE.Vector3(dir1.x * d, dir1.y * d, dir1.z * d));
                 this.addOrUpdateLabel(this.polyline, label, position);
 
+                d = distance * 0.2; // distance from curve to p1
                 const arcP0 = p1
                     .clone()
                     .add(new THREE.Vector3(dir0.x * d, dir0.y * d, dir0.z * d));
                 const arcP2 = p1
                     .clone()
                     .add(new THREE.Vector3(dir2.x * d, dir2.y * d, dir2.z * d));
+                position = p1
+                    .clone()
+                    .add(new THREE.Vector3(dir1.x * d, dir1.y * d, dir1.z * d));
                 this.curve = this.createCurve(arcP0, position, arcP2);
                 this.scene.add(this.curve);
             } else {
                 clearPoints = true;
                 clearPolyline = true;
+                checkAndReload && (reload = true);
             }
         }
         // invalid case, clear useless objects
@@ -317,6 +349,14 @@ export class Measure {
         this.tempPoints && this.scene.remove(this.tempPoints);
         this.tempLine && this.scene.remove(this.tempLine);
         this.tempLineForArea && this.scene.remove(this.tempLineForArea);
+
+        this.completeMeasureCallback();
+
+        if (reload) {
+            // 如果没有正常完成, 则重新加载
+            this.cancel();
+            this.open();
+        }
     }
 
     /**
@@ -343,8 +383,11 @@ export class Measure {
             this.tempPoints = undefined;
             this.tempLine = undefined;
             this.tempLineForArea = undefined;
+
+            this.onUnhoverCallback();
             return;
         }
+        this.onHoverCallback();
 
         // draw the temp point as mouse moves
         const points = this.tempPoints || this.createPoints(1);
@@ -432,7 +475,7 @@ export class Measure {
 
     dblclick = (e: MouseEvent) => {
         // double click means to complete the draw operation
-        this.complete();
+        this.complete(true);
     };
 
     onMouseClicked = (e: MouseEvent) => {
@@ -544,6 +587,10 @@ export class Measure {
         }
         // If there is point added, then increase the count. Here we use one counter to count both points and line geometry.
         this.pointArray.push(point);
+
+        this.continueMeasureCallback();
+
+        // 测量角度时, 只需要 3 个点
         if (this.mode === MeasureMode.Angle && this.pointArray.length >= 3) {
             this.complete();
         }

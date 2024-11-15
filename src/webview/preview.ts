@@ -6,36 +6,25 @@ declare function acquireVsCodeApi(): {
 const vscode = acquireVsCodeApi();
 
 import * as THREE from "three";
-import { LoadingManager } from "three";
-const { STLLoader } = require("three/examples/jsm/loaders/STLLoader.js");
-const { GLTFLoader } = require("three/examples/jsm/loaders/GLTFLoader.js");
-const {
-    ColladaLoader,
-} = require("three/examples/jsm/loaders/ColladaLoader.js");
-const { OBJLoader } = require("three/examples/jsm/loaders/OBJLoader.js");
+
 const {
     OrbitControls,
 } = require("three/examples/jsm/controls/OrbitControls.js");
-const URDFLoader = require("urdf-loader").default;
-const { MeshLoadDoneFunc, URDFRobot, URDFJoint } = require("urdf-loader");
-
-// 导入自定义URDFDragControls
-const { CustomURDFDragControls } = require("./CustomURDFDragControls");
+const { URDFJoint } = require("urdf-loader");
 
 // 导入测量模块
-const { Measure, MeasureMode } = require("./Measure");
+import { ModuleMeasure } from "./module_measure";
+
+// 导入URDF模块
+import { ModuleURDF } from "./module_urdf";
 
 // 获取可操作元素
-const reloadButton = document.getElementById("re-load");
-const controlsToggle = document.getElementById("toggle-controls"); // 切换控制按钮的显示
-const controlsel = document.getElementById("controls");
-const showVisualToggle = document.getElementById("show-visual");
-const showCollisionToggle = document.getElementById("show-collision");
-const showJointsToggle = document.getElementById("show-joints");
-const jointSizeInput = document.getElementById("joint-size");
-const showLinksToggle = document.getElementById("show-links");
-const linkSizeInput = document.getElementById("link-size");
-const ulJoints = document.getElementById("ul-joints");
+const reloadButton = document.getElementById("re-load") as HTMLButtonElement; // 重新加载按钮
+const controlsToggle = document.getElementById(
+    "toggle-controls"
+) as HTMLDivElement; // 切换控制按钮的显示
+const controlsel = document.getElementById("controls") as HTMLDivElement; // 控制按钮
+const ulJoints = document.getElementById("ul-joints") as HTMLUListElement;
 const tooltip = document.getElementById("tooltip") as HTMLDivElement;
 const radiansButton = document.getElementById(
     "switch-radians"
@@ -43,34 +32,44 @@ const radiansButton = document.getElementById(
 const degreesButton = document.getElementById(
     "switch-degrees"
 ) as HTMLButtonElement;
-const measureDistanceButton = document.getElementById(
-    "measure-distance"
-) as HTMLButtonElement;
-const measureAreaButton = document.getElementById(
-    "measure-area"
-) as HTMLButtonElement;
-const measureAngleButton = document.getElementById(
-    "measure-angle"
-) as HTMLButtonElement;
+const notifyDragJoint = document.getElementById(
+    "notify-drag-joint"
+) as HTMLDivElement;
+const notifyDragRotate = document.getElementById(
+    "notify-drag-rotate"
+) as HTMLDivElement;
+const notifyClickFirstPoint = document.getElementById(
+    "notify-click-first-point"
+) as HTMLDivElement;
+const notifyClickMorePoints = document.getElementById(
+    "notify-click-more-points"
+) as HTMLDivElement;
+const notifyClickRestart = document.getElementById(
+    "notify-click-restart"
+) as HTMLDivElement;
+const notifyDblclickComplete = document.getElementById(
+    "notify-dblclick-complete"
+) as HTMLDivElement;
+const notifyEscCancle = document.getElementById(
+    "notify-esc-cancle"
+) as HTMLDivElement;
 
 // 确保所有元素都已加载
 if (
     !reloadButton ||
     !controlsToggle ||
     !controlsel ||
-    !showVisualToggle ||
-    !showCollisionToggle ||
-    !showJointsToggle ||
-    !jointSizeInput ||
-    !showLinksToggle ||
-    !linkSizeInput ||
     !ulJoints ||
     !tooltip ||
     !radiansButton ||
     !degreesButton ||
-    !measureDistanceButton ||
-    !measureAreaButton ||
-    !measureAngleButton
+    !notifyDragJoint ||
+    !notifyDragRotate ||
+    !notifyClickFirstPoint ||
+    !notifyClickMorePoints ||
+    !notifyClickRestart ||
+    !notifyDblclickComplete ||
+    !notifyEscCancle
 ) {
     throw new Error("Element not found");
 }
@@ -115,23 +114,6 @@ ambientLight.intensity = 0.5;
 ambientLight.position.set(0, 0, 1);
 scene.add(ambientLight);
 
-// 创建坐标系
-const axesHelper = new THREE.AxesHelper(1); // 1 是坐标轴的长度
-axesHelper.layers.set(1);
-scene.add(axesHelper);
-
-// 默认碰撞体材料
-const collisionMaterial = new THREE.MeshPhongMaterial({
-    transparent: true,
-    opacity: 0.35,
-    shininess: 2.5,
-    premultipliedAlpha: true,
-    color: 0xffbe38,
-    polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -1,
-});
-
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.minDistance = 0.1;
 controls.target.y = 1;
@@ -141,52 +123,8 @@ onResize();
 window.addEventListener("resize", onResize);
 render();
 
-// mesh文件加载器
-const manager = new THREE.LoadingManager();
-const loaderURDF = new URDFLoader(manager);
-const loaderGLTF = new GLTFLoader(manager);
-const loaderOBJ = new OBJLoader(manager);
-const loaderCollada = new ColladaLoader(manager);
-const loaderSTL = new STLLoader(manager);
-
-// 正在加载的 mesh 数量
-let numMeshLoading = 0;
-// URDF 文本
-let urdfText = "";
-// 机器人
-let robot: typeof URDFRobot | null = null;
-// 路径映射: 绝对路径 -> webview 资源路径
-// let pathMapping: { [key: string]: string } = {};
-// 待映射的路径
-let pathsToResolve: string[] = [];
-// 显示关节轴
-let jointAxes: { [key: string]: THREE.AxesHelper } = {};
-let jointAxesSize = 1.0;
-// 显示link坐标系
-let linkAxes: { [key: string]: THREE.AxesHelper } = {};
-let linkAxesSize = 1.0;
-// 角度制/弧度制
-let isDegree = false;
-// 设置ROS功能包所在的目录
-loaderURDF.packages = {};
-// 是否显示 visual 和 collision
-let showVisual = true;
-let showCollision = false;
-// 是否刷新视野
-let resetCamera = false;
-// 解析visual和collison
-loaderURDF.parseCollision = true;
-loaderURDF.parseVisual = true;
 // 资源路径前缀
 let uriPrefix = "https://file%2B.vscode-resource.vscode-cdn.net";
-
-// 设置 manager 报错时的处理
-manager.onError = (url: string) => {
-    vscode.postMessage({
-        type: "error",
-        message: `Failed to load ${url}`,
-    });
-};
 
 // 重写 console.error
 // 保存原始的 console.error
@@ -200,170 +138,57 @@ console.error = function (...args) {
     originalConsoleError.apply(console, args); // 继续调用原始的 console.error 输出到控制台
 };
 
-// 设置资源处理函数
-manager.setURLModifier((url: string): string => {
-    // 删除其中的 `file://`
-    url = url.replace("file://", "");
-    // 替换其中的 `\` 为 `/`
-    url = url.replace(/\\/g, "/");
-    // 对于 Windows 系统, 添加 `/` 前缀
-    if (!url.startsWith("/")) {
-        url = "/" + url;
-    }
-    // console.log("url", url);
-    return uriPrefix + url;
-});
-
-// 创建自定义的 URDF 控制器
-const dragControls = new CustomURDFDragControls(
+// URDF 模块
+const module_urdf = new ModuleURDF(
     scene,
     camera,
     controls,
-    renderer.domElement,
-    updateJointCallback
+    renderer,
+    uriPrefix,
+    vscode,
+    render,
+    jointHoverCallback,
+    jointUnhoverCallback
 );
 
-// 测量工具
-const measureDistanceTool = new Measure(
+// 测量模块
+const module_measure = new ModuleMeasure(
     renderer,
     scene,
     camera,
-    controls,
-    MeasureMode.Distance,
-    clearMeaure
-);
-const measureAreaTool = new Measure(
-    renderer,
-    scene,
-    camera,
-    controls,
-    MeasureMode.Area,
-    clearMeaure
-);
-const measureAngleTool = new Measure(
-    renderer,
-    scene,
-    camera,
-    controls,
-    MeasureMode.Angle,
-    clearMeaure
+    module_urdf.dragControls,
+    startMeasureCallback,
+    continueMeasureCallback,
+    completeMeasureCallback,
+    closeMeasureCallback,
+    measureHoverCallback,
+    measureUnhoverCallback
 );
 
-// 设置 mesh 处理函数
-loaderURDF.loadMeshCb = function (
-    path: string,
-    manager: LoadingManager,
-    onComplete: typeof MeshLoadDoneFunc
-) {
-    numMeshLoading += 1;
-    const webview_path = path;
-    // 扩展名
-    const ext = webview_path?.split(/\./g)?.pop()?.toLowerCase();
-    switch (ext) {
-        case "gltf":
-        case "glb":
-            loaderGLTF.load(
-                webview_path,
-                (result: any) => {
-                    onComplete(result.scene);
-                    numMeshLoading -= 1;
-                },
-                null,
-                (err: Error) => {
-                    onComplete(null, err);
-                    numMeshLoading -= 1;
-                }
-            );
-            break;
-        case "obj":
-            loaderOBJ.load(
-                webview_path,
-                (result: any) => {
-                    onComplete(result);
-                    numMeshLoading -= 1;
-                },
-                null,
-                (err: Error) => {
-                    onComplete(null, err);
-                    numMeshLoading -= 1;
-                }
-            );
-            break;
-        case "dae":
-            loaderCollada.load(
-                webview_path,
-                (result: any) => {
-                    onComplete(result.scene);
-                    numMeshLoading -= 1;
-                },
-                null,
-                (err: Error) => {
-                    onComplete(null, err);
-                    numMeshLoading -= 1;
-                }
-            );
-            break;
-        case "stl":
-            loaderSTL.load(
-                webview_path,
-                (result: any) => {
-                    const material = new THREE.MeshPhongMaterial();
-                    const mesh = new THREE.Mesh(result, material);
-                    onComplete(mesh);
-                    numMeshLoading -= 1;
-                },
-                null,
-                (err: Error) => {
-                    onComplete(null, err);
-                    numMeshLoading -= 1;
-                }
-            );
-            break;
-    }
-};
-
-const waitInterval = 5; // 等待间隔
-function waitForNumMeshLoadingToZero(max_wait_time = 5000) {
-    return new Promise((resolve) => {
-        const interval = setInterval(() => {
-            max_wait_time -= waitInterval;
-            if (numMeshLoading <= 0 || max_wait_time <= 0) {
-                clearInterval(interval);
-                resolve(null);
-            }
-        }, waitInterval); // 每 waitInterval 毫秒检查一次
-    });
-}
+// 角度制/弧度制
+let isDegree = false;
 
 // 监听来自 vscode 的消息
 window.addEventListener("message", (event) => {
     const message = event.data;
     if (message.type === "urdf") {
         if (message.packages) {
-            loaderURDF.packages = message.packages;
+            module_urdf.packages = message.packages;
         }
         if (message.workingPath) {
             if (message.workingPath.endsWith("/")) {
-                loaderURDF.workingPath = message.workingPath;
+                module_urdf.workingPath = message.workingPath;
             } else {
-                loaderURDF.workingPath = message.workingPath + "/";
+                module_urdf.workingPath = message.workingPath + "/";
             }
         }
         if (message.reset_camera && message.reset_camera === true) {
-            resetCamera = true;
+            module_urdf.resetCamera = true;
         }
         if (message.urdfText) {
-            clearMeaure();
-            urdfText = message.urdfText;
+            module_measure.clearMeaure();
+            module_urdf.urdfText = message.urdfText;
             loadRobot();
-
-            if (pathsToResolve.length > 0) {
-                vscode.postMessage({
-                    type: "resolvePaths",
-                    pathsToResolve: pathsToResolve,
-                });
-                pathsToResolve = [];
-            }
         }
     } else if (message.type === "settings") {
         if (message.backgroundColor) {
@@ -372,7 +197,6 @@ window.addEventListener("message", (event) => {
         }
     } else if (message.type === "uriPrefix") {
         if (message.uriPrefix) {
-            // console.log("uriPrefix", uriPrefix);
             // 去除末尾的 `/`
             if (message.uriPrefix.endsWith("/")) {
                 uriPrefix = message.uriPrefix.slice(0, -1);
@@ -380,6 +204,7 @@ window.addEventListener("message", (event) => {
                 uriPrefix = message.uriPrefix;
             }
             uriPrefix = "https://" + uriPrefix;
+            module_urdf.uriPrefix = uriPrefix;
         }
     }
 });
@@ -388,167 +213,12 @@ window.addEventListener("message", (event) => {
  * 加载机器人模型
  */
 async function loadRobot() {
-    // 删除旧机器人
-    if (robot) {
-        scene.remove(robot);
-    }
-    jointAxes = {};
+    await module_urdf.LoadURDF();
 
-    // 解析 URDF
-    robot = loaderURDF.parse(urdfText);
-
-    // 添加到场景
-    scene.add(robot);
-
-    // 等待所有 mesh 加载完成
-    await waitForNumMeshLoadingToZero();
-    numMeshLoading = 0;
-
-    // 切换显示Visual或Collision
-    const colliders: (typeof URDFRobot)[] = [];
-    robot.traverse((child: typeof URDFRobot) => {
-        if (child.isURDFCollider) {
-            child.visible = showCollision;
-            colliders.push(child);
-        } else if (child.isURDFVisual) {
-            child.visible = showVisual;
-        }
-    });
-    // 为 collider 设置默认材质
-    colliders.forEach((coll: typeof URDFRobot) => {
-        coll.traverse((c: typeof URDFRobot) => {
-            c.material = collisionMaterial;
-            c.castShadow = false;
-        });
-    });
-
-    // 设置视野
-    resetCameraView();
-
-    // robot.updateMatrixWorld(true);
-
-    // 添加关节轴
-    loadJointAxes();
-    // 添加 link 坐标系
-    loadLinkAxes();
     // 更新关节列表
     updateJointList();
 
     render();
-}
-
-/**
- * 处理重置视野
- */
-function resetCameraView() {
-    if (!resetCamera) {
-        return;
-    }
-    // 1. 计算物体的包围盒
-    const box = new THREE.Box3().setFromObject(robot);
-
-    // 2. 获取包围盒的中心和尺寸
-    const size = new THREE.Vector3();
-    const center = new THREE.Vector3();
-    box.getSize(size); // 获取物体的大小
-    box.getCenter(center); // 获取物体的中心
-
-    // 3. 计算包围盒对角线长度,用于确定摄像机的合适距离
-    const maxSize = Math.max(size.x, size.y, size.z);
-    const distance = maxSize / (2 * Math.tan((camera.fov * Math.PI) / 360)); // 摄像机距离
-    const offset = 1.0; // 添加偏移量,确保物体完全在视野内
-
-    // 4. 设置摄像机位置并使其看向物体的中心
-    camera.position.set(
-        center.x + distance * offset,
-        center.y + distance * offset,
-        center.z + distance * offset
-    );
-    camera.lookAt(center);
-
-    // 5. 更新摄像机的投影矩阵
-    camera.updateProjectionMatrix();
-
-    // 6. 设置OrbitControls的目标为物体中心
-    controls.target.set(center.x, center.y, center.z);
-
-    // 7. 更新OrbitControls
-    controls.update();
-
-    // 8. 清除重置视野标志
-    resetCamera = false;
-
-    // 重设坐标系尺寸
-    const max_coord = Math.max(box.max.x, box.max.y, box.max.z) * 1.5;
-    axesHelper.scale.set(max_coord, max_coord, max_coord);
-}
-
-/**
- * 处理关节轴显示
- */
-function loadJointAxes() {
-    Object.entries<{
-        [key: string]: typeof URDFJoint;
-    }>(robot?.joints || {}).forEach(([joint_name, joint]) => {
-        if (joint.jointType === "fixed") {
-            return;
-        }
-        // @ts-ignore
-        if (showJointsToggle.checked) {
-            const axes = new THREE.AxesHelper(jointAxesSize);
-            axes.layers.set(1); // 让 axes 不被 Raycaster 检测到
-            jointAxes[joint_name] = axes;
-            joint.add(axes);
-        } else {
-            if (jointAxes[joint_name]) {
-                joint.remove(jointAxes[joint_name]);
-                delete jointAxes[joint_name];
-            }
-        }
-    });
-}
-
-/**
- * 处理 link 坐标系显示
- */
-function loadLinkAxes() {
-    Object.entries<{
-        [key: string]: typeof URDFRobot;
-    }>(robot?.links || {}).forEach(([link_name, link]) => {
-        // @ts-ignore
-        if (showLinksToggle.checked) {
-            const axes = new THREE.AxesHelper(linkAxesSize);
-            axes.layers.set(1); // 让 axes 不被 Raycaster 检测到
-            linkAxes[link_name] = axes;
-            link.add(axes);
-        } else {
-            if (linkAxes[link_name]) {
-                link.remove(linkAxes[link_name]);
-                delete linkAxes[link_name];
-            }
-        }
-    });
-}
-
-/**
- * 处理 Visual 和 Collision 的显示切换
- */
-function showVisualCollison() {
-    robot.traverse((child: typeof URDFRobot) => {
-        if (child.isURDFCollider) {
-            child.visible = showCollision;
-        } else if (child.isURDFVisual) {
-            child.visible = showVisual;
-        }
-    });
-}
-
-/**
- * 处理 id 和 class, 将其中的 `/` 替换为 `__`
- * @param str
- */
-function postprocessIdAndClass(str: string) {
-    return str.replace(/\//g, "__");
 }
 
 /**
@@ -560,13 +230,14 @@ function updateJointList() {
     }
     Object.entries<{
         [key: string]: typeof URDFJoint;
-    }>(robot?.joints || {}).forEach(([joint_name, joint]) => {
+    }>(module_urdf.robot?.joints || {}).forEach(([joint_name, joint]) => {
         if (joint.jointType === "fixed") {
             return;
         }
 
         const li = document.createElement("li"); // 列表项
-        const joint_name_processed = postprocessIdAndClass(joint_name);
+        const joint_name_processed =
+            module_urdf.postprocessIdAndClass(joint_name);
         li.id = `joint_${joint_name_processed}`;
         li.innerHTML = `
         <div>
@@ -645,12 +316,13 @@ function updateJointList() {
 function updateDegreeRadians() {
     Object.entries<{
         [key: string]: typeof URDFJoint;
-    }>(robot?.joints || {}).forEach(([joint_name, joint]) => {
+    }>(module_urdf.robot?.joints || {}).forEach(([joint_name, joint]) => {
         if (joint.jointType === "fixed") {
             return;
         }
 
-        const joint_name_processed = postprocessIdAndClass(joint_name);
+        const joint_name_processed =
+            module_urdf.postprocessIdAndClass(joint_name);
 
         const joint_limit_upper = document.getElementById(
             `joint_${joint_name_processed}_limit_upper`
@@ -673,30 +345,11 @@ function updateDegreeRadians() {
 }
 
 /**
- * 处理拖动导致的关节角度变化
- */
-function updateJointCallback(joint: typeof URDFJoint, angle: number) {
-    const joint_name = joint.name;
-    const joint_name_processed = postprocessIdAndClass(joint_name);
-    const slider = document.getElementById(
-        `slider_joint_${joint_name_processed}`
-    ) as HTMLInputElement;
-    if (slider) {
-        slider.value = angle.toString();
-    }
-}
-
-/**
  * 处理滑块导致的关节角度变化
  */
 function updateJointValueFromSlider(value: string, joint_name: string) {
-    const joint = robot?.joints[joint_name];
-    if (joint) {
-        const angle = parseFloat(value);
-        joint.setJointValue(angle);
-
-        updateTooltipText(angle);
-    }
+    module_urdf.updateJointValue(joint_name, parseFloat(value));
+    updateTooltipText(parseFloat(value));
 }
 
 /**
@@ -738,48 +391,6 @@ controlsToggle.addEventListener("click", () =>
     controlsel.classList.toggle("hidden")
 );
 
-showVisualToggle.addEventListener("change", () => {
-    // @ts-ignore
-    showVisual = showVisualToggle.checked;
-    showVisualCollison();
-});
-
-showCollisionToggle.addEventListener("change", () => {
-    // @ts-ignore
-    showCollision = showCollisionToggle.checked;
-    showVisualCollison();
-});
-
-showJointsToggle.addEventListener("change", () => {
-    loadJointAxes();
-    render();
-});
-
-jointSizeInput.addEventListener("input", () => {
-    // @ts-ignore
-    const size = parseFloat(jointSizeInput.value);
-    jointAxesSize = size;
-    Object.values(jointAxes).forEach((joint) => {
-        joint.scale.set(size, size, size);
-    });
-    render();
-});
-
-showLinksToggle.addEventListener("change", () => {
-    loadLinkAxes();
-    render();
-});
-
-linkSizeInput.addEventListener("input", () => {
-    // @ts-ignore
-    const size = parseFloat(linkSizeInput.value);
-    linkAxesSize = size;
-    Object.values(linkAxes).forEach((link) => {
-        link.scale.set(size, size, size);
-    });
-    render();
-});
-
 radiansButton.addEventListener("click", () => {
     if (!isDegree) {
         return;
@@ -800,110 +411,86 @@ degreesButton.addEventListener("click", () => {
     updateDegreeRadians();
 });
 
-measureDistanceButton.addEventListener("click", () => {
-    if (measureDistanceButton.classList.contains("checked")) {
-        handleMeasureDistance(false);
-    } else {
-        handleMeasureDistance(true);
-    }
-});
-
-function handleMeasureDistance(isMeasureDistance: boolean) {
-    if (isMeasureDistance) {
-        if (measureDistanceButton.classList.contains("checked")) {
-            return;
-        }
-        measureDistanceButton.classList.add("checked");
-        if (measureAreaButton.classList.contains("checked")) {
-            measureAreaButton.classList.remove("checked");
-            measureAreaTool.close();
-        }
-        if (measureAngleButton.classList.contains("checked")) {
-            measureAngleButton.classList.remove("checked");
-            measureAngleTool.close();
-        }
-        measureDistanceTool.open();
-        dragControls.set_enable(false);
-    } else {
-        if (!measureDistanceButton.classList.contains("checked")) {
-            return;
-        }
-        measureDistanceButton.classList.remove("checked");
-        measureDistanceTool.close();
-        dragControls.set_enable(true);
-    }
+function jointHoverCallback() {
+    notifyDragJoint.classList.remove("disabled");
+    notifyDragRotate.classList.add("disabled");
 }
 
-measureAreaButton.addEventListener("click", () => {
-    if (measureAreaButton.classList.contains("checked")) {
-        handleMeasureArea(false);
-    } else {
-        handleMeasureArea(true);
-    }
-});
-
-function handleMeasureArea(isMeasureArea: boolean) {
-    if (isMeasureArea) {
-        if (measureAreaButton.classList.contains("checked")) {
-            return;
-        }
-        measureAreaButton.classList.add("checked");
-        if (measureDistanceButton.classList.contains("checked")) {
-            measureDistanceButton.classList.remove("checked");
-            measureDistanceTool.close();
-        }
-        if (measureAngleButton.classList.contains("checked")) {
-            measureAngleButton.classList.remove("checked");
-            measureAngleTool.close();
-        }
-        measureAreaTool.open();
-        dragControls.set_enable(false);
-    } else {
-        if (!measureAreaButton.classList.contains("checked")) {
-            return;
-        }
-        measureAreaButton.classList.remove("checked");
-        measureAreaTool.close();
-        dragControls.set_enable(true);
-    }
+function jointUnhoverCallback() {
+    notifyDragJoint.classList.add("disabled");
+    notifyDragRotate.classList.remove("disabled");
 }
 
-measureAngleButton.addEventListener("click", () => {
-    if (measureAngleButton.classList.contains("checked")) {
-        handleMeasureAngle(false);
-    } else {
-        handleMeasureAngle(true);
-    }
-});
+let havePoints = false; // 是否已经有点了
 
-function handleMeasureAngle(isMeasureAngle: boolean) {
-    if (isMeasureAngle) {
-        if (measureAngleButton.classList.contains("checked")) {
-            return;
+function startMeasureCallback() {
+    const notifyItems = document.querySelectorAll<HTMLElement>(".notify-item");
+    notifyItems.forEach((item) => {
+        if (item.classList.contains("case-measure")) {
+            // 显示测量提示
+            item.classList.remove("hidden");
+
+            if (item.id === "notify-esc-cancle") {
+                item.classList.remove("disabled");
+            } else {
+                item.classList.add("disabled");
+            }
+        } else if (item.classList.contains("case-all")) {
+            item.classList.remove("disabled");
+        } else {
+            // 隐藏其他提示
+            item.classList.add("hidden");
+            item.classList.remove("disabled");
         }
-        measureAngleButton.classList.add("checked");
-        if (measureDistanceButton.classList.contains("checked")) {
-            measureDistanceButton.classList.remove("checked");
-            measureDistanceTool.close();
-        }
-        if (measureAreaButton.classList.contains("checked")) {
-            measureAreaButton.classList.remove("checked");
-            measureAreaTool.close();
-        }
-        measureAngleTool.open();
-        dragControls.set_enable(false);
-    } else {
-        if (!measureAngleButton.classList.contains("checked")) {
-            return;
-        }
-        measureAngleButton.classList.remove("checked");
-        measureAngleTool.close();
-        dragControls.set_enable(true);
-    }
+    });
+    notifyClickMorePoints.classList.add("hidden");
+    notifyClickRestart.classList.add("hidden");
+    notifyDblclickComplete.classList.remove("disabled");
+
+    havePoints = false;
 }
 
-function clearMeaure() {
-    handleMeasureDistance(false);
-    handleMeasureArea(false);
-    handleMeasureAngle(false);
+function continueMeasureCallback() {
+    notifyDblclickComplete.classList.remove("disabled");
+    notifyClickFirstPoint.classList.add("hidden");
+    notifyClickMorePoints.classList.remove("hidden");
+    havePoints = true;
+}
+
+function completeMeasureCallback() {
+    notifyDblclickComplete.classList.add("hidden");
+    notifyClickFirstPoint.classList.add("hidden");
+    notifyClickMorePoints.classList.add("hidden");
+    notifyClickRestart.classList.remove("hidden");
+    notifyClickRestart.classList.remove("disabled");
+}
+
+function closeMeasureCallback() {
+    const notifyItems = document.querySelectorAll<HTMLElement>(".notify-item");
+    notifyItems.forEach((item) => {
+        if (item.classList.contains("case-normal")) {
+            item.classList.remove("hidden");
+            item.classList.add("disabled");
+        } else if (item.classList.contains("case-all")) {
+            item.classList.remove("disabled");
+        } else {
+            item.classList.add("hidden");
+            item.classList.remove("disabled");
+        }
+    });
+}
+
+function measureHoverCallback() {
+    if (havePoints) {
+        notifyClickMorePoints.classList.remove("disabled");
+    } else {
+        notifyClickFirstPoint.classList.remove("disabled");
+    }
+    notifyDragRotate.classList.add("disabled");
+}
+
+function measureUnhoverCallback() {
+    notifyClickFirstPoint.classList.add("disabled");
+    notifyClickMorePoints.classList.add("disabled");
+    notifyDragRotate.classList.remove("disabled");
 }

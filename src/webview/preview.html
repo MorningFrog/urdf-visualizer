@@ -95,6 +95,72 @@
         </div>
         <!-- 左侧菜单 -->
 
+        <div id="notify-container">
+            <!-- `case-` 表示显示的情况
+                - normal: 一般情况(无测量)
+                - all: 所有情况
+                - measure: 测量情况
+            -->
+
+            <div
+                class="notify-item case-normal disabled"
+                id="notify-drag-joint"
+            >
+                <span class="notify-icon mouse-drag"></span>
+                <span class="notify-content"> Drag to control the joint </span>
+            </div>
+
+            <div class="notify-item case-all" id="notify-drag-rotate">
+                <span class="notify-icon mouse-drag"> </span>
+                <span class="notify-content">
+                    Drag to rotate the perspective
+                </span>
+            </div>
+
+            <div
+                class="notify-item case-measure hidden"
+                id="notify-click-first-point"
+            >
+                <span class="notify-icon mouse-click"> </span>
+                <span class="notify-content">
+                    Click to drop the first point
+                </span>
+            </div>
+            <div
+                class="notify-item case-measure hidden"
+                id="notify-click-more-points"
+            >
+                <span class="notify-icon mouse-click"> </span>
+                <span class="notify-content"> Click to drop more points </span>
+            </div>
+            <div
+                class="notify-item case-measure hidden"
+                id="notify-click-restart"
+            >
+                <span class="notify-icon mouse-click"> </span>
+                <span class="notify-content">
+                    Click to restart the measurement
+                </span>
+            </div>
+            <div
+                class="notify-item case-measure hidden"
+                id="notify-dblclick-complete"
+            >
+                <span class="notify-icon mouse-dblclick"> </span>
+                <span class="notify-icon key-enter"> </span>
+                <span class="notify-content">
+                    Double click or press Enter to complete the measurement
+                </span>
+            </div>
+            <div class="notify-item case-measure hidden" id="notify-esc-cancle">
+                <span class="notify-icon key-esc"> </span>
+                <span class="notify-content">
+                    Press Esc to cancle the measurement
+                </span>
+            </div>
+        </div>
+        <!-- 右下消息栏 -->
+
         <div id="operation">
             <div id="div-measure">
                 <div class="div-measure-button">

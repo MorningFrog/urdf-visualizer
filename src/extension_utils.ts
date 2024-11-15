@@ -66,50 +66,50 @@ export function getWebviewContent(
         );
 
     // 替换 webview 代码中的 `${extensionPath}` 变量
-    const extensionPathResolved = activePanel?.webview.asWebviewUri(
-        vscode.Uri.file(extensionPath)
-    );
-    if (!extensionPathResolved?.authority || !extensionPathResolved?.path) {
-        vscode.window.showErrorMessage(
-            `Failed to resolve extension path: ${extensionPath}`
-        );
-        return html;
-    }
-    const targetDir = path.join(extensionPath, "dist/webview");
+    // const extensionPathResolved = activePanel?.webview.asWebviewUri(
+    //     vscode.Uri.file(extensionPath)
+    // );
+    // if (!extensionPathResolved?.authority || !extensionPathResolved?.path) {
+    //     vscode.window.showErrorMessage(
+    //         `Failed to resolve extension path: ${extensionPath}`
+    //     );
+    //     return html;
+    // }
+    // const targetDir = path.join(extensionPath, "dist/webview");
 
-    try {
-        // 扫描并替换目录中的 js 文件
-        const files = fs.readdirSync(targetDir);
+    // try {
+    //     // 扫描并替换目录中的 js 文件
+    //     const files = fs.readdirSync(targetDir);
 
-        // 过滤出所有 .js 文件
-        const jsFiles = files.filter((file) => file.endsWith(".js"));
+    //     // 过滤出所有 .js 文件
+    //     const jsFiles = files.filter((file) => file.endsWith(".js"));
 
-        jsFiles.forEach((file) => {
-            const filePath = path.join(targetDir, file);
+    //     jsFiles.forEach((file) => {
+    //         const filePath = path.join(targetDir, file);
 
-            // 读取文件内容
-            try {
-                const data = fs.readFileSync(filePath, "utf8");
+    //         // 读取文件内容
+    //         try {
+    //             const data = fs.readFileSync(filePath, "utf8");
 
-                // 替换 `${extensionPath}` 为实际的扩展目录路径
-                const updatedContent = data.replace(
-                    /\$\{extensionPath\}/g,
-                    extensionPathResolved.toString()
-                );
+    //             // 替换 `${extensionPath}` 为实际的扩展目录路径
+    //             const updatedContent = data.replace(
+    //                 /\$\{extensionPath\}/g,
+    //                 extensionPathResolved.toString()
+    //             );
 
-                // 将更新后的内容写回文件
-                fs.writeFileSync(filePath, updatedContent, "utf8");
-            } catch (fileErr: any) {
-                vscode.window.showErrorMessage(
-                    `Failed to process file ${file}: ${fileErr.message}`
-                );
-            }
-        });
-    } catch (dirErr: any) {
-        vscode.window.showErrorMessage(
-            `Failed to read directory: ${dirErr.message}`
-        );
-    }
+    //             // 将更新后的内容写回文件
+    //             fs.writeFileSync(filePath, updatedContent, "utf8");
+    //         } catch (fileErr: any) {
+    //             vscode.window.showErrorMessage(
+    //                 `Failed to process file ${file}: ${fileErr.message}`
+    //             );
+    //         }
+    //     });
+    // } catch (dirErr: any) {
+    //     vscode.window.showErrorMessage(
+    //         `Failed to read directory: ${dirErr.message}`
+    //     );
+    // }
 
     return html;
 }

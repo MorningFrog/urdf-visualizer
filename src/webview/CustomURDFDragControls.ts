@@ -13,7 +13,9 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         camera: THREE.Camera,
         controls: typeof OrbitControls,
         rendererDom: HTMLElement, // 传入渲染器的 DOM 元素
-        updateJointCallback?: (joint: typeof URDFJoint, angle: number) => void
+        updateJointCallback?: (joint: typeof URDFJoint, angle: number) => void,
+        onHoverCallback?: () => void,
+        onUnhoverCallback?: () => void
     ) {
         super(scene, camera, rendererDom);
 
@@ -25,6 +27,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         this.label.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
         this.label.style.color = "#fff";
         this.label.style.padding = "5px";
+        this.label.style.userSelect = "none";
         this.label.style.display = "none"; // 初始隐藏
         document.body.appendChild(this.label);
 
@@ -40,6 +43,12 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         if (updateJointCallback) {
             this.updateJointCallback = updateJointCallback;
         }
+        if (onHoverCallback) {
+            this.onHoverCallback = onHoverCallback;
+        }
+        if (onUnhoverCallback) {
+            this.onUnhoverCallback = onUnhoverCallback;
+        }
     }
 
     onHover(joint: typeof URDFJoint) {
@@ -49,6 +58,8 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         // 显示关节名称
         this.label.innerText = `Joint: ${joint.name}`;
         this.label.style.display = "block";
+        // 执行自定义操作
+        this.onHoverCallback && this.onHoverCallback();
     }
 
     onUnhover(joint: typeof URDFJoint) {
@@ -57,6 +68,8 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         }
         // 隐藏关节名称
         this.label.style.display = "none";
+        // 执行自定义操作
+        this.onUnhoverCallback && this.onUnhoverCallback();
     }
 
     onDragStart(joint: typeof URDFJoint) {
@@ -90,9 +103,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         }
         super.updateJoint(joint, angle);
         // 执行自定义操作
-        if (this.updateJointCallback) {
-            this.updateJointCallback(joint, angle);
-        }
+        this.updateJointCallback && this.updateJointCallback(joint, angle);
     }
 
     // 清理事件监听器

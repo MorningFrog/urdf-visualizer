@@ -26,6 +26,7 @@ A VSCode extension for visualizing URDF files and xacro files.
 - Visualize joint and/or link coordinate systems
 - Display the joint name when hovering the mouse
 - Drag and control joint angles
+- Measure distance, angle or area
 
 ## Extension Settings
 
@@ -59,6 +60,8 @@ Operations:
 - Rotate perspective: Hold down the left mouse button and drag in the blank space
 - Moving perspective: Hold down the right mouse button and drag
 - Rotate/Move Joint: Hold down the left mouse button and drag on the link directly connected to the joint
+- Measure distance/angle/area: Click the button on one of the three buttons in the upper right corner to start measuring
+![measure](media/images/measure.gif)
 
 ## Install
 
@@ -67,24 +70,22 @@ There are three installation methods:
 - In VSCode, use `Ctrl+Shift+P` to open the Command Panel and enter `ext install morningfrog.urdf-visualizer`.
 - Download the `.vsix` file in the Release of the repository, then select `Install from VISX` in the upper right corner of the VSCode extension, and choose the downloaded `.vsix` file for installation.
 
+## Known Issues
+
+- When measuring area, if concave polygons appear, the area result may be incorrect
+
 ## Release Notes
 
-### 2.1.2
+### 3.0.0
 
-The title of the preview window will display the file name.
+- Add measurement functions for distance/angle/area.
+- Add operation prompts
 
-### 2.1.1
+### 2.0.x
 
-The length of the coordinate system will automatically match the model size.
+- Add the visualization of joint angles.
+- Optimized the extension's experience.
 
-### 2.1.0
-
-The field of view will match the size of the model.
-
-### 2.0.0
-
-Add the visualization of joint angles.
-
-### 1.0.0
+### 1.0.x
 
 Initial release of URDF Visualizer.

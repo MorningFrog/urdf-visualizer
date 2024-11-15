@@ -26,6 +26,7 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 可视化 joint 和/或 link 坐标系
 - 鼠标悬浮时显示 joint 名称
 - 能直接拖动控制关节角度
+- 测量距离、角度或面积
 
 ## 扩展设置
 
@@ -59,6 +60,8 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 转动视角: 在空白处按住鼠标左键并拖动
 - 移动视角: 按住鼠标右键拖动
 - 转动/移动关节: 在关节直接连接的link上按住鼠标左键并拖动 
+- 测量距离/角度/面积: 鼠标左键单击右上方三个按钮中的一个开始测量
+![measure](media/images/measure.gif)
 
 ## 安装
 
@@ -68,24 +71,22 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 在该仓库的 Release 中下载 `.vsix` 文件, 然后在 VSCode 的扩展右上角选择 "从VISX安装", 选择下载的 `.vsix` 文件进行安装.
 
 
+## 已知问题
+
+- 面积测量时, 如果出现凹多边形, 面积结果可能错误.
+
 ## Release Notes
 
-### 2.1.2
+### 3.0.0
 
-预览窗口标题将显示文件名.
+- 增加了距离/角度/面积的测量功能.
+- 增加了操作提示
 
-### 2.1.1
+### 2.0.x
 
-坐标系的长度会自动匹配模型尺寸.
+- 添加了关节角度的可视化.
+- 优化了扩展体验.
 
-### 2.1.0
-
-视野范围将与模型尺寸相匹配.
-
-### 2.0.0
-
-添加了关节角度的可视化.
-
-### 1.0.0
+### 1.0.x
 
 Initial release of URDF Visualizer.
