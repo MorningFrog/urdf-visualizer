@@ -27,6 +27,8 @@ A VSCode extension for visualizing URDF files and xacro files.
 - Display the joint name when hovering the mouse
 - Drag and control joint angles
 - Measure distance, angle or area
+- multilingual support: English, Simplified Chinese
+  > If you need more language support, you can raise it in the issue of the repository
 
 ## Extension Settings
 
@@ -43,10 +45,9 @@ This extension contributes the following settings:
     // other settings
   }
   ```
-  > [!NOTE]
-  > Currently, only `${workspaceFolder}` and `${env:<environment_variables>}` are supported as special symbols in the path:
-  > - `${workspaceFolder}` represents the absolute path of the workspace
-  > - `${env:<environment_variables>}` represents the value of the environment variable `<environment_variables>`
+  Currently, only `${workspaceFolder}` and `${env:<environment_variables>}` are supported as special symbols in the path:
+  - `${workspaceFolder}` represents the absolute path of the workspace
+  - `${env:<environment_variables>}` represents the value of the environment variable `<environment_variables>`
 - `urdf-visualizer.renderOnSave`: Whether to automatically re-render when the file is saved.
 - `urdf-visualizer.reRenderWhenSwitchFile`: Whether to automatically re-render when switching between active files.
 - `urdf-visualizer.backgroundColor`: Set the background color; it needs to be a hexadecimal color code starting with `#`.
@@ -77,7 +78,11 @@ There are three installation methods:
 
 ## Release Notes
 
-### 3.0.0
+### 4.0.0
+
+- Added multilingual support (i18n), automatically selecting extension languages based on VSCode language.
+
+### 3.0.x
 
 - Add measurement functions for distance/angle/area.
 - Add operation prompts

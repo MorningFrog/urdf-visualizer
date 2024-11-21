@@ -8,10 +8,23 @@
         />
         <title>URDF/Xacro Preview with Three.js</title>
         <link href="./style.css" rel="stylesheet" />
+        <!-- 这里的样式方便对 `%xxx%` 字符串进行替换 -->
+        <style>
+            #controls #toggle-controls:before {
+                content: "%webview.hideControls%";
+                font-size: 12px;
+                font-weight: normal;
+            }
+
+            /* hidden state */
+            #controls.hidden #toggle-controls:before {
+                content: "%webview.showControls%";
+            }
+        </style>
     </head>
     <body>
         <div id="menu">
-            <button id="re-load">ReLoad</button>
+            <button id="re-load">%webview.reload%</button>
             <div id="controls" class="hidden">
                 <div id="toggle-controls"></div>
                 <div>
@@ -21,7 +34,7 @@
                         id="show-visual"
                         checked
                     />
-                    <label for="show-visual">Show Visual</label>
+                    <label for="show-visual">%webview.showVisual%</label>
                 </div>
                 <div>
                     <input
@@ -29,7 +42,7 @@
                         name="show-collision"
                         id="show-collision"
                     />
-                    <label for="show-collision">Show Collision</label>
+                    <label for="show-collision">%webview.showCollision%</label>
                 </div>
                 <div>
                     <div>
@@ -38,10 +51,12 @@
                             name="show-joints"
                             id="show-joints"
                         />
-                        <label for="show-joints">Show Joint Frames</label>
+                        <label for="show-joints"
+                            >%webview.showJointFrames%</label
+                        >
                     </div>
                     <div class="div-frame-size">
-                        <label for="joint-size">Joint Frame Size</label>
+                        <label for="joint-size">%webview.jointFrameSize%</label>
                         <div class="width_wrapper">
                             <input
                                 type="range"
@@ -62,10 +77,10 @@
                             name="show-links"
                             id="show-links"
                         />
-                        <label for="show-links">Show Link Frames</label>
+                        <label for="show-links">%webview.showLinkFrames%</label>
                     </div>
                     <div class="div-frame-size">
-                        <label for="link-size">Link Frame Size</label>
+                        <label for="link-size">%webview.linkFrameSize%</label>
                         <div class="width_wrapper">
                             <input
                                 type="range"
@@ -83,9 +98,11 @@
                     <h1 id="head-joints">Joints</h1>
                     <div class="switch-container">
                         <div>
-                            <button id="switch-degrees">Degrees</button>
+                            <button id="switch-degrees">
+                                %webview.degrees%
+                            </button>
                             <button id="switch-radians" class="checked">
-                                Radians
+                                %webview.radians%
                             </button>
                         </div>
                     </div>
@@ -107,13 +124,13 @@
                 id="notify-drag-joint"
             >
                 <span class="notify-icon mouse-drag"></span>
-                <span class="notify-content"> Drag to control the joint </span>
+                <span class="notify-content">%webview.dragControlJoint%</span>
             </div>
 
             <div class="notify-item case-all" id="notify-drag-rotate">
                 <span class="notify-icon mouse-drag"> </span>
                 <span class="notify-content">
-                    Drag to rotate the perspective
+                    %webview.dragRotatePerspective%
                 </span>
             </div>
 
@@ -123,7 +140,7 @@
             >
                 <span class="notify-icon mouse-click"> </span>
                 <span class="notify-content">
-                    Click to drop the first point
+                    %webview.clickDropFirstPoint%
                 </span>
             </div>
             <div
@@ -131,7 +148,9 @@
                 id="notify-click-more-points"
             >
                 <span class="notify-icon mouse-click"> </span>
-                <span class="notify-content"> Click to drop more points </span>
+                <span class="notify-content">
+                    %webview.clickDropMorePoints%
+                </span>
             </div>
             <div
                 class="notify-item case-measure hidden"
@@ -139,7 +158,7 @@
             >
                 <span class="notify-icon mouse-click"> </span>
                 <span class="notify-content">
-                    Click to restart the measurement
+                    %webview.clickRestartMeasure%
                 </span>
             </div>
             <div
@@ -149,14 +168,12 @@
                 <span class="notify-icon mouse-dblclick"> </span>
                 <span class="notify-icon key-enter"> </span>
                 <span class="notify-content">
-                    Double click or press Enter to complete the measurement
+                    %webview.doubleClickCompleteMeasure%
                 </span>
             </div>
             <div class="notify-item case-measure hidden" id="notify-esc-cancle">
                 <span class="notify-icon key-esc"> </span>
-                <span class="notify-content">
-                    Press Esc to cancle the measurement
-                </span>
+                <span class="notify-content"> %webview.escCancleMeasure% </span>
             </div>
         </div>
         <!-- 右下消息栏 -->
@@ -167,21 +184,21 @@
                     <button
                         id="measure-distance"
                         class="measure"
-                        title="measure distance"
+                        title="%webview.measureDistance%"
                     ></button>
                 </div>
                 <div class="div-measure-button">
                     <button
                         id="measure-angle"
                         class="measure"
-                        title="measure angle"
+                        title="%webview.measureAngle%"
                     ></button>
                 </div>
                 <div class="div-measure-button">
                     <button
                         id="measure-area"
                         class="measure"
-                        title="measure area"
+                        title="%webview.measureArea%"
                     ></button>
                 </div>
             </div>

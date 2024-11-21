@@ -27,6 +27,8 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 鼠标悬浮时显示 joint 名称
 - 能直接拖动控制关节角度
 - 测量距离、角度或面积
+- 多语言支持: 英语, 简体中文
+  > 如果你需要更多语言支持, 可以在仓库的 Issue 中提出
 
 ## 扩展设置
 
@@ -43,10 +45,9 @@ A VSCode extension for visualizing URDF files and xacro files.
     // other settings
   }
   ```
-  > [!NOTE]
-  > 当前只支持 `${workspaceFolder}` 和 `${env:<environment_variables>}` 作为特殊符号出现在路径中: 
-  > - `${workspaceFolder}` 表示工作空间路径
-  > - `${env:<environment_variables>}` 表示环境变量 `<environment_variables>` 的值
+  当前只支持 `${workspaceFolder}` 和 `${env:<environment_variables>}` 作为特殊符号出现在路径中: 
+  - `${workspaceFolder}` 表示工作空间路径
+  - `${env:<environment_variables>}` 表示环境变量 `<environment_variables>` 的值
 - `urdf-visualizer.renderOnSave`: 是否在文件保存时自动重新渲染.
 - `urdf-visualizer.reRenderWhenSwitchFile`: 是否在激活的文件切换时自动重新渲染.
 - `urdf-visualizer.backgroundColor`: 设置背景颜色, 需要为 `#` 开头的十六进制颜色代码.
@@ -78,10 +79,14 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
-### 3.0.0
+### 4.0.0
+
+- 添加了多语言支持(i18n), 根据 VSCode 语言自动选择扩展语言.
+
+### 3.0.x
 
 - 增加了距离/角度/面积的测量功能.
-- 增加了操作提示
+- 增加了操作提示.
 
 ### 2.0.x
 

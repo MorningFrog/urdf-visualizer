@@ -1,12 +1,12 @@
 {
   "name": "urdf-visualizer",
-  "displayName": "URDF Visualizer",
-  "description": "A VSCode extension for visualizing URDF files and xacro files.",
+  "displayName": "%extension.displayName%",
+  "description": "%extension.description%",
   "repository": {
     "type": "git",
     "url": "https://github.com/MorningFrog/urdf-visualizer"
   },
-  "version": "3.0.1",
+  "version": "4.0.0",
   "publisher": "morningfrog",
   "engines": {
     "vscode": "^1.70.0"
@@ -23,8 +23,8 @@
     "commands": [
       {
         "command": "urdf-visualizer.previewURDFXacro",
-        "title": "Preview URDF/Xacro",
-        "category": "Navigation",
+        "title": "%extension.commands.previewURDFXacro.title%",
+        "category": "URDF Visualizer",
         "icon": "$(eye)"
       }
     ],
@@ -39,29 +39,29 @@
     },
     "configuration": {
       "type": "object",
-      "title": "URDF Visualizer",
+      "title": "%extension.configuration.title%",
       "properties": {
         "urdf-visualizer.packages": {
           "type": "object",
           "default": {},
-          "description": "The path of ROS/ROS2 packages, it is used for parse 'package://<package_name>' in URDF files."
+          "description": "%extension.configuration.packages.description%"
         },
         "urdf-visualizer.renderOnSave": {
           "type": "boolean",
           "default": true,
-          "description": "Render the URDF/Xacro file when saving."
+          "description": "%extension.configuration.renderOnSave.description%"
         },
         "urdf-visualizer.reRenderWhenSwitchFile": {
           "type": "boolean",
           "default": true,
-          "description": "Re render the URDF/Xacro file when switching active file."
+          "description": "%extension.configuration.reRenderWhenSwitchFile.description%"
         },
         "urdf-visualizer.backgroundColor": {
           "type": "string",
           "default": "#cccccc",
-          "description": "The background color of the 3D viewer.",
+          "description": "%extension.configuration.backgroundColor.description%",
           "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
-          "patternErrorMessage": "The color must be a valid hex color code."
+          "patternErrorMessage": "%extension.configuration.backgroundColor.patternErrorMessage%"
         }
       }
     }
@@ -87,6 +87,7 @@
     "@eslint/js": "^9.10.0",
     "@eslint/object-schema": "^2.1.4",
     "@eslint/plugin-kit": "^0.2.0",
+    "@types/fs-extra": "^11.0.4",
     "@types/mocha": "^10.0.7",
     "@types/node": "20.x",
     "@types/three": "^0.168.0",
@@ -111,6 +112,7 @@
   },
   "dependencies": {
     "expr-eval": "^2.0.2",
+    "fs-extra": "^11.2.0",
     "jsdom": "^25.0.0",
     "three": "^0.168.0",
     "urdf-loader": "^0.12.3",

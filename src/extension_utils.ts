@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
+import localize from "./localize";
 
 /**
  * 替换文件路径中的变量
@@ -54,6 +55,14 @@ export function getWebviewContent(
     const html = fs
         .readFileSync(htmlIndexPath, "utf-8")
         ?.replace(
+            // i18n
+            /%([^%]+)%/g,
+            (match, p1) => {
+                return localize(p1) || match;
+            }
+        )
+        .replace(
+            // 替换所有的相对路径为绝对路径
             /(<link.+?href="|<script.+?src="|<img.+?src=")(.+?)"/g,
             (m: string, $1: string, $2: string) => {
                 const absLocalPath = path.resolve(htmlRoot, $2);
@@ -64,7 +73,6 @@ export function getWebviewContent(
                 return replaceHref;
             }
         );
-
     // 替换 webview 代码中的 `${extensionPath}` 变量
     // const extensionPathResolved = activePanel?.webview.asWebviewUri(
     //     vscode.Uri.file(extensionPath)

@@ -61,16 +61,16 @@ ul {
     cursor: pointer;
 }
 
-#controls #toggle-controls:before {
+/* #controls #toggle-controls:before {
     content: "hide controls";
     font-size: 12px;
     font-weight: normal;
-}
+} */
 
 /* hidden state */
-#controls.hidden #toggle-controls:before {
+/* #controls.hidden #toggle-controls:before {
     content: "show controls";
-}
+} */
 
 #controls.hidden > *:not(#toggle-controls) {
     display: none;
