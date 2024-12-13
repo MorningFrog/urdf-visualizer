@@ -51,6 +51,7 @@ A VSCode extension for visualizing URDF files and xacro files.
 - `urdf-visualizer.renderOnSave`: 是否在文件保存时自动重新渲染.
 - `urdf-visualizer.reRenderWhenSwitchFile`: 是否在激活的文件切换时自动重新渲染.
 - `urdf-visualizer.backgroundColor`: 设置背景颜色, 需要为 `#` 开头的十六进制颜色代码.
+- `urdf-visualizer.showTips`: 切换操作提示的显示与否.
 
 ## 说明
 
@@ -78,6 +79,11 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 面积测量时, 如果出现凹多边形, 面积结果可能错误.
 
 ## Release Notes
+
+### 4.0.1
+
+- 修复了 1.75 版本以下 VSCode 在 urdf 未被配置为 xml 时无法预览的问题.
+- 优化了操作提示, 添加了切换操作提示显示与否的设置.
 
 ### 4.0.0
 

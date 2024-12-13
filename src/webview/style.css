@@ -291,6 +291,10 @@ div.div-measure-button:has(> button.measure.checked):hover {
     pointer-events: none;
 }
 
+#notify-container.hidden {
+    display: none;
+}
+
 .notify-item {
     display: flex;
     align-items: center;
@@ -319,12 +323,32 @@ div.div-measure-button:has(> button.measure.checked):hover {
     mask: url("../../media/icons/mouse-drag.svg") no-repeat center / auto 80%;
 }
 
+.notify-item .notify-icon.mouse-left-drag {
+    mask: url("../../media/icons/mouse-left-drag.svg") no-repeat center / auto
+        80%;
+}
+
+.notify-item .notify-icon.mouse-right-drag {
+    mask: url("../../media/icons/mouse-right-drag.svg") no-repeat center / auto
+        80%;
+}
+
 .notify-item .notify-icon.mouse-click {
     mask: url("../../media/icons/mouse-click.svg") no-repeat center / auto 80%;
 }
 
 .notify-item .notify-icon.mouse-dblclick {
     mask: url("../../media/icons/mouse-dblclick.svg") no-repeat center / auto
+        80%;
+}
+
+.notify-item .notify-icon.mouse-scroll-down {
+    mask: url("../../media/icons/mouse-scroll-down.svg") no-repeat center / auto
+        80%;
+}
+
+.notify-item .notify-icon.mouse-scroll-up {
+    mask: url("../../media/icons/mouse-scroll-up.svg") no-repeat center / auto
         80%;
 }
 

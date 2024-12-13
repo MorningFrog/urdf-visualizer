@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/MorningFrog/urdf-visualizer"
   },
-  "version": "4.0.0",
+  "version": "4.0.1",
   "publisher": "morningfrog",
   "engines": {
     "vscode": "^1.70.0"
@@ -15,7 +15,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:xml"
+    "onLanguage:xml",
+    "onCommand:urdf-visualizer.previewURDFXacro"
   ],
   "icon": "media/icons/URDF-Visualizer.png",
   "main": "./dist/extension.js",
@@ -62,6 +63,11 @@
           "description": "%extension.configuration.backgroundColor.description%",
           "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
           "patternErrorMessage": "%extension.configuration.backgroundColor.patternErrorMessage%"
+        },
+        "urdf-visualizer.showTips": {
+          "type": "boolean",
+          "default": true,
+          "description": "%extension.configuration.showTips.description%"
         }
       }
     }

@@ -127,13 +127,6 @@
                 <span class="notify-content">%webview.dragControlJoint%</span>
             </div>
 
-            <div class="notify-item case-all" id="notify-drag-rotate">
-                <span class="notify-icon mouse-drag"> </span>
-                <span class="notify-content">
-                    %webview.dragRotatePerspective%
-                </span>
-            </div>
-
             <div
                 class="notify-item case-measure hidden"
                 id="notify-click-first-point"
@@ -174,6 +167,26 @@
             <div class="notify-item case-measure hidden" id="notify-esc-cancle">
                 <span class="notify-icon key-esc"> </span>
                 <span class="notify-content"> %webview.escCancleMeasure% </span>
+            </div>
+
+            <div class="notify-item case-all" id="notify-drag-rotate">
+                <span class="notify-icon mouse-left-drag"> </span>
+                <span class="notify-content">
+                    %webview.dragRotatePerspective%
+                </span>
+            </div>
+
+            <div class="notify-item case-all" id="notify-drag-move">
+                <span class="notify-icon mouse-right-drag"> </span>
+                <span class="notify-content">
+                    %webview.dragMovePerspective%
+                </span>
+            </div>
+
+            <div class="notify-item case-all" id="notify-scroll-zoom">
+                <span class="notify-icon mouse-scroll-down"> </span>
+                <span class="notify-icon mouse-scroll-up"> </span>
+                <span class="notify-content"> %webview.scrollZoom% </span>
             </div>
         </div>
         <!-- 右下消息栏 -->

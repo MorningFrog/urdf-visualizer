@@ -32,11 +32,17 @@ const radiansButton = document.getElementById(
 const degreesButton = document.getElementById(
     "switch-degrees"
 ) as HTMLButtonElement;
+const notifyContainer = document.getElementById(
+    "notify-container"
+) as HTMLDivElement;
 const notifyDragJoint = document.getElementById(
     "notify-drag-joint"
 ) as HTMLDivElement;
 const notifyDragRotate = document.getElementById(
     "notify-drag-rotate"
+) as HTMLDivElement;
+const notifyDragMove = document.getElementById(
+    "notify-drag-move"
 ) as HTMLDivElement;
 const notifyClickFirstPoint = document.getElementById(
     "notify-click-first-point"
@@ -63,8 +69,10 @@ if (
     !tooltip ||
     !radiansButton ||
     !degreesButton ||
+    !notifyContainer ||
     !notifyDragJoint ||
     !notifyDragRotate ||
+    !notifyDragMove ||
     !notifyClickFirstPoint ||
     !notifyClickMorePoints ||
     !notifyClickRestart ||
@@ -194,6 +202,13 @@ window.addEventListener("message", (event) => {
         if (message.backgroundColor) {
             scene.background = new THREE.Color(message.backgroundColor);
             render();
+        }
+        if (message.showTips !== undefined) {
+            if (message.showTips === true) {
+                notifyContainer.classList.remove("hidden");
+            } else {
+                notifyContainer.classList.add("hidden");
+            }
         }
     } else if (message.type === "uriPrefix") {
         if (message.uriPrefix) {
@@ -414,11 +429,13 @@ degreesButton.addEventListener("click", () => {
 function jointHoverCallback() {
     notifyDragJoint.classList.remove("disabled");
     notifyDragRotate.classList.add("disabled");
+    notifyDragMove.classList.add("disabled");
 }
 
 function jointUnhoverCallback() {
     notifyDragJoint.classList.add("disabled");
     notifyDragRotate.classList.remove("disabled");
+    notifyDragMove.classList.remove("disabled");
 }
 
 let havePoints = false; // 是否已经有点了
@@ -487,10 +504,12 @@ function measureHoverCallback() {
         notifyClickFirstPoint.classList.remove("disabled");
     }
     notifyDragRotate.classList.add("disabled");
+    notifyDragMove.classList.add("disabled");
 }
 
 function measureUnhoverCallback() {
     notifyClickFirstPoint.classList.add("disabled");
     notifyClickMorePoints.classList.add("disabled");
     notifyDragRotate.classList.remove("disabled");
+    notifyDragMove.classList.remove("disabled");
 }

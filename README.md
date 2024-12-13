@@ -51,6 +51,7 @@ This extension contributes the following settings:
 - `urdf-visualizer.renderOnSave`: Whether to automatically re-render when the file is saved.
 - `urdf-visualizer.reRenderWhenSwitchFile`: Whether to automatically re-render when switching between active files.
 - `urdf-visualizer.backgroundColor`: Set the background color; it needs to be a hexadecimal color code starting with `#`.
+- `urdf-visualizer.showTips`: Switch the display of operation tips.
 
 ## Instructions
 
@@ -78,20 +79,25 @@ There are three installation methods:
 
 ## Release Notes
 
+### 4.0.1
+
+- Fixed the issue where VSCode below version 1.75 cannot preview when urdf is not configured as XML.
+- Optimized the operation tips and added a setting to switch the display of operation tips.
+
 ### 4.0.0
 
 - Added multilingual support (i18n), automatically selecting extension languages based on VSCode language.
 
-### 3.0.x
+### 3.x
 
 - Add measurement functions for distance/angle/area.
 - Add operation prompts
 
-### 2.0.x
+### 2.x
 
 - Add the visualization of joint angles.
 - Optimized the extension's experience.
 
-### 1.0.x
+### 1.x
 
 Initial release of URDF Visualizer.

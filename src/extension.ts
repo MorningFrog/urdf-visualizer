@@ -173,10 +173,11 @@ export function activate(context: vscode.ExtensionContext) {
                     // 发送初始的 URDF 文件内容到 Webview
                     sendURDFContent(editor.document, { reset_camera: true });
 
-                    // 发送背景颜色
+                    // 发送背景颜色和是否显示提示
                     activePanel.webview.postMessage({
                         type: "settings",
                         backgroundColor: config.get<string>("backgroundColor"),
+                        showTips: config.get<boolean>("showTips"),
                     });
 
                     // 更新 previousDocument
@@ -265,6 +266,14 @@ export function activate(context: vscode.ExtensionContext) {
                     activePanel.webview.postMessage({
                         type: "settings",
                         backgroundColor: config.get<string>("backgroundColor"),
+                    });
+                }
+            }
+            if (event.affectsConfiguration("urdf-visualizer.showTips")) {
+                if (activePanel) {
+                    activePanel.webview.postMessage({
+                        type: "settings",
+                        showTips: config.get<boolean>("showTips"),
                     });
                 }
             }
