@@ -1,229 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no"
-        />
-        <title>URDF/Xacro Preview with Three.js</title>
-        <link href="./style.css" rel="stylesheet" />
-        <!-- 这里的样式方便对 `%xxx%` 字符串进行替换 -->
-        <style>
-            #controls #toggle-controls:before {
-                content: "%webview.hideControls%";
-                font-size: 12px;
-                font-weight: normal;
-            }
 
-            /* hidden state */
-            #controls.hidden #toggle-controls:before {
-                content: "%webview.showControls%";
-            }
-        </style>
-    </head>
-    <body>
-        <div id="menu">
-            <button id="re-load">%webview.reload%</button>
-            <div id="controls" class="hidden">
-                <div id="toggle-controls"></div>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+    <title>URDF/Xacro Preview with Three.js</title>
+    <link href="./style.css" rel="stylesheet" />
+    <!-- 这里的样式方便对 `%xxx%` 字符串进行替换 -->
+    <style>
+        #controls #toggle-controls:before {
+            content: "%webview.hideControls%";
+            font-size: 12px;
+            font-weight: normal;
+        }
+
+        /* hidden state */
+        #controls.hidden #toggle-controls:before {
+            content: "%webview.showControls%";
+        }
+    </style>
+</head>
+
+<body>
+    <div id="menu">
+        <button id="re-load">%webview.reload%</button>
+        <div id="controls" class="hidden">
+            <div id="toggle-controls"></div>
+            <div>
+                <input type="checkbox" name="show-visual" id="show-visual" checked />
+                <label for="show-visual">%webview.showVisual%</label>
+            </div>
+            <div>
+                <input type="checkbox" name="show-collision" id="show-collision" />
+                <label for="show-collision">%webview.showCollision%</label>
+            </div>
+            <div>
                 <div>
-                    <input
-                        type="checkbox"
-                        name="show-visual"
-                        id="show-visual"
-                        checked
-                    />
-                    <label for="show-visual">%webview.showVisual%</label>
+                    <input type="checkbox" name="show-joints" id="show-joints" />
+                    <label for="show-joints">%webview.showJointFrames%</label>
                 </div>
-                <div>
-                    <input
-                        type="checkbox"
-                        name="show-collision"
-                        id="show-collision"
-                    />
-                    <label for="show-collision">%webview.showCollision%</label>
-                </div>
-                <div>
-                    <div>
-                        <input
-                            type="checkbox"
-                            name="show-joints"
-                            id="show-joints"
-                        />
-                        <label for="show-joints"
-                            >%webview.showJointFrames%</label
-                        >
+                <div class="div-frame-size">
+                    <label for="joint-size">%webview.jointFrameSize%</label>
+                    <div class="width_wrapper">
+                        <input type="range" name="joint-size" id="joint-size" min="0.01" max="5.0" step="0.01"
+                            value="1.0" />
                     </div>
-                    <div class="div-frame-size">
-                        <label for="joint-size">%webview.jointFrameSize%</label>
-                        <div class="width_wrapper">
-                            <input
-                                type="range"
-                                name="joint-size"
-                                id="joint-size"
-                                min="0.01"
-                                max="5.0"
-                                step="0.01"
-                                value="1.0"
-                            />
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <div>
-                        <input
-                            type="checkbox"
-                            name="show-links"
-                            id="show-links"
-                        />
-                        <label for="show-links">%webview.showLinkFrames%</label>
-                    </div>
-                    <div class="div-frame-size">
-                        <label for="link-size">%webview.linkFrameSize%</label>
-                        <div class="width_wrapper">
-                            <input
-                                type="range"
-                                name="link-size"
-                                id="link-size"
-                                min="0.01"
-                                max="5.0"
-                                step="0.01"
-                                value="1.0"
-                            />
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <h1 id="head-joints">Joints</h1>
-                    <div class="switch-container">
-                        <div>
-                            <button id="switch-degrees">
-                                %webview.degrees%
-                            </button>
-                            <button id="switch-radians" class="checked">
-                                %webview.radians%
-                            </button>
-                        </div>
-                    </div>
-                    <ul id="ul-joints"></ul>
                 </div>
             </div>
+            <div>
+                <div>
+                    <input type="checkbox" name="show-links" id="show-links" />
+                    <label for="show-links">%webview.showLinkFrames%</label>
+                </div>
+                <div class="div-frame-size">
+                    <label for="link-size">%webview.linkFrameSize%</label>
+                    <div class="width_wrapper">
+                        <input type="range" name="link-size" id="link-size" min="0.01" max="5.0" step="0.01"
+                            value="1.0" />
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h1 id="head-joints">Joints</h1>
+                <div class="switch-container">
+                    <div>
+                        <button id="switch-degrees">
+                            %webview.degrees%
+                        </button>
+                        <button id="switch-radians" class="checked">
+                            %webview.radians%
+                        </button>
+                    </div>
+                </div>
+                <ul id="ul-joints"></ul>
+            </div>
         </div>
-        <!-- 左侧菜单 -->
+    </div>
+    <!-- 左侧菜单 -->
 
-        <div id="notify-container">
-            <!-- `case-` 表示显示的情况
+    <div id="notify-container">
+        <!-- `case-` 表示显示的情况
                 - normal: 一般情况(无测量)
                 - all: 所有情况
                 - measure: 测量情况
             -->
 
-            <div
-                class="notify-item case-normal disabled"
-                id="notify-drag-joint"
-            >
-                <span class="notify-icon mouse-drag"></span>
-                <span class="notify-content">%webview.dragControlJoint%</span>
-            </div>
+        <div class="notify-item case-normal disabled" id="notify-drag-joint">
+            <span class="notify-icon mouse-drag"></span>
+            <span class="notify-content">%webview.dragControlJoint%</span>
+        </div>
 
-            <div
-                class="notify-item case-measure hidden"
-                id="notify-click-first-point"
-            >
-                <span class="notify-icon mouse-click"> </span>
-                <span class="notify-content">
-                    %webview.clickDropFirstPoint%
-                </span>
-            </div>
-            <div
-                class="notify-item case-measure hidden"
-                id="notify-click-more-points"
-            >
-                <span class="notify-icon mouse-click"> </span>
-                <span class="notify-content">
-                    %webview.clickDropMorePoints%
-                </span>
-            </div>
-            <div
-                class="notify-item case-measure hidden"
-                id="notify-click-restart"
-            >
-                <span class="notify-icon mouse-click"> </span>
-                <span class="notify-content">
-                    %webview.clickRestartMeasure%
-                </span>
-            </div>
-            <div
-                class="notify-item case-measure hidden"
-                id="notify-dblclick-complete"
-            >
-                <span class="notify-icon mouse-dblclick"> </span>
-                <span class="notify-icon key-enter"> </span>
-                <span class="notify-content">
-                    %webview.doubleClickCompleteMeasure%
-                </span>
-            </div>
-            <div class="notify-item case-measure hidden" id="notify-esc-cancle">
-                <span class="notify-icon key-esc"> </span>
-                <span class="notify-content"> %webview.escCancleMeasure% </span>
-            </div>
+        <div class="notify-item case-measure hidden" id="notify-click-first-point">
+            <span class="notify-icon mouse-click"> </span>
+            <span class="notify-content">
+                %webview.clickDropFirstPoint%
+            </span>
+        </div>
+        <div class="notify-item case-measure hidden" id="notify-click-more-points">
+            <span class="notify-icon mouse-click"> </span>
+            <span class="notify-content">
+                %webview.clickDropMorePoints%
+            </span>
+        </div>
+        <div class="notify-item case-measure hidden" id="notify-click-restart">
+            <span class="notify-icon mouse-click"> </span>
+            <span class="notify-content">
+                %webview.clickRestartMeasure%
+            </span>
+        </div>
+        <div class="notify-item case-measure hidden" id="notify-dblclick-complete">
+            <span class="notify-icon mouse-dblclick"> </span>
+            <span class="notify-icon key-enter"> </span>
+            <span class="notify-content">
+                %webview.doubleClickCompleteMeasure%
+            </span>
+        </div>
+        <div class="notify-item case-measure hidden" id="notify-esc-cancle">
+            <span class="notify-icon key-esc"> </span>
+            <span class="notify-content"> %webview.escCancleMeasure% </span>
+        </div>
 
-            <div class="notify-item case-all" id="notify-drag-rotate">
-                <span class="notify-icon mouse-left-drag"> </span>
-                <span class="notify-content">
-                    %webview.dragRotatePerspective%
-                </span>
-            </div>
+        <div class="notify-item case-all" id="notify-drag-rotate">
+            <span class="notify-icon mouse-left-drag"> </span>
+            <span class="notify-content">
+                %webview.dragRotatePerspective%
+            </span>
+        </div>
 
-            <div class="notify-item case-all" id="notify-drag-move">
-                <span class="notify-icon mouse-right-drag"> </span>
-                <span class="notify-content">
-                    %webview.dragMovePerspective%
-                </span>
-            </div>
+        <div class="notify-item case-all" id="notify-drag-move">
+            <span class="notify-icon mouse-right-drag"> </span>
+            <span class="notify-content">
+                %webview.dragMovePerspective%
+            </span>
+        </div>
 
-            <div class="notify-item case-all" id="notify-scroll-zoom">
-                <span class="notify-icon mouse-scroll-down"> </span>
-                <span class="notify-icon mouse-scroll-up"> </span>
-                <span class="notify-content"> %webview.scrollZoom% </span>
+        <div class="notify-item case-all" id="notify-scroll-zoom">
+            <span class="notify-icon mouse-scroll-down"> </span>
+            <span class="notify-icon mouse-scroll-up"> </span>
+            <span class="notify-content"> %webview.scrollZoom% </span>
+        </div>
+    </div>
+    <!-- 右下消息栏 -->
+
+    <div id="operation">
+        <div id="div-measure">
+            <div class="div-measure-button">
+                <button id="measure-distance" class="measure" title="%webview.measureDistance%"></button>
+            </div>
+            <div class="div-measure-button">
+                <button id="measure-angle" class="measure" title="%webview.measureAngle%"></button>
+            </div>
+            <div class="div-measure-button">
+                <button id="measure-area" class="measure" title="%webview.measureArea%"></button>
             </div>
         </div>
-        <!-- 右下消息栏 -->
+    </div>
+    <!-- 右侧菜单 -->
 
-        <div id="operation">
-            <div id="div-measure">
-                <div class="div-measure-button">
-                    <button
-                        id="measure-distance"
-                        class="measure"
-                        title="%webview.measureDistance%"
-                    ></button>
-                </div>
-                <div class="div-measure-button">
-                    <button
-                        id="measure-angle"
-                        class="measure"
-                        title="%webview.measureAngle%"
-                    ></button>
-                </div>
-                <div class="div-measure-button">
-                    <button
-                        id="measure-area"
-                        class="measure"
-                        title="%webview.measureArea%"
-                    ></button>
-                </div>
-            </div>
-        </div>
-        <!-- 右侧菜单 -->
+    <div id="urdf-viewer"></div>
+    <!-- 主页面 -->
 
-        <div id="urdf-viewer"></div>
-        <!-- 主页面 -->
+    <div id="tooltip"></div>
+    <!-- 悬浮提示框 -->
 
-        <div id="tooltip"></div>
-        <!-- 悬浮提示框 -->
+    <script type="module" src="../../dist/webview/preview.js"></script>
+</body>
 
-        <script type="module" src="../../dist/webview/preview.js"></script>
-    </body>
 </html>

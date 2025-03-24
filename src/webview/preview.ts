@@ -237,6 +237,29 @@ async function loadRobot() {
 }
 
 /**
+ * 获取关节的最小和最大角度
+ */
+function getJointLimit(joint_name: string) {
+    const joint = module_urdf.robot?.joints[joint_name];
+    if (joint) {
+        if (joint.jointType === "continuous") {
+            return {
+                lower: -2 * Math.PI,
+                upper: 2 * Math.PI,
+            };
+        }
+        return {
+            lower: joint.limit.lower,
+            upper: joint.limit.upper,
+        };
+    }
+    return {
+        lower: 0,
+        upper: 0,
+    };
+}
+
+/**
  * 更新关节列表
  */
 function updateJointList() {
@@ -250,23 +273,28 @@ function updateJointList() {
             return;
         }
 
+        const joint_limit = getJointLimit(joint_name);
+
         const li = document.createElement("li"); // 列表项
         const joint_name_processed =
             module_urdf.postprocessIdAndClass(joint_name);
         li.id = `joint_${joint_name_processed}`;
+        li.classList.add("joint-item");
+        li.classList.add("width_wrapper");
         li.innerHTML = `
-        <div>
-        <label>${joint_name}</label>
+        <div class="div-joint-name width_full">
+            <label>${joint_name}</label>
+            <label>${joint.jointType}</label>
         </div>
-        <div class="div-slider width_wrapper">
+        <div class="div-slider width_full">
             <div>
                 <input
                     type="range"
                     name="slider_joint_${joint_name_processed}"
                     id="slider_joint_${joint_name_processed}"
                     class="slider-joint"
-                    min="${joint.limit.lower}"
-                    max="${joint.limit.upper}"
+                    min="${joint_limit.lower}"
+                    max="${joint_limit.upper}"
                     step="0.01"
                     value="0.0"
                 />
@@ -277,8 +305,8 @@ function updateJointList() {
                     <div id="joint_${joint_name_processed}_limit_lower"></div>
                 </div>
                 <div class="div-scale-item" style="left: ${
-                    ((0 - joint.limit.lower) /
-                        (joint.limit.upper - joint.limit.lower)) *
+                    ((0 - joint_limit.lower) /
+                        (joint_limit.upper - joint_limit.lower)) *
                     100
                 }%;">
                     <div>|</div>
@@ -339,22 +367,24 @@ function updateDegreeRadians() {
         const joint_name_processed =
             module_urdf.postprocessIdAndClass(joint_name);
 
-        const joint_limit_upper = document.getElementById(
+        const joint_limit = getJointLimit(joint_name);
+
+        const element_joint_limit_upper = document.getElementById(
             `joint_${joint_name_processed}_limit_upper`
         ) as HTMLInputElement;
-        const joint_limit_lower = document.getElementById(
+        const element_joint_limit_lower = document.getElementById(
             `joint_${joint_name_processed}_limit_lower`
         ) as HTMLInputElement;
         if (isDegree) {
-            joint_limit_upper.innerText = Math.round(
-                (joint.limit.upper * 180) / Math.PI
+            element_joint_limit_upper.innerText = Math.round(
+                (joint_limit.upper * 180) / Math.PI
             ).toString();
-            joint_limit_lower.innerText = Math.round(
-                (joint.limit.lower * 180) / Math.PI
+            element_joint_limit_lower.innerText = Math.round(
+                (joint_limit.lower * 180) / Math.PI
             ).toString();
         } else {
-            joint_limit_upper.innerText = joint.limit.upper.toFixed(2);
-            joint_limit_lower.innerText = joint.limit.lower.toFixed(2);
+            element_joint_limit_upper.innerText = joint_limit.upper.toFixed(2);
+            element_joint_limit_lower.innerText = joint_limit.lower.toFixed(2);
         }
     });
 }

@@ -100,6 +100,10 @@ ul {
     width: 90%;
 }
 
+.width_full {
+    width: 100%;
+}
+
 /* 隐藏默认的滑块样式 */
 input[type="range"] {
     -webkit-appearance: none; /* Chrome, Safari, Opera */
@@ -127,9 +131,19 @@ input[type="range"]:hover::-webkit-slider-thumb {
     background: blueviolet;
 }
 
-.div-slider {
+li.joint-item {
     position: relative;
     left: 8px;
+}
+
+.div-joint-name {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.div-slider {
+    position: relative;
 }
 
 .slider-joint {

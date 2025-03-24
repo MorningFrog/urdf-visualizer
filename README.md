@@ -79,6 +79,12 @@ There are three installation methods:
 
 ## Release Notes
 
+### 4.1.0
+
+- Add type prompts to the right of the Joint name in the sidebar.
+- The continuous joint angle can be adjusted from $-2\pi$ to $2\pi$.
+- Using a higher version of `Three.js`, it may solve the issue of incompatibility with Nvidia's higher version drivers.
+
 ### 4.0.1
 
 - Fixed the issue where VSCode below version 1.75 cannot preview when urdf is not configured as XML.

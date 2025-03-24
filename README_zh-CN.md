@@ -80,6 +80,12 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
+### 4.1.0
+
+- 侧边栏的 Joint 右侧增加类型提示.
+- continuous 关节角度可以在 $-2\pi$-$2\pi$ 之间调节.
+- 使用更高版本的 `Three.js`, 这可能解决与Nvidia高版本驱动不相容的问题.
+
 ### 4.0.1
 
 - 修复了 1.75 版本以下 VSCode 在 urdf 未被配置为 xml 时无法预览的问题.
