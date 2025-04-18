@@ -61,7 +61,7 @@ This extension contributes the following settings:
 There are two ways to start previewing URDF or Xacro files:
 - In VSCode, use `Ctrl+Shift+P` to open the Command Panel and enter `URDF Visualizer: Preview URDF/Xacro`.
 - Click the <img src="media/images/view_icon.png" alt="view icon" style="height:1em; vertical-align:middle;"> button in the upper right corner of the file.
-> Both operations require the URDF/Acro file to be in an active state.
+> Both operations require the URDF/Xacro file to be in an active state.
 
 Operations:
 - Rotate perspective: Hold down the left mouse button and drag in the blank space
