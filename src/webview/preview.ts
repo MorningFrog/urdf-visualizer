@@ -180,6 +180,16 @@ let isDegree = false;
 window.addEventListener("message", (event) => {
     const message = event.data;
     if (message.type === "urdf") {
+        if (message.uriPrefix) {
+            // 去除末尾的 `/`
+            if (message.uriPrefix.endsWith("/")) {
+                uriPrefix = message.uriPrefix.slice(0, -1);
+            } else {
+                uriPrefix = message.uriPrefix;
+            }
+            uriPrefix = "https://" + uriPrefix;
+            module_urdf.uriPrefix = uriPrefix;
+        }
         if (message.packages) {
             module_urdf.packages = message.packages;
         }
@@ -209,17 +219,6 @@ window.addEventListener("message", (event) => {
             } else {
                 notifyContainer.classList.add("hidden");
             }
-        }
-    } else if (message.type === "uriPrefix") {
-        if (message.uriPrefix) {
-            // 去除末尾的 `/`
-            if (message.uriPrefix.endsWith("/")) {
-                uriPrefix = message.uriPrefix.slice(0, -1);
-            } else {
-                uriPrefix = message.uriPrefix;
-            }
-            uriPrefix = "https://" + uriPrefix;
-            module_urdf.uriPrefix = uriPrefix;
         }
     }
 });
@@ -284,7 +283,7 @@ function updateJointList() {
         li.innerHTML = `
         <div class="div-joint-name width_full">
             <label>${joint_name}</label>
-            <label>${joint.jointType}</label>
+            <label class="joint_type ${joint.jointType}">${joint.jointType}</label>
         </div>
         <div class="div-slider width_full">
             <div>

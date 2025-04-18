@@ -60,6 +60,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     let previousDocument: vscode.TextDocument | null = null; // 保存上一个document
 
+    let uriPrefix: string | null = null; // 保存当前文件的 URI 前缀
+
     const xacroParser = new XacroParser(); // xacro 解析器
     const serializer = new XMLSerializer(); // XML 序列化器
 
@@ -160,18 +162,12 @@ export function activate(context: vscode.ExtensionContext) {
                         )
                     );
 
-                    // 发送 uriPrefix
-                    activePanel.webview.postMessage({
-                        type: "uriPrefix",
-                        uriPrefix: activePanel.webview.asWebviewUri(
-                            vscode.Uri.file(
-                                path.dirname(editor.document.fileName)
-                            )
-                        ).authority,
-                    });
+                    uriPrefix = activePanel.webview.asWebviewUri(vscode.Uri.file(
+                        path.dirname(editor.document.fileName)
+                    )).authority;
 
                     // 发送初始的 URDF 文件内容到 Webview
-                    sendURDFContent(editor.document, { reset_camera: true });
+                    sendURDFContent(editor.document, { reset_camera: true, uriPrefix: uriPrefix });
 
                     // 发送背景颜色和是否显示提示
                     activePanel.webview.postMessage({
@@ -195,7 +191,7 @@ export function activate(context: vscode.ExtensionContext) {
                             }
                             if (document) {
                                 sendURDFContent(document, {
-                                    reset_camera: true,
+                                    reset_camera: true, uriPrefix: uriPrefix
                                 });
                             }
                         } else if (message.type === "error") {
@@ -239,7 +235,7 @@ export function activate(context: vscode.ExtensionContext) {
                 checkURDFXacroFile(editor.document)
             ) {
                 previousDocument = editor.document;
-                sendURDFContent(editor.document, { reset_camera: true });
+                sendURDFContent(editor.document, { reset_camera: true, uriPrefix: uriPrefix });
             }
         }
     );

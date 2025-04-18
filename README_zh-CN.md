@@ -58,6 +58,11 @@ A VSCode extension for visualizing URDF files and xacro files.
 > [!IMPORTANT]
 > 在文件夹下打开 VSCode, 文件夹下应当包含 URDF/Xacro 文件所需的所有资源文件. 仅用 VSCode 打开单个文件会让其找不到 mesh 文件.
 
+有两种方式开始预览 URDF 或 Xacro 文件:
+- 在 VSCode 中使用 `Ctrl+Shift+P` 打开命令栏, 选择 `URDF Visualizer: Preview URDF/Xacro`
+- 单击文件右上角的 <img src="media/images/view_icon.png" alt="view icon" style="height:1em; vertical-align:middle;"> 按钮
+> 两种操作都要求 URDF/Xacro 文件处于激活状态
+
 操作:
 - 转动视角: 在空白处按住鼠标左键并拖动
 - 移动视角: 按住鼠标右键拖动
@@ -79,6 +84,11 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 面积测量时, 如果出现凹多边形, 面积结果可能错误.
 
 ## Release Notes
+
+### 4.1.1
+
+- 修复了 SSH remote server 中加载 mesh 的问题
+- 优化了关节类型的显示
 
 ### 4.1.0
 

@@ -142,6 +142,13 @@ li.joint-item {
     align-items: center;
 }
 
+label.joint_type {
+    padding: 0 5px;
+    margin-left: 5px;
+    border: 1px solid blue;
+    border-radius: 5px;
+}
+
 .div-slider {
     position: relative;
 }

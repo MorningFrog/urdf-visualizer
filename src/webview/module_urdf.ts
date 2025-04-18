@@ -130,6 +130,11 @@ export class ModuleURDF {
 
         // 设置 manager 报错时的处理
         this.manager.onError = (url: string) => {
+            // 删除 url 中 `vscode-cdn.net` 及其之前的部分
+            const url_parts = url.split("vscode-cdn.net");
+            if (url_parts.length > 1) {
+                url = url_parts[1];
+            }
             this.vscode.postMessage({
                 type: "error",
                 message: `Failed to load ${url}`,

@@ -58,6 +58,11 @@ This extension contributes the following settings:
 > [!IMPORTANT]
 > Open VSCode in the folder contains all files required by the urdf/xacro file. Open VSCode only with the urdf/xacro file will make it unable to find mesh files.
 
+There are two ways to start previewing URDF or Xacro files:
+- In VSCode, use `Ctrl+Shift+P` to open the Command Panel and enter `URDF Visualizer: Preview URDF/Xacro`.
+- Click the <img src="media/images/view_icon.png" alt="view icon" style="height:1em; vertical-align:middle;"> button in the upper right corner of the file.
+> Both operations require the URDF/Acro file to be in an active state.
+
 Operations:
 - Rotate perspective: Hold down the left mouse button and drag in the blank space
 - Moving perspective: Hold down the right mouse button and drag
@@ -78,6 +83,11 @@ There are three installation methods:
 - When measuring area, if concave polygons appear, the area result may be incorrect
 
 ## Release Notes
+
+### 4.1.1
+
+- Fixed the issue of loading mesh in SSH remote server
+- Optimized the display of joint types
 
 ### 4.1.0
 
