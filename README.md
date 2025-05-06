@@ -84,6 +84,10 @@ There are three installation methods:
 
 ## Release Notes
 
+### 4.1.2
+
+- Added a toggle to show/hide the world frame.
+
 ### 4.1.1
 
 - Fixed the issue of loading mesh in SSH remote server

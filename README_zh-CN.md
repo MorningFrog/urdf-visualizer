@@ -85,6 +85,10 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
+### 4.1.2
+
+- 增加了世界坐标系的显示和隐藏的切换
+
 ### 4.1.1
 
 - 修复了 SSH remote server 中加载 mesh 的问题
