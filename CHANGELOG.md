@@ -1,5 +1,11 @@
 # Change Log
 
+## [4.1.2]
+
+- 增加了世界坐标系的显示和隐藏的切换
+  
+  Added a toggle to show/hide the world frame.
+
 ## [4.1.1]
 
 - 修复了 SSH remote server 中加载 mesh 的问题

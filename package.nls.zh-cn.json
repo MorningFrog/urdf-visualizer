@@ -11,6 +11,7 @@
     "extension.configuration.showTips.description": "显示操作提示.",
     "webview.showVisual": "显示 Visual",
     "webview.showCollision": "显示 Collision",
+    "webview.showWorldFrame": "显示世界坐标系",
     "webview.showJointFrames": "显示 Joint 坐标系",
     "webview.jointFrameSize": "Joint 坐标系尺寸",
     "webview.showLinkFrames": "显示 Link 坐标系",

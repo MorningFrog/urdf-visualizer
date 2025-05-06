@@ -21,6 +21,9 @@ export class ModuleURDF {
     camera: THREE.PerspectiveCamera; // 相机
 
     // HTML 元素
+    showWorldFrameToggle = document.getElementById(
+        "show-world-frame"
+    ) as HTMLInputElement;
     showJointsToggle = document.getElementById(
         "show-joints"
     ) as HTMLInputElement;
@@ -168,6 +171,7 @@ export class ModuleURDF {
         // 创建坐标系
         this.axesHelper = new THREE.AxesHelper(1); // 1 是坐标轴的长度
         this.axesHelper.layers.set(1);
+        this.axesHelper.visible = this.showWorldFrameToggle.checked;
         this.scene.add(this.axesHelper);
 
         // 设置 mesh 处理函数
@@ -242,6 +246,11 @@ export class ModuleURDF {
                     break;
             }
         };
+
+        this.showWorldFrameToggle.addEventListener("change", () => {
+            this.axesHelper.visible = this.showWorldFrameToggle.checked;
+            this.render();
+        });
 
         this.showJointsToggle.addEventListener("change", () => {
             this.loadJointAxes();

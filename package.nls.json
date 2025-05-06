@@ -11,6 +11,7 @@
     "extension.configuration.showTips.description": "Show operation tips.",
     "webview.showVisual": "Show Visual",
     "webview.showCollision": "Show Collision",
+    "webview.showWorldFrame": "Show World Frame",
     "webview.showJointFrames": "Show Joint Frames",
     "webview.jointFrameSize": "Joint Frame Size",
     "webview.showLinkFrames": "Show Link Frames",
