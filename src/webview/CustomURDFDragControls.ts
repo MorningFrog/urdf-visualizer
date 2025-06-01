@@ -21,6 +21,30 @@ function findNearestJoint(child: THREE.Mesh): URDFJoint | null {
     return curr;
 }
 
+/**
+ * 寻找最近的 Link 元素
+ * @param child
+ * @returns 返回最近的 URDFLink 元素和悬浮的是否是 Visual 元素的布尔值
+ */
+function findNearestLink(child: THREE.Mesh): [URDFLink, boolean] {
+    let curr: any = child;
+    let isVisual = false;
+    while (curr) {
+        // @ts-ignore
+        if (curr.isURDFVisual) {
+            isVisual = true;
+            curr = curr.parent;
+        }
+
+        // @ts-ignore
+        if (curr.isURDFLink) {
+            return [curr, isVisual];
+        }
+        curr = curr.parent;
+    }
+    return [curr, isVisual];
+}
+
 export class CustomURDFDragControls extends PointerURDFDragControls {
     private label: HTMLDivElement;
     private controls: OrbitControls;
@@ -29,6 +53,10 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         () => {};
     private onHoverCallback: () => void = () => {};
     private onUnhoverCallback: () => void = () => {};
+
+    hoveredJoint: URDFJoint | null = null; // 当前悬停的 joint
+    hoveredLink: URDFLink | null = null; // 当前悬停的 link
+    isHoveredVisual: boolean = false; // 是否悬停在 Visual 元素上
 
     constructor(
         scene: THREE.Scene,
@@ -74,49 +102,97 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
     }
 
     update() {
-        const { raycaster, hovered, manipulating, scene } = this;
+        const { raycaster, hoveredJoint, hoveredLink, manipulating, scene } =
+            this;
 
         if (manipulating) {
             return;
         }
 
-        let hoveredJoint: URDFJoint | null = null;
-        let hoveredLink: URDFLink | null = null;
+        let currHoveredJoint: URDFJoint | null = null;
+        let currHoveredLink: URDFLink | null = null;
+        let currIsHoveredVisual: boolean = false;
         const intersections = raycaster.intersectObject(scene, true);
         if (intersections.length !== 0) {
             const hit = intersections[0];
             this.hitDistance = hit.distance;
-            hoveredLink = hit.object.parent as URDFLink;
-            console.log("hoveredLink", hit.object);
-            hoveredJoint = findNearestJoint(hit.object);
+            [currHoveredLink, currIsHoveredVisual] = findNearestLink(
+                hit.object
+            );
+            currHoveredJoint = findNearestJoint(hit.object);
             this.initialGrabPoint.copy(hit.point);
         }
 
-        if (hoveredJoint !== hovered) {
-            if (hovered) {
-                this.onUnhover(hovered);
+        if (
+            currHoveredJoint !== hoveredJoint ||
+            currHoveredLink !== hoveredLink ||
+            currIsHoveredVisual !== this.isHoveredVisual
+        ) {
+            if (hoveredJoint || hoveredLink) {
+                this.onUnhover(hoveredJoint, hoveredLink);
             }
 
-            this.hovered = hoveredJoint;
+            this.hoveredJoint = currHoveredJoint;
+            this.hoveredLink = currHoveredLink;
+            this.isHoveredVisual = currIsHoveredVisual;
 
-            if (hoveredJoint) {
-                this.onHover(hoveredJoint);
+            if (currHoveredJoint || currHoveredLink) {
+                this.onHover(currHoveredJoint, currHoveredLink);
             }
         }
     }
 
-    onHover(joint: URDFJoint) {
+    setGrabbed(grabbed) {
+        const { hoveredJoint, manipulating } = this;
+
+        if (grabbed) {
+            if (manipulating !== null || hoveredJoint === null) {
+                return;
+            }
+
+            this.manipulating = hoveredJoint;
+            this.onDragStart(hoveredJoint);
+        } else {
+            if (this.manipulating === null) {
+                return;
+            }
+
+            this.onDragEnd(this.manipulating);
+            this.manipulating = null;
+            this.update();
+        }
+    }
+
+    onHover(joint: URDFJoint | null, link: URDFLink | null) {
         if (!this.enabled) {
             return;
         }
-        // 显示关节名称
-        this.label.innerText = `Joint: ${joint.name}`;
-        this.label.style.display = "block";
+        // 显示 joint 和 link 名称
+        if (!joint && !link) {
+            this.label.style.display = "none";
+        } else {
+            if (joint && !link) {
+                // @ts-ignore
+                this.label.innerText = `Joint: ${joint.name}`;
+            } else if (!joint && link) {
+                // @ts-ignore
+                this.label.innerText = `Link: ${link.name}\n${
+                    this.isHoveredVisual ? "(Visual)" : "(Collider)"
+                }`;
+            } else {
+                // @ts-ignore
+                this.label.innerText = `Joint: ${joint.name}\nLink: ${
+                    // @ts-ignore
+                    link.name
+                }\n${this.isHoveredVisual ? "(Visual)" : "(Collider)"}`;
+            }
+            this.label.style.display = "block";
+        }
         // 执行自定义操作
         this.onHoverCallback && this.onHoverCallback();
     }
 
-    onUnhover(joint: URDFJoint) {
+    onUnhover(joint: URDFJoint | null, link: URDFLink | null) {
         if (!this.enabled) {
             return;
         }

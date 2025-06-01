@@ -84,6 +84,11 @@ There are three installation methods:
 
 ## Release Notes
 
+### 4.2.0
+
+- Added display of Link names when hovering.
+- Fix the bug: Operations and prompts always follow the Visual, ignoring Collider visibility.
+
 ### 4.1.2
 
 - Added a toggle to show/hide the world frame.

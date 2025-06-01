@@ -85,6 +85,11 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
+### 4.2.0
+
+- 在鼠标悬停时增加了 Link 名称的显示
+- 修复以下 bug: 不论 Visual 和 Collider 是否显示, 都按照 Visual 来显示提示和进行操作
+
 ### 4.1.2
 
 - 增加了世界坐标系的显示和隐藏的切换

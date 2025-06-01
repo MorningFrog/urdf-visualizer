@@ -1,10 +1,13 @@
 # Change Log
 
-## [Unreleased]
+## [4.2.0]
 
-- 修复显示 Collider 时仍然按照 Visual 来显示和操作的 bug
-  
 - 在鼠标悬停时增加了 Link 名称的显示
+
+  Added display of Link names when hovering.
+- 修复以下 bug: 不论 Visual 和 Collider 是否显示, 都按照 Visual 来显示提示和进行操作
+  
+  Fix the bug: Operations and prompts always follow the Visual, ignoring Collider visibility.
 
 ## [4.1.2]
 

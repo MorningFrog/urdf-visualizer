@@ -504,15 +504,29 @@ export class ModuleURDF {
      * 处理 Visual 和 Collision 的显示切换
      */
     showVisualCollison = () => {
+        function setLayerRecursive(object: THREE.Object3D, layer: number) {
+            object.layers.set(layer); // 设置当前对象
+            object.traverse((child1) => child1.layers.set(layer)); // 递归子对象
+        }
         // @ts-ignore
-        this.robot.traverse((child: URDFRobot) => {
+        this.robot.traverse((child: THREE.Object3D) => {
             // @ts-ignore
             if (child.isURDFCollider) {
                 child.visible = this.showCollision;
+                if (!this.showCollision) {
+                    setLayerRecursive(child, 1); // 禁用 Raycaster 检测
+                } else {
+                    setLayerRecursive(child, 0); // 恢复 Raycaster 检测
+                }
             }
             // @ts-ignore
             else if (child.isURDFVisual) {
                 child.visible = this.showVisual;
+                if (!this.showVisual) {
+                    setLayerRecursive(child, 1); // 禁用 Raycaster 检测
+                } else {
+                    setLayerRecursive(child, 0); // 恢复 Raycaster 检测
+                }
             }
         });
     };
