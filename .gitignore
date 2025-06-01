@@ -1,6 +1,7 @@
 out
 dist
 release
+.stfolder
 node_modules
 .vscode-test/
 *.vsix

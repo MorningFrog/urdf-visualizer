@@ -109,16 +109,16 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 - 添加了多语言支持(i18n), 根据 VSCode 语言自动选择扩展语言.
 
-### 3.0.x
+### 3.x
 
 - 增加了距离/角度/面积的测量功能.
 - 增加了操作提示.
 
-### 2.0.x
+### 2.x
 
 - 添加了关节角度的可视化.
 - 优化了扩展体验.
 
-### 1.0.x
+### 1.x
 
 Initial release of URDF Visualizer.

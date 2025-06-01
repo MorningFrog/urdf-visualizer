@@ -1,5 +1,11 @@
 # Change Log
 
+## [Unreleased]
+
+- 修复显示 Collider 时仍然按照 Visual 来显示和操作的 bug
+  
+- 在鼠标悬停时增加了 Link 名称的显示
+
 ## [4.1.2]
 
 - 增加了世界坐标系的显示和隐藏的切换

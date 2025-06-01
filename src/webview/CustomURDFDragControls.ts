@@ -2,8 +2,25 @@ import * as THREE from "three";
 const {
     OrbitControls,
 } = require("three/examples/jsm/controls/OrbitControls.js");
-const { URDFJoint } = require("urdf-loader");
+const { URDFJoint, URDFLink, URDFVisual, URDFCollider } = require("urdf-loader");
 const { PointerURDFDragControls } = require("urdf-loader/src/URDFDragControls");
+
+
+// Find the nearest parent that is a joint
+function isJoint(j: typeof URDFLink | typeof URDFJoint | typeof URDFVisual) {
+    return j.isURDFJoint && j.jointType !== 'fixed';
+};
+
+function findNearestJoint(child: THREE.Mesh): typeof URDFJoint | null {
+    let curr = child;
+    while (curr) {
+        if (isJoint(curr)) {
+            return curr;
+        }
+        curr = curr.parent;
+    }
+    return curr;
+};
 
 export class CustomURDFDragControls extends PointerURDFDragControls {
     private label: HTMLDivElement;
@@ -48,6 +65,46 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         }
         if (onUnhoverCallback) {
             this.onUnhoverCallback = onUnhoverCallback;
+        }
+    }
+
+    update() {
+
+        const {
+            raycaster,
+            hovered,
+            manipulating,
+            scene,
+        } = this;
+
+        if (manipulating) {
+            return;
+        }
+
+        let hoveredJoint: typeof URDFJoint | null = null;
+        let hoveredLink: typeof URDFLink | null = null;
+        const intersections = raycaster.intersectObject(scene, true);
+        if (intersections.length !== 0) {
+
+            const hit = intersections[0];
+            this.hitDistance = hit.distance;
+            hoveredLink = hit.object.parent as typeof URDFLink;
+            console.log("hoveredLink", hit.object);
+            hoveredJoint = findNearestJoint(hit.object);
+            this.initialGrabPoint.copy(hit.point);
+
+        }
+
+        if (hoveredJoint !== hovered) {
+            if (hovered) {
+                this.onUnhover(hovered);
+            }
+
+            this.hovered = hoveredJoint;
+
+            if (hoveredJoint) {
+                this.onHover(hoveredJoint);
+            }
         }
     }
 
