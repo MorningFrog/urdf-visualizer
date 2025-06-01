@@ -1,12 +1,12 @@
 /* 测量模块 */
 
 import * as THREE from "three";
-const { CustomURDFDragControls } = require("./CustomURDFDragControls");
+import { CustomURDFDragControls } from "./CustomURDFDragControls";
 // 导入测量模块
 import { Measure, MeasureMode } from "./Measure";
 
 export class ModuleMeasure {
-    dragControls: typeof CustomURDFDragControls;
+    dragControls: CustomURDFDragControls;
     measureDistanceTool: Measure;
     measureAreaTool: Measure;
     measureAngleTool: Measure;
@@ -32,7 +32,7 @@ export class ModuleMeasure {
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
         camera: THREE.Camera,
-        controls: typeof CustomURDFDragControls,
+        controls: CustomURDFDragControls,
         startMeasureCallback = () => {}, // 开始测量时的回调函数
         continueMeasureCallback = () => {}, // 继续测量时的回调函数
         completeMeasureCallback = () => {}, // 完成测量时的回调函数

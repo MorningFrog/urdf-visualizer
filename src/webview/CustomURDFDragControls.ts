@@ -1,18 +1,17 @@
 import * as THREE from "three";
-const {
-    OrbitControls,
-} = require("three/examples/jsm/controls/OrbitControls.js");
-const { URDFJoint, URDFLink, URDFVisual, URDFCollider } = require("urdf-loader");
-const { PointerURDFDragControls } = require("urdf-loader/src/URDFDragControls");
 
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+const { PointerURDFDragControls } = require("urdf-loader/src/URDFDragControls");
+import { URDFJoint, URDFLink, URDFVisual, URDFCollider } from "urdf-loader";
 
 // Find the nearest parent that is a joint
-function isJoint(j: typeof URDFLink | typeof URDFJoint | typeof URDFVisual) {
-    return j.isURDFJoint && j.jointType !== 'fixed';
-};
+function isJoint(j: URDFLink | URDFJoint | URDFVisual) {
+    // @ts-ignore
+    return j.isURDFJoint && j.jointType !== "fixed";
+}
 
-function findNearestJoint(child: THREE.Mesh): typeof URDFJoint | null {
-    let curr = child;
+function findNearestJoint(child: THREE.Mesh): URDFJoint | null {
+    let curr: any = child;
     while (curr) {
         if (isJoint(curr)) {
             return curr;
@@ -20,17 +19,23 @@ function findNearestJoint(child: THREE.Mesh): typeof URDFJoint | null {
         curr = curr.parent;
     }
     return curr;
-};
+}
 
 export class CustomURDFDragControls extends PointerURDFDragControls {
     private label: HTMLDivElement;
+    private controls: OrbitControls;
+    enabled: boolean = true; // 控制是否启用拖拽
+    private updateJointCallback: (joint: URDFJoint, angle: number) => void =
+        () => {};
+    private onHoverCallback: () => void = () => {};
+    private onUnhoverCallback: () => void = () => {};
 
     constructor(
         scene: THREE.Scene,
         camera: THREE.Camera,
-        controls: typeof OrbitControls,
+        controls: OrbitControls,
         rendererDom: HTMLElement, // 传入渲染器的 DOM 元素
-        updateJointCallback?: (joint: typeof URDFJoint, angle: number) => void,
+        updateJointCallback?: (joint: URDFJoint, angle: number) => void,
         onHoverCallback?: () => void,
         onUnhoverCallback?: () => void
     ) {
@@ -69,30 +74,22 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
     }
 
     update() {
-
-        const {
-            raycaster,
-            hovered,
-            manipulating,
-            scene,
-        } = this;
+        const { raycaster, hovered, manipulating, scene } = this;
 
         if (manipulating) {
             return;
         }
 
-        let hoveredJoint: typeof URDFJoint | null = null;
-        let hoveredLink: typeof URDFLink | null = null;
+        let hoveredJoint: URDFJoint | null = null;
+        let hoveredLink: URDFLink | null = null;
         const intersections = raycaster.intersectObject(scene, true);
         if (intersections.length !== 0) {
-
             const hit = intersections[0];
             this.hitDistance = hit.distance;
-            hoveredLink = hit.object.parent as typeof URDFLink;
+            hoveredLink = hit.object.parent as URDFLink;
             console.log("hoveredLink", hit.object);
             hoveredJoint = findNearestJoint(hit.object);
             this.initialGrabPoint.copy(hit.point);
-
         }
 
         if (hoveredJoint !== hovered) {
@@ -108,7 +105,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         }
     }
 
-    onHover(joint: typeof URDFJoint) {
+    onHover(joint: URDFJoint) {
         if (!this.enabled) {
             return;
         }
@@ -119,7 +116,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         this.onHoverCallback && this.onHoverCallback();
     }
 
-    onUnhover(joint: typeof URDFJoint) {
+    onUnhover(joint: URDFJoint) {
         if (!this.enabled) {
             return;
         }
@@ -129,7 +126,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         this.onUnhoverCallback && this.onUnhoverCallback();
     }
 
-    onDragStart(joint: typeof URDFJoint) {
+    onDragStart(joint: URDFJoint) {
         if (!this.enabled) {
             return;
         }
@@ -137,7 +134,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         this.controls.enabled = false;
     }
 
-    onDragEnd(joint: typeof URDFJoint) {
+    onDragEnd(joint: URDFJoint) {
         if (!this.enabled) {
             return;
         }
@@ -154,7 +151,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
     }
 
     // 更新关节角度
-    updateJoint(joint: typeof URDFJoint, angle: number) {
+    updateJoint(joint: URDFJoint, angle: number) {
         if (!this.enabled) {
             return;
         }

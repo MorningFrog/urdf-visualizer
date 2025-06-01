@@ -2,17 +2,14 @@
 
 import * as THREE from "three";
 import { LoadingManager } from "three";
-const {
-    OrbitControls,
-} = require("three/examples/jsm/controls/OrbitControls.js");
-const { STLLoader } = require("three/examples/jsm/loaders/STLLoader.js");
-const { GLTFLoader } = require("three/examples/jsm/loaders/GLTFLoader.js");
-const {
-    ColladaLoader,
-} = require("three/examples/jsm/loaders/ColladaLoader.js");
-const { OBJLoader } = require("three/examples/jsm/loaders/OBJLoader.js");
-const URDFLoader = require("urdf-loader").default;
-const { MeshLoadDoneFunc, URDFRobot, URDFJoint } = require("urdf-loader");
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import URDFLoader, { URDFVisual } from "urdf-loader";
+import { URDFRobot, URDFJoint, URDFLink, URDFCollider } from "urdf-loader";
+
 // 导入自定义URDFDragControls
 import { CustomURDFDragControls } from "./CustomURDFDragControls";
 
@@ -64,7 +61,7 @@ export class ModuleURDF {
     // URDF 文本
     urdfText = "";
     // 机器人
-    robot: typeof URDFRobot | null = null;
+    robot: URDFRobot | null = null;
     // 显示关节轴
     jointAxes: { [key: string]: THREE.AxesHelper } = {};
     jointAxesSize = 1.0;
@@ -83,7 +80,7 @@ export class ModuleURDF {
     // vscode 对象
     vscode: any;
 
-    controls: typeof OrbitControls; // 控制器
+    controls: OrbitControls; // 控制器
 
     // URDFDragControls
     dragControls: CustomURDFDragControls;
@@ -97,7 +94,7 @@ export class ModuleURDF {
     constructor(
         scene: THREE.Scene, // 场景
         camera: THREE.PerspectiveCamera, // 相机
-        controls: typeof OrbitControls, // 控制器
+        controls: OrbitControls, // 控制器
         renderer: THREE.WebGLRenderer, // 渲染器
         uriPrefix: string, // 资源路径前缀
         vscode: any, // vscode 对象
@@ -178,7 +175,7 @@ export class ModuleURDF {
         this.loaderURDF.loadMeshCb = (
             path: string,
             manager: LoadingManager,
-            onComplete: typeof MeshLoadDoneFunc
+            onComplete: (mesh: THREE.Object3D, err?: Error) => void
         ) => {
             this.numMeshLoading += 1;
             const webview_path = path;
@@ -193,8 +190,10 @@ export class ModuleURDF {
                             onComplete(result.scene);
                             this.numMeshLoading -= 1;
                         },
+                        // @ts-ignore
                         null,
                         (err: Error) => {
+                            // @ts-ignore
                             onComplete(null, err);
                             this.numMeshLoading -= 1;
                         }
@@ -207,8 +206,10 @@ export class ModuleURDF {
                             onComplete(result);
                             this.numMeshLoading -= 1;
                         },
+                        // @ts-ignore
                         null,
                         (err: Error) => {
+                            // @ts-ignore
                             onComplete(null, err);
                             this.numMeshLoading -= 1;
                         }
@@ -221,8 +222,10 @@ export class ModuleURDF {
                             onComplete(result.scene);
                             this.numMeshLoading -= 1;
                         },
+                        // @ts-ignore
                         null,
                         (err: Error) => {
+                            // @ts-ignore
                             onComplete(null, err);
                             this.numMeshLoading -= 1;
                         }
@@ -237,8 +240,10 @@ export class ModuleURDF {
                             onComplete(mesh);
                             this.numMeshLoading -= 1;
                         },
+                        // @ts-ignore
                         null,
                         (err: Error) => {
+                            // @ts-ignore
                             onComplete(null, err);
                             this.numMeshLoading -= 1;
                         }
@@ -298,7 +303,7 @@ export class ModuleURDF {
     /**
      * 处理拖动导致的关节角度变化
      */
-    updateJointCallback = (joint: typeof URDFJoint, angle: number) => {
+    updateJointCallback = (joint: URDFJoint, angle: number) => {
         const joint_name = joint.name;
         const joint_name_processed = this.postprocessIdAndClass(joint_name);
         const slider = document.getElementById(
@@ -353,18 +358,26 @@ export class ModuleURDF {
         this.numMeshLoading = 0;
 
         // 切换显示Visual或Collision
-        const colliders: (typeof URDFRobot)[] = [];
-        this.robot.traverse((child: typeof URDFRobot) => {
-            if (child.isURDFCollider) {
-                child.visible = this.showCollision;
-                colliders.push(child);
-            } else if (child.isURDFVisual) {
-                child.visible = this.showVisual;
+        const colliders: URDFCollider[] = [];
+        this.robot.traverse(
+            // @ts-ignore
+            (child: URDFLink | URDFCollider | URDFVisual | THREE.Mesh) => {
+                // @ts-ignore
+                if (child.isURDFCollider) {
+                    child.visible = this.showCollision;
+                    // @ts-ignore
+                    colliders.push(child);
+                }
+                // @ts-ignore
+                else if (child.isURDFVisual) {
+                    child.visible = this.showVisual;
+                }
             }
-        });
+        );
         // 为 collider 设置默认材质
-        colliders.forEach((coll: typeof URDFRobot) => {
-            coll.traverse((c: typeof URDFRobot) => {
+        colliders.forEach((coll: URDFCollider) => {
+            // @ts-ignore
+            coll.traverse((c: THREE.Mesh) => {
                 c.material = this.collisionMaterial;
                 c.castShadow = false;
             });
@@ -389,6 +402,7 @@ export class ModuleURDF {
             return;
         }
         // 1. 计算物体的包围盒
+        // @ts-ignore
         const box = new THREE.Box3().setFromObject(this.robot);
 
         // 2. 获取包围盒的中心和尺寸
@@ -432,47 +446,48 @@ export class ModuleURDF {
      * 处理关节轴显示
      */
     loadJointAxes = () => {
-        Object.entries<{
-            [key: string]: typeof URDFJoint;
-        }>(this.robot?.joints || {}).forEach(([joint_name, joint]) => {
-            if (joint.jointType === "fixed") {
-                return;
-            }
-            // @ts-ignore
-            if (this.showJointsToggle.checked) {
-                const axes = new THREE.AxesHelper(this.jointAxesSize);
-                axes.layers.set(1); // 让 axes 不被 Raycaster 检测到
-                this.jointAxes[joint_name] = axes;
-                joint.add(axes);
-            } else {
-                if (this.jointAxes[joint_name]) {
-                    joint.remove(this.jointAxes[joint_name]);
-                    delete this.jointAxes[joint_name];
+        Object.entries<URDFJoint>(this.robot?.joints || {}).forEach(
+            ([joint_name, joint]) => {
+                if (joint.jointType === "fixed") {
+                    return;
+                }
+                // @ts-ignore
+                if (this.showJointsToggle.checked) {
+                    const axes = new THREE.AxesHelper(this.jointAxesSize);
+                    axes.layers.set(1); // 让 axes 不被 Raycaster 检测到
+                    this.jointAxes[joint_name] = axes;
+                    // @ts-ignore
+                    joint.add(axes);
+                } else {
+                    if (this.jointAxes[joint_name]) {
+                        // @ts-ignore
+                        joint.remove(this.jointAxes[joint_name]);
+                        delete this.jointAxes[joint_name];
+                    }
                 }
             }
-        });
+        );
     };
 
     /**
      * 处理 link 坐标系显示
      */
     loadLinkAxes = () => {
-        Object.entries<{
-            [key: string]: typeof URDFRobot;
-        }>(this.robot?.links || {}).forEach(([link_name, link]) => {
-            // @ts-ignore
-            if (this.showLinksToggle.checked) {
-                const axes = new THREE.AxesHelper(this.linkAxesSize);
-                axes.layers.set(1); // 让 axes 不被 Raycaster 检测到
-                this.linkAxes[link_name] = axes;
-                link.add(axes);
-            } else {
-                if (this.linkAxes[link_name]) {
-                    link.remove(this.linkAxes[link_name]);
-                    delete this.linkAxes[link_name];
+        Object.entries<URDFLink>(this.robot?.links || {}).forEach(
+            ([link_name, link]) => {
+                if (this.showLinksToggle.checked) {
+                    const axes = new THREE.AxesHelper(this.linkAxesSize);
+                    axes.layers.set(1); // 让 axes 不被 Raycaster 检测到
+                    this.linkAxes[link_name] = axes;
+                    link.add(axes);
+                } else {
+                    if (this.linkAxes[link_name]) {
+                        link.remove(this.linkAxes[link_name]);
+                        delete this.linkAxes[link_name];
+                    }
                 }
             }
-        });
+        );
     };
 
     /**
@@ -489,10 +504,14 @@ export class ModuleURDF {
      * 处理 Visual 和 Collision 的显示切换
      */
     showVisualCollison = () => {
-        this.robot.traverse((child: typeof URDFRobot) => {
+        // @ts-ignore
+        this.robot.traverse((child: URDFRobot) => {
+            // @ts-ignore
             if (child.isURDFCollider) {
                 child.visible = this.showCollision;
-            } else if (child.isURDFVisual) {
+            }
+            // @ts-ignore
+            else if (child.isURDFVisual) {
                 child.visible = this.showVisual;
             }
         });

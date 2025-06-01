@@ -7,10 +7,8 @@ const vscode = acquireVsCodeApi();
 
 import * as THREE from "three";
 
-const {
-    OrbitControls,
-} = require("three/examples/jsm/controls/OrbitControls.js");
-const { URDFJoint } = require("urdf-loader");
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { URDFJoint } from "urdf-loader";
 
 // 导入测量模块
 import { ModuleMeasure } from "./module_measure";
@@ -265,25 +263,26 @@ function updateJointList() {
     if (ulJoints) {
         ulJoints.innerHTML = "";
     }
-    Object.entries<{
-        [key: string]: typeof URDFJoint;
-    }>(module_urdf.robot?.joints || {}).forEach(([joint_name, joint]) => {
-        if (joint.jointType === "fixed") {
-            return;
-        }
+    Object.entries<URDFJoint>(module_urdf.robot?.joints || {}).forEach(
+        ([joint_name, joint]) => {
+            if (joint.jointType === "fixed") {
+                return;
+            }
 
-        const joint_limit = getJointLimit(joint_name);
+            const joint_limit = getJointLimit(joint_name);
 
-        const li = document.createElement("li"); // 列表项
-        const joint_name_processed =
-            module_urdf.postprocessIdAndClass(joint_name);
-        li.id = `joint_${joint_name_processed}`;
-        li.classList.add("joint-item");
-        li.classList.add("width_wrapper");
-        li.innerHTML = `
+            const li = document.createElement("li"); // 列表项
+            const joint_name_processed =
+                module_urdf.postprocessIdAndClass(joint_name);
+            li.id = `joint_${joint_name_processed}`;
+            li.classList.add("joint-item");
+            li.classList.add("width_wrapper");
+            li.innerHTML = `
         <div class="div-joint-name width_full">
             <label>${joint_name}</label>
-            <label class="joint_type ${joint.jointType}">${joint.jointType}</label>
+            <label class="joint_type ${joint.jointType}">${
+                joint.jointType
+            }</label>
         </div>
         <div class="div-slider width_full">
             <div>
@@ -304,8 +303,11 @@ function updateJointList() {
                     <div id="joint_${joint_name_processed}_limit_lower"></div>
                 </div>
                 <div class="div-scale-item" style="left: ${
+                    // @ts-ignore
                     ((0 - joint_limit.lower) /
+                        // @ts-ignore
                         (joint_limit.upper - joint_limit.lower)) *
+                    // @ts-ignore
                     100
                 }%;">
                     <div>|</div>
@@ -317,38 +319,39 @@ function updateJointList() {
             </div>
         </div>
         `;
-        // 绑定滑块事件
-        const slider = li.querySelector(
-            `#slider_joint_${joint_name_processed}`
-        ) as HTMLInputElement;
-        if (slider) {
-            // 更新关节角度
-            slider.addEventListener("input", () => {
-                updateJointValueFromSlider(slider.value, joint_name);
-            });
-            // 显示值
-            slider.addEventListener("mouseover", (event) => {
-                const value = slider.value;
-                updateTooltipText(parseFloat(value));
-                tooltip.style.display = "block";
-                tooltip.style.left = `${event.pageX}px`;
-                const slider_top = slider.getBoundingClientRect().top;
-                tooltip.style.top = `${slider_top - 30}px`;
-            });
-            // 隐藏值
-            slider.addEventListener("mouseout", () => {
-                tooltip.style.display = "none";
-            });
-            // 更改位置
-            slider.addEventListener("mousemove", (event) => {
-                tooltip.style.left = `${event.pageX}px`;
-                const slider_top = slider.getBoundingClientRect().top;
-                tooltip.style.top = `${slider_top - 30}px`;
-            });
-        }
+            // 绑定滑块事件
+            const slider = li.querySelector(
+                `#slider_joint_${joint_name_processed}`
+            ) as HTMLInputElement;
+            if (slider) {
+                // 更新关节角度
+                slider.addEventListener("input", () => {
+                    updateJointValueFromSlider(slider.value, joint_name);
+                });
+                // 显示值
+                slider.addEventListener("mouseover", (event) => {
+                    const value = slider.value;
+                    updateTooltipText(parseFloat(value));
+                    tooltip.style.display = "block";
+                    tooltip.style.left = `${event.pageX}px`;
+                    const slider_top = slider.getBoundingClientRect().top;
+                    tooltip.style.top = `${slider_top - 30}px`;
+                });
+                // 隐藏值
+                slider.addEventListener("mouseout", () => {
+                    tooltip.style.display = "none";
+                });
+                // 更改位置
+                slider.addEventListener("mousemove", (event) => {
+                    tooltip.style.left = `${event.pageX}px`;
+                    const slider_top = slider.getBoundingClientRect().top;
+                    tooltip.style.top = `${slider_top - 30}px`;
+                });
+            }
 
-        ulJoints?.appendChild(li);
-    });
+            ulJoints?.appendChild(li);
+        }
+    );
     updateDegreeRadians();
 }
 
@@ -356,36 +359,40 @@ function updateJointList() {
  * 根据显示弧度制和角度制切换显示
  */
 function updateDegreeRadians() {
-    Object.entries<{
-        [key: string]: typeof URDFJoint;
-    }>(module_urdf.robot?.joints || {}).forEach(([joint_name, joint]) => {
-        if (joint.jointType === "fixed") {
-            return;
+    Object.entries<URDFJoint>(module_urdf.robot?.joints || {}).forEach(
+        ([joint_name, joint]) => {
+            if (joint.jointType === "fixed") {
+                return;
+            }
+
+            const joint_name_processed =
+                module_urdf.postprocessIdAndClass(joint_name);
+
+            const joint_limit = getJointLimit(joint_name);
+
+            const element_joint_limit_upper = document.getElementById(
+                `joint_${joint_name_processed}_limit_upper`
+            ) as HTMLInputElement;
+            const element_joint_limit_lower = document.getElementById(
+                `joint_${joint_name_processed}_limit_lower`
+            ) as HTMLInputElement;
+            if (isDegree) {
+                element_joint_limit_upper.innerText = Math.round(
+                    // @ts-ignore
+                    (joint_limit.upper * 180) / Math.PI
+                ).toString();
+                element_joint_limit_lower.innerText = Math.round(
+                    // @ts-ignore
+                    (joint_limit.lower * 180) / Math.PI
+                ).toString();
+            } else {
+                element_joint_limit_upper.innerText =
+                    joint_limit.upper.toFixed(2);
+                element_joint_limit_lower.innerText =
+                    joint_limit.lower.toFixed(2);
+            }
         }
-
-        const joint_name_processed =
-            module_urdf.postprocessIdAndClass(joint_name);
-
-        const joint_limit = getJointLimit(joint_name);
-
-        const element_joint_limit_upper = document.getElementById(
-            `joint_${joint_name_processed}_limit_upper`
-        ) as HTMLInputElement;
-        const element_joint_limit_lower = document.getElementById(
-            `joint_${joint_name_processed}_limit_lower`
-        ) as HTMLInputElement;
-        if (isDegree) {
-            element_joint_limit_upper.innerText = Math.round(
-                (joint_limit.upper * 180) / Math.PI
-            ).toString();
-            element_joint_limit_lower.innerText = Math.round(
-                (joint_limit.lower * 180) / Math.PI
-            ).toString();
-        } else {
-            element_joint_limit_upper.innerText = joint_limit.upper.toFixed(2);
-            element_joint_limit_lower.innerText = joint_limit.lower.toFixed(2);
-        }
-    });
+    );
 }
 
 /**

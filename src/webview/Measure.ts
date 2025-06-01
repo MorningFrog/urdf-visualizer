@@ -1,15 +1,8 @@
 import * as THREE from "three";
-const {
-    OrbitControls,
-} = require("three/examples/jsm/controls/OrbitControls.js");
-const { DragControls } = require("three/examples/jsm/controls/DragControls.js");
-const {
-    FontLoader,
-    Font,
-} = require("three/examples/jsm/loaders/FontLoader.js");
-const {
-    TextGeometry,
-} = require("three/examples/jsm/geometries/TextGeometry.js");
+import { CustomURDFDragControls } from "./CustomURDFDragControls";
+import { DragControls } from "three/examples/jsm/controls/DragControls.js";
+import { FontLoader, Font } from "three/examples/jsm/Addons";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 
 export enum MeasureMode {
     Distance = "Distance",
@@ -73,8 +66,8 @@ export class Measure {
     renderer: THREE.WebGLRenderer;
     scene: THREE.Scene;
     camera: THREE.Camera;
-    controls: typeof OrbitControls;
-    dragControls?: typeof DragControls; // enable objects(labels) to be dragged
+    controls: CustomURDFDragControls;
+    dragControls?: DragControls; // enable objects(labels) to be dragged
     raycaster?: THREE.Raycaster;
     mouseMoved = false;
     isCompleted = false;
@@ -102,7 +95,7 @@ export class Measure {
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
         camera: THREE.Camera,
-        controls: typeof OrbitControls,
+        controls: CustomURDFDragControls,
         mode: MeasureMode = MeasureMode.Distance,
         cancleCallback = () => {},
         startMeasureCallback = () => {}, // 开始测量时的回调函数
@@ -790,10 +783,12 @@ export class Measure {
      */
     initDragControls() {
         const dc = new DragControls([], this.camera, this.renderer.domElement);
+        // @ts-ignore
         dc.addEventListener("dragstart", (event: Event) => {
             this.controls.enabled = false;
         });
         // dragControls.addEventListener('drag', (event) => { console.log('dragging') })
+        // @ts-ignore
         dc.addEventListener("dragend", (event: Event) => {
             this.controls.enabled = true;
         });
