@@ -36,14 +36,16 @@ jobs:
         id: version
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          echo "::set-output name=version::$VERSION"
+          echo "Version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Extract notes from CHANGELOG.md
         id: changelog
         run: |
-          # 提取从 `## [<version>]` 到下一个 `##` 开头或文件结尾的内容
-          NOTES=$(sed -n "/## \[${{ steps.version.outputs.version }}\]/,/^## /p" CHANGELOG.md | sed '1d;$d')
-          echo "::set-output name=notes::${NOTES}"
+          NOTES=$(awk "/## $$${{ steps.version.outputs.version }}$$/,/^## /" CHANGELOG.md | awk 'NR>1 {if (/^## /) exit; print}')
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Install VSCE
         run: npm install @vscode/vsce -g
@@ -52,7 +54,6 @@ jobs:
         run: npm run compile
 
       - name: Verify VSCE_PAT
-        if: inputs.dry_run != true
         run: |
           npx @vscode/vsce publish verify-pat ${{ secrets.VSCE_PAT }}
 
