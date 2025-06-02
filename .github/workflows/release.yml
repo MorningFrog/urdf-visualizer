@@ -42,26 +42,26 @@ jobs:
       - name: Extract notes from CHANGELOG.md
         id: changelog
         run: |
-          # 转义 version 中的点号，以便在 awk 中使用
-          ESCAPED_VERSION=$(echo "${{ steps.version.outputs.version }}" | sed 's/\./\\./g')
-
-          # 使用 awk 提取内容，并保留换行
-          CONTENT=$(awk -v version="\\[${ESCAPED_VERSION}\\]" '
-            BEGIN { found=0; }
-            /^## / {
-              if (found) exit
-              if ($0 ~ "^## " version) found=1
-              next
-            }
-            found { print }
-          ' CHANGELOG.md)
-
-          # 删除首尾空行
-          CONTENT=$(echo "$CONTENT" | sed -e '/./,$!d' -e ':a' -e '/^\n*$/{$d;N;ba' -e '}')
+          VERSION="${{ steps.version.outputs.version }}"
+          START_LINE=$(grep -n "## \[$VERSION\]" CHANGELOG.md | cut -d: -f1)
           
-          # 输出到 GITHUB_OUTPUT
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          echo "$CONTENT" >> $GITHUB_OUTPUT
+          # 找到下一个版本的起始行，或者文件末尾
+          END_LINE=$(sed -n "$((START_LINE + 1)),\$p" CHANGELOG.md | grep -n "## " | head -n 1 | cut -d: -f1)
+          if [ -z "$END_LINE" ]; then
+            END_LINE=$(wc -l < CHANGELOG.md)
+          else
+            END_LINE=$((START_LINE + END_LINE - 1))
+          fi
+          
+          # 提取版本部分
+          changelog_content=$(sed -n "$((START_LINE + 1)),$((END_LINE))p" CHANGELOG.md)
+          
+          # 使用 awk 删除首尾空行，保留中间的空行
+          changelog_content=$(echo "$changelog_content" | sed -e '1{/^[[:space:]]*$/d}' -e '${/^[[:space:]]*$/d}')
+          
+          # 将结果存入 GITHUB_OUTPUT
+          echo "notes<<EOF" >> $GITHUB_ENV
+          echo "$changelog_content" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Install VSCE
