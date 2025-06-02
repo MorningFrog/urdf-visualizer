@@ -19,122 +19,122 @@ jobs:
   release:
     name: Release VSCode Extension
     runs-on: ubuntu-latest
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: "20"
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    - name: Extract version from package.json
-      id: version
-      run: |
-        VERSION=$(node -p "require('./package.json').version")
-        echo "::set-output name=version::$VERSION"
+      - name: Extract version from package.json
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "::set-output name=version::$VERSION"
 
-    - name: Extract notes from CHANGELOG.md
-      uses: martinbeentjes/npm-generate-changelog@v1
-      id: changelog
-      with:
-        version: ${{ steps.version.outputs.version }}
-        file: CHANGELOG.md
+      - name: Extract notes from CHANGELOG.md
+        uses: martinbeentjes/npm-generate-changelog@v1
+        id: changelog
+        with:
+          version: ${{ steps.version.outputs.version }}
+          file: CHANGELOG.md
 
-    - name: Install VSCE
-      run: npm install @vscode/vsce -g
+      - name: Install VSCE
+        run: npm install @vscode/vsce -g
 
-    - name: Compile Extension
-      run: npm run compile
+      - name: Compile Extension
+        run: npm run compile
 
-    - name: Verify VSCE_PAT
-      if: inputs.dry_run != true
-      run: |
-        npx @vscode/vsce publish verify-pat ${{ secrets.VSCE_PAT }}
+      - name: Verify VSCE_PAT
+        if: inputs.dry_run != true
+        run: |
+          npx @vscode/vsce publish verify-pat ${{ secrets.VSCE_PAT }}
 
-    # Prerelease
-    - name: Build Prerelease VSIX package
-      if: inputs.prerelease == true
-      run: |
-        npx @vscode/vsce package --no-dependencies --pre-release \
-          --out "urdf-visualizer-${{ steps.version.outputs.version }}-pre.vsix"
+      # Prerelease
+      - name: Build Prerelease VSIX package
+        if: inputs.prerelease == true
+        run: |
+          npx @vscode/vsce package --no-dependencies --pre-release \
+            --out "urdf-visualizer-${{ steps.version.outputs.version }}-pre.vsix"
 
-    - name: Create GitHub Prerelease
-      if: inputs.prerelease == true && inputs.dry_run != true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        gh release create "${{ steps.version.outputs.version }}-pre" \
-          "urdf-visualizer-${{ steps.version.outputs.version }}-pre.vsix" \
-          --title "urdf-visualizer-${{ steps.version.outputs.version }}-pre" \
-          --notes "${{ steps.changelog.outputs.notes }}" \
-          --prerelease
+      - name: Create GitHub Prerelease
+        if: inputs.prerelease == true && inputs.dry_run != true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.version }}-pre" \
+            "urdf-visualizer-${{ steps.version.outputs.version }}-pre.vsix" \
+            --title "urdf-visualizer-${{ steps.version.outputs.version }}-pre" \
+            --notes "${{ steps.changelog.outputs.notes }}" \
+            --prerelease
 
-    - name: Create GitHub Prerelease (Dry Run)
-      if: inputs.prerelease == true && inputs.dry_run == true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        echo 'gh release create "${{ steps.version.outputs.version }}-pre" \
-          "urdf-visualizer-${{ steps.version.outputs.version }}-pre.vsix" \
-          --title "urdf-visualizer-${{ steps.version.outputs.version }}-pre" \
-          --notes "${{ steps.changelog.outputs.notes }}" \
-          --prerelease'
+      - name: Create GitHub Prerelease (Dry Run)
+        if: inputs.prerelease == true && inputs.dry_run == true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo 'gh release create "${{ steps.version.outputs.version }}-pre" \
+            "urdf-visualizer-${{ steps.version.outputs.version }}-pre.vsix" \
+            --title "urdf-visualizer-${{ steps.version.outputs.version }}-pre" \
+            --notes "${{ steps.changelog.outputs.notes }}" \
+            --prerelease'
 
-    - name: Publish Prerelease to Marketplace
-      if: inputs.prerelease == true && inputs.dry_run != true
-      run: |
-        npx @vscode/vsce publish --no-dependencies --pre-release \
-          --packagePath "urdf-visualizer-${{ steps.version.outputs.version }}-pre.vsix" \
-          --pat ${{ secrets.VSCE_PAT }}
+      - name: Publish Prerelease to Marketplace
+        if: inputs.prerelease == true && inputs.dry_run != true
+        run: |
+          npx @vscode/vsce publish --no-dependencies --pre-release \
+            --packagePath "urdf-visualizer-${{ steps.version.outputs.version }}-pre.vsix" \
+            --pat ${{ secrets.VSCE_PAT }}
 
-    - name: Publish Prerelease to Marketplace (Dry Run)
-      if: inputs.prerelease == true && inputs.dry_run == true
-      run: |
-        echo 'npx @vscode/vsce publish --no-dependencies --pre-release \
-          --packagePath "urdf-visualizer-${{ steps.version.outputs.version }}-pre.vsix" \
-          --pat ${{ secrets.VSCE_PAT }}'
+      - name: Publish Prerelease to Marketplace (Dry Run)
+        if: inputs.prerelease == true && inputs.dry_run == true
+        run: |
+          echo 'npx @vscode/vsce publish --no-dependencies --pre-release \
+            --packagePath "urdf-visualizer-${{ steps.version.outputs.version }}-pre.vsix" \
+            --pat ${{ secrets.VSCE_PAT }}'
 
-    # Release
-    - name: Build Release VSIX package
-      if: inputs.prerelease != true
-      run: |
-        npx @vscode/vsce package --no-dependencies \
-          --out "urdf-visualizer-${{ steps.version.outputs.version }}.vsix"
+      # Release
+      - name: Build Release VSIX package
+        if: inputs.prerelease != true
+        run: |
+          npx @vscode/vsce package --no-dependencies \
+            --out "urdf-visualizer-${{ steps.version.outputs.version }}.vsix"
 
-    - name: Create GitHub Release
-      if: inputs.prerelease != true && inputs.dry_run != true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        gh release create "${{ steps.version.outputs.version }}" \
-          "urdf-visualizer-${{ steps.version.outputs.version }}.vsix" \
-          --title "urdf-visualizer-${{ steps.version.outputs.version }}" \
-          --notes "${{ steps.changelog.outputs.notes }}"
+      - name: Create GitHub Release
+        if: inputs.prerelease != true && inputs.dry_run != true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.version }}" \
+            "urdf-visualizer-${{ steps.version.outputs.version }}.vsix" \
+            --title "urdf-visualizer-${{ steps.version.outputs.version }}" \
+            --notes "${{ steps.changelog.outputs.notes }}"
 
-    - name: Create GitHub Release (Dry Run)
-      if: inputs.prerelease != true && inputs.dry_run == true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        echo 'gh release create "${{ steps.version.outputs.version }}" \
-          "urdf-visualizer-${{ steps.version.outputs.version }}.vsix" \
-          --title "urdf-visualizer-${{ steps.version.outputs.version }}" \
-          --notes "${{ steps.changelog.outputs.notes }}"'
+      - name: Create GitHub Release (Dry Run)
+        if: inputs.prerelease != true && inputs.dry_run == true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo 'gh release create "${{ steps.version.outputs.version }}" \
+            "urdf-visualizer-${{ steps.version.outputs.version }}.vsix" \
+            --title "urdf-visualizer-${{ steps.version.outputs.version }}" \
+            --notes "${{ steps.changelog.outputs.notes }}"'
 
-    - name: Publish Release to Marketplace
-      if: inputs.prerelease != true && inputs.dry_run != true
-      run: |
-        npx @vscode/vsce publish --no-dependencies \
-          --packagePath "urdf-visualizer-${{ steps.version.outputs.version }}.vsix" \
-          --pat ${{ secrets.VSCE_PAT }}
+      - name: Publish Release to Marketplace
+        if: inputs.prerelease != true && inputs.dry_run != true
+        run: |
+          npx @vscode/vsce publish --no-dependencies \
+            --packagePath "urdf-visualizer-${{ steps.version.outputs.version }}.vsix" \
+            --pat ${{ secrets.VSCE_PAT }}
 
-    - name: Publish Release to Marketplace (Dry Run)
-      if: inputs.prerelease != true && inputs.dry_run == true
-      run: |
-        echo 'npx @vscode/vsce publish --no-dependencies \
-          --packagePath "urdf-visualizer-${{ steps.version.outputs.version }}.vsix" \
-          --pat ${{ secrets.VSCE_PAT }}'
+      - name: Publish Release to Marketplace (Dry Run)
+        if: inputs.prerelease != true && inputs.dry_run == true
+        run: |
+          echo 'npx @vscode/vsce publish --no-dependencies \
+            --packagePath "urdf-visualizer-${{ steps.version.outputs.version }}.vsix" \
+            --pat ${{ secrets.VSCE_PAT }}'
