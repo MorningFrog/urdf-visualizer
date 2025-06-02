@@ -7,6 +7,7 @@ on:
         description: "Is this a pre-release?"
         required: true
         type: boolean
+        default: false
       dry_run:
         description: "Dry run mode (no real execution)"
         type: boolean
@@ -38,11 +39,11 @@ jobs:
           echo "::set-output name=version::$VERSION"
 
       - name: Extract notes from CHANGELOG.md
-        uses: martinbeentjes/npm-generate-changelog@v1
         id: changelog
-        with:
-          version: ${{ steps.version.outputs.version }}
-          file: CHANGELOG.md
+        run: |
+          # 提取从 `## [<version>]` 到下一个 `##` 开头或文件结尾的内容
+          NOTES=$(sed -n "/## \[${{ steps.version.outputs.version }}\]/,/^## /p" CHANGELOG.md | sed '1d;$d')
+          echo "::set-output name=notes::${NOTES}"
 
       - name: Install VSCE
         run: npm install @vscode/vsce -g
