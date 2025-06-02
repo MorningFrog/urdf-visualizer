@@ -46,7 +46,7 @@ jobs:
           ESCAPED_VERSION=$(echo "${{ steps.version.outputs.version }}" | sed 's/\./\\./g')
 
           # 使用 awk 提取内容，并保留换行
-          CONTENT=$(awk -v version="\[${ESCAPED_VERSION}\]" '
+          CONTENT=$(awk -v version="\\[${ESCAPED_VERSION}\\]" '
             BEGIN { found=0; }
             /^## / {
               if (found) exit
