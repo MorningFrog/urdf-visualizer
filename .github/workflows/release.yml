@@ -60,7 +60,7 @@ jobs:
           changelog_content=$(echo "$changelog_content" | sed -e '1{/^[[:space:]]*$/d}' -e '${/^[[:space:]]*$/d}')
           
           # 将结果存入 GITHUB_OUTPUT
-          echo "notes<<EOF" >> $GITHUB_ENV
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "$changelog_content" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
