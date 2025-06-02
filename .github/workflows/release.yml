@@ -55,7 +55,7 @@ jobs:
 
       - name: Verify VSCE_PAT
         run: |
-          npx @vscode/vsce publish verify-pat ${{ secrets.VSCE_PAT }}
+          npx @vscode/vsce verify-pat ${{ secrets.VSCE_PAT }}
 
       # Prerelease
       - name: Build Prerelease VSIX package
