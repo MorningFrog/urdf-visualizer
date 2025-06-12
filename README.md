@@ -84,7 +84,7 @@ There are three installation methods:
 
 ## Release Notes
 
-### 4.3.0
+### 4.3.1
 
 Added:
 
