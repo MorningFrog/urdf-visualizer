@@ -24,9 +24,9 @@ A VSCode extension for visualizing URDF files and xacro files.
 - Visualization of URDF and Xacro files
 - Switch the display of visual and/or collision
 - Visualize joint and/or link coordinate systems
-- Display the joint name when hovering the mouse
+- Display the joint and link names when hovering the mouse
 - Drag and control joint angles
-- Measure distance, angle or area
+- Measure coordinates, distance, angle or area
 - multilingual support: English, Simplified Chinese
   > If you need more language support, you can raise it in the issue of the repository
 
@@ -67,7 +67,7 @@ Operations:
 - Rotate perspective: Hold down the left mouse button and drag in the blank space
 - Moving perspective: Hold down the right mouse button and drag
 - Rotate/Move Joint: Hold down the left mouse button and drag on the link directly connected to the joint
-- Measure distance/angle/area: Click the button on one of the three buttons in the upper right corner to start measuring
+- Measure coordinates/distance/angle/area: Click the button on one of the four buttons in the upper right corner to start measuring
 
 ![measure](media/images/measure.gif)
 
@@ -83,6 +83,16 @@ There are three installation methods:
 - When measuring area, if concave polygons appear, the area result may be incorrect
 
 ## Release Notes
+
+### 4.3.0
+
+Added:
+
+- Measurement of coordinate values
+
+Fixed:
+
+- Synchronizing icons and functions during measurement
 
 ### 4.2.0
 
