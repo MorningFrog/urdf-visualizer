@@ -90,6 +90,10 @@ Added:
 
 - Measurement of coordinate values
 
+Improved:
+
+- The display of measured angle
+
 Fixed:
 
 - Synchronizing icons and functions during measurement

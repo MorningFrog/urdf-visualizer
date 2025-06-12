@@ -91,6 +91,10 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 - 坐标值的测量
 
+优化:
+
+- 测量角度的显示
+
 修复:
 
 - 测量时图标和功能的同步

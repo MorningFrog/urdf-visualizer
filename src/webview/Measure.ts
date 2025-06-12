@@ -324,33 +324,26 @@ export class Measure {
                 const p1 = this.pointArray[1];
                 const p2 = this.pointArray[2];
 
+                // 计算方向向量
+                const [dir0, dir1, dir2] = getAngleBisector(p0, p1, p2);
+
                 // 计算角度值并添加标签
-                const angle = calculateAngle(p0, p1, p2);
+                const angle = calculateAngle(dir0, dir2);
                 const label = `${numberToString(
                     angle
                 )} ${this.getUnitString()}`;
                 const distance = Math.min(p0.distanceTo(p1), p2.distanceTo(p1));
-                const [dir0, dir1, dir2] = getAngleBisector(p0, p1, p2);
+
                 const position = p1
                     .clone()
-                    .add(dir1.multiplyScalar(distance * 0.5));
+                    .add(dir1.multiplyScalar(distance * 0.35));
                 this.addOrUpdateLabel(this.EnsuredPolyline, label, position);
 
-                // 创建角度指示弧线
-                const arcP0 = p1
-                    .clone()
-                    .add(dir0.multiplyScalar(distance * 0.2));
-                const arcP1 = p1
-                    .clone()
-                    .add(dir1.multiplyScalar(distance * 0.4));
-                const arcP2 = p1
-                    .clone()
-                    .add(dir2.multiplyScalar(distance * 0.2));
-
                 this.EnsuredCurve = createCurve(
-                    arcP0,
-                    arcP1,
-                    arcP2,
+                    dir0,
+                    dir2,
+                    p1,
+                    distance * 0.2,
                     this.LINE_MATERIAL
                 );
                 this.EnsuredCurve.name = this.OBJ_NAME; // 设置标识名称

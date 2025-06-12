@@ -10,6 +10,14 @@ Added:
   
   Measurement of coordinate values
 
+优化:
+
+Improved:
+
+- 测量角度的显示
+
+  The display of measured angle
+
 修复:
 
 Fixed:

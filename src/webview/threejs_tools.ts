@@ -149,38 +149,81 @@ export function calculateArea(points: THREE.Vector3[]) {
 
 /**
  * 计算两点间角度（角度制）
- * @param startPoint 起点
- * @param middlePoint 顶点
- * @param endPoint 终点
+ * @param dir0 边1方向向量
+ * @param dir2 边2方向向量
  * @returns 角度值（0-180度）
  */
-export function calculateAngle(
-    startPoint: THREE.Vector3,
-    middlePoint: THREE.Vector3,
-    endPoint: THREE.Vector3
-) {
-    // 计算两边向量
-    const dir0 = startPoint.clone().sub(middlePoint).normalize();
-    const dir1 = endPoint.clone().sub(middlePoint).normalize();
+export function calculateAngle(dir0: THREE.Vector3, dir2: THREE.Vector3) {
     // 计算夹角（弧度）并转为角度
-    return (dir0.angleTo(dir1) * 180) / Math.PI;
+    return (dir0.angleTo(dir2) * 180) / Math.PI;
 }
 
 /**
- * 创建角度指示弧线
- * @param p0 起点
- * @param p1 控制点
- * @param p2 终点
+ * 创建三维空间中的弧线几何体
+ * @param dir0 - 边1的归一化方向向量
+ * @param dir2 - 边2的归一化方向向量
+ * @param center - 弧线的圆心
+ * @param radius - 弧线的半径
+ * @param material - 用于渲染弧线的材质
+ * @returns 包含弧线点数据的BufferGeometry
  */
 export function createCurve(
-    p0: THREE.Vector3,
-    p1: THREE.Vector3,
-    p2: THREE.Vector3,
+    dir0: THREE.Vector3,
+    dir2: THREE.Vector3,
+    center: THREE.Vector3,
+    radius: number,
     material: THREE.Material
-) {
-    const curve = new THREE.QuadraticBezierCurve3(p0, p1, p2);
-    const points = curve.getPoints(4); // get points
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+): THREE.Line {
+    // 根据夹角判断是否需要交换
+
+    // 计算旋转角度和弧线平面
+    const normal = new THREE.Vector3().crossVectors(dir0, dir2).normalize();
+    const angle = dir0.angleTo(dir2); // 弧度制的夹角
+
+    // 在XY平面创建二维弧线（起点在正X轴，按逆时针旋转指定角度）
+    const curve = new THREE.EllipseCurve(
+        0,
+        0, // 圆心在局部坐标原点
+        radius,
+        radius, // X/Y半径相同（正圆）
+        0,
+        angle, // 起始角到终止角（弧度）
+        false, // 逆时针
+        0 // 旋转偏移（弧度）
+    );
+
+    // 获取弧线点集（二维）
+    const points2D = curve.getPoints(10); // 10个分段点
+
+    // 创建旋转矩阵：使XY平面法线（Z轴）对齐实际法线方向
+    const rotation1 = new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 0, 1),
+        normal
+    );
+    // 创建旋转矩阵: 使 X 轴对齐到 dir0 方向
+    const rotation2 = new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(1, 0, 0).applyQuaternion(rotation1),
+        dir0
+    );
+
+    // 将点从二维平面转换到三维空间
+    const points3D = points2D.map((point) => {
+        // 创建局部坐标点（Z=0）
+        const vec = new THREE.Vector3(point.x, point.y, 0);
+
+        // 使法线方向对齐
+        vec.applyQuaternion(rotation1);
+
+        // 使 X 轴对齐到 dir0 方向
+        vec.applyQuaternion(rotation2);
+
+        // 平移到实际圆心位置
+        return vec.add(center);
+    });
+
+    // 创建并返回几何体
+    const geometry = new THREE.BufferGeometry();
+    geometry.setFromPoints(points3D);
     const obj = new THREE.Line(geometry, material);
     return obj;
 }
