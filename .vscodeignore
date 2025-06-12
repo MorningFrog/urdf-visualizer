@@ -1,9 +1,12 @@
 .vscode/**
 .vscode-test/**
+.github/**
 out/**
 node_modules/**
 src/**
 release/**
+media_origin/**
+media/images/**
 !src/webview/preview.html
 !src/webview/style.css
 !src/fonts

@@ -30,6 +30,7 @@
     "webview.scrollZoom": "Scroll to zoom",
     "webview.doubleClickCompleteMeasure": "Double click or press Enter to complete the measurement",
     "webview.escCancleMeasure": "Press Esc to cancle the measurement",
+    "webview.measureCoordinates": "measure coordinates",
     "webview.measureDistance": "measure distance",
     "webview.measureAngle": "measure angle",
     "webview.measureArea": "measure area"

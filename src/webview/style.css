@@ -268,6 +268,11 @@ button.measure:hover {
     background-color: #222;
 }
 
+button#measure-coordinates {
+    mask: url("../../media/icons/measure-coordinates.svg") no-repeat center /
+        auto 80%;
+}
+
 button#measure-distance {
     mask: url("../../media/icons/measure-distance.svg") no-repeat center / auto
         90%;

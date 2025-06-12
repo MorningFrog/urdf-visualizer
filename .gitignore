@@ -1,9 +1,11 @@
 out
 dist
 release
+media_origin
 .stfolder
 node_modules
 .vscode-test/
 *.vsix
 npminstall-debug.log
 TODO.md
+

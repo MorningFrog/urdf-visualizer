@@ -30,6 +30,7 @@
     "webview.scrollZoom": "滚动鼠标滚轮以缩放",
     "webview.doubleClickCompleteMeasure": "鼠标左键双击或按 Enter 键完成测量",
     "webview.escCancleMeasure": "按 Esc 键取消测量",
+    "webview.measureCoordinates": "测量坐标",
     "webview.measureDistance": "测量距离",
     "webview.measureAngle": "测量角度",
     "webview.measureArea": "测量面积"

@@ -1,5 +1,23 @@
 # Change Log
 
+## [4.3.0]
+
+增加:
+
+Added:
+
+- 坐标值的测量
+  
+  Measurement of coordinate values
+
+修复:
+
+Fixed:
+
+- 测量时图标和功能的同步
+  
+  Synchronizing icons and functions during measurement
+
 ## [4.2.0]
 
 - 在鼠标悬停时增加了 Link 名称的显示

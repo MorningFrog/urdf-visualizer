@@ -7,10 +7,14 @@ import { Measure, MeasureMode } from "./Measure";
 
 export class ModuleMeasure {
     dragControls: CustomURDFDragControls;
+    measureCoordinatesTool: Measure;
     measureDistanceTool: Measure;
     measureAreaTool: Measure;
     measureAngleTool: Measure;
 
+    measureCoordinatesButton = document.getElementById(
+        "measure-coordinates"
+    ) as HTMLButtonElement;
     measureDistanceButton = document.getElementById(
         "measure-distance"
     ) as HTMLButtonElement;
@@ -42,6 +46,7 @@ export class ModuleMeasure {
     ) {
         // 确保所有元素都已加载
         if (
+            !this.measureCoordinatesButton ||
             !this.measureDistanceButton ||
             !this.measureAreaButton ||
             !this.measureAngleButton
@@ -58,6 +63,20 @@ export class ModuleMeasure {
         this.onUnhoverCallback = onUnhoverCallback;
 
         // 测量工具
+        this.measureCoordinatesTool = new Measure(
+            renderer,
+            scene,
+            camera,
+            controls,
+            MeasureMode.Coordinates,
+            this.clearMeaure,
+            this.startMeasureCallback,
+            this.continueMeasureCallback,
+            this.completeMeasureCallback,
+            this.closeMeasureCallback,
+            this.onHoverCallback,
+            this.onUnhoverCallback
+        );
         this.measureDistanceTool = new Measure(
             renderer,
             scene,
@@ -101,6 +120,14 @@ export class ModuleMeasure {
             this.onUnhoverCallback
         );
 
+        this.measureCoordinatesButton.addEventListener("click", () => {
+            if (this.measureCoordinatesButton.classList.contains("checked")) {
+                this.handleMeasureCoordinates(false);
+            } else {
+                this.handleMeasureCoordinates(true);
+            }
+        });
+
         this.measureDistanceButton.addEventListener("click", () => {
             if (this.measureDistanceButton.classList.contains("checked")) {
                 this.handleMeasureDistance(false);
@@ -128,10 +155,41 @@ export class ModuleMeasure {
 
     // 清除测量
     clearMeaure = () => {
+        this.handleMeasureCoordinates(false);
         this.handleMeasureDistance(false);
         this.handleMeasureArea(false);
         this.handleMeasureAngle(false);
         this.closeMeasureCallback();
+    };
+
+    handleMeasureCoordinates = (isMeasureCoordinates: boolean) => {
+        if (isMeasureCoordinates) {
+            if (this.measureCoordinatesButton.classList.contains("checked")) {
+                return;
+            }
+            this.measureCoordinatesButton.classList.add("checked");
+            if (this.measureDistanceButton.classList.contains("checked")) {
+                this.measureDistanceButton.classList.remove("checked");
+                this.measureDistanceTool.close();
+            }
+            if (this.measureAreaButton.classList.contains("checked")) {
+                this.measureAreaButton.classList.remove("checked");
+                this.measureAreaTool.close();
+            }
+            if (this.measureAngleButton.classList.contains("checked")) {
+                this.measureAngleButton.classList.remove("checked");
+                this.measureAngleTool.close();
+            }
+            this.measureCoordinatesTool.open();
+            this.dragControls.set_enable(false);
+        } else {
+            if (!this.measureCoordinatesButton.classList.contains("checked")) {
+                return;
+            }
+            this.measureCoordinatesButton.classList.remove("checked");
+            this.measureCoordinatesTool.close();
+            this.dragControls.set_enable(true);
+        }
     };
 
     handleMeasureDistance = (isMeasureDistance: boolean) => {
@@ -141,6 +199,10 @@ export class ModuleMeasure {
             }
 
             this.measureDistanceButton.classList.add("checked");
+            if (this.measureCoordinatesButton.classList.contains("checked")) {
+                this.measureCoordinatesButton.classList.remove("checked");
+                this.measureCoordinatesTool.close();
+            }
             if (this.measureAreaButton.classList.contains("checked")) {
                 this.measureAreaButton.classList.remove("checked");
                 this.measureAreaTool.close();
@@ -167,6 +229,10 @@ export class ModuleMeasure {
                 return;
             }
             this.measureAreaButton.classList.add("checked");
+            if (this.measureCoordinatesButton.classList.contains("checked")) {
+                this.measureCoordinatesButton.classList.remove("checked");
+                this.measureCoordinatesTool.close();
+            }
             if (this.measureDistanceButton.classList.contains("checked")) {
                 this.measureDistanceButton.classList.remove("checked");
                 this.measureDistanceTool.close();
@@ -193,6 +259,10 @@ export class ModuleMeasure {
                 return;
             }
             this.measureAngleButton.classList.add("checked");
+            if (this.measureCoordinatesButton.classList.contains("checked")) {
+                this.measureCoordinatesButton.classList.remove("checked");
+                this.measureCoordinatesTool.close();
+            }
             if (this.measureDistanceButton.classList.contains("checked")) {
                 this.measureDistanceButton.classList.remove("checked");
                 this.measureDistanceTool.close();
