@@ -357,38 +357,29 @@ export class ModuleURDF {
         await this.waitForNumMeshLoadingToZero();
         this.numMeshLoading = 0;
 
-        // 切换显示Visual或Collision
-        const colliders: URDFCollider[] = [];
+        // 为 collider 设置默认材质
         this.robot.traverse(
             // @ts-ignore
             (child: URDFLink | URDFCollider | URDFVisual | THREE.Mesh) => {
                 // @ts-ignore
                 if (child.isURDFCollider) {
-                    child.visible = this.showCollision;
                     // @ts-ignore
-                    colliders.push(child);
-                }
-                // @ts-ignore
-                else if (child.isURDFVisual) {
-                    child.visible = this.showVisual;
+                    child.traverse((c: THREE.Mesh) => {
+                        c.material = this.collisionMaterial;
+                        c.castShadow = false;
+                    });
                 }
             }
         );
-        // 为 collider 设置默认材质
-        colliders.forEach((coll: URDFCollider) => {
-            // @ts-ignore
-            coll.traverse((c: THREE.Mesh) => {
-                c.material = this.collisionMaterial;
-                c.castShadow = false;
-            });
-        });
+        // 处理 Visual 和 Collision 的显示
+        this.showVisualCollison();
 
         // 设置视野
         this.resetCameraView();
 
         // this.robot.updateMatrixWorld(true);
 
-        // 添加关节轴
+        // 添加 joint 坐标系
         this.loadJointAxes();
         // 添加 link 坐标系
         this.loadLinkAxes();
