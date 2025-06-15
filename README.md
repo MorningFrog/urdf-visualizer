@@ -84,6 +84,22 @@ There are three installation methods:
 
 ## Release Notes
 
+### 4.3.2
+
+Added: 
+
+- Tooltips for certain options
+- Display for Joint axis
+
+Improved: 
+
+- Differentiated Joint and Link coordinate frames with solid and dashed lines, respectively
+- Highlighted corresponding Joint and Link coordinate frames when hovering over the model
+
+Fixed:
+
+- Bug: Colliders were unintentionally interactive upon initial launch
+
 ### 4.3.1
 
 Added:
@@ -98,34 +114,20 @@ Fixed:
 
 - Synchronizing icons and functions during measurement
 
-### 4.2.0
+### 4.2.x
 
 - Added display of Link names when hovering.
-- Fix the bug: Operations and prompts always follow the Visual, ignoring Collider visibility.
 
-### 4.1.2
-
-- Added a toggle to show/hide the world frame.
-
-### 4.1.1
-
-- Fixed the issue of loading mesh in SSH remote server
-- Optimized the display of joint types
-
-### 4.1.0
+### 4.1.x
 
 - Add type prompts to the right of the Joint name in the sidebar.
 - The continuous joint angle can be adjusted from $-2\pi$ to $2\pi$.
-- Using a higher version of `Three.js`, it may solve the issue of incompatibility with Nvidia's higher version drivers.
+- Added a toggle to show/hide the world frame.
 
-### 4.0.1
-
-- Fixed the issue where VSCode below version 1.75 cannot preview when urdf is not configured as XML.
-- Optimized the operation tips and added a setting to switch the display of operation tips.
-
-### 4.0.0
+### 4.0.x
 
 - Added multilingual support (i18n), automatically selecting extension languages based on VSCode language.
+- Optimized the operation tips and added a setting to switch the display of operation tips.
 
 ### 3.x
 

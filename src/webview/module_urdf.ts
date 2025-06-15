@@ -7,8 +7,15 @@ import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
-import URDFLoader, { URDFVisual } from "urdf-loader";
-import { URDFRobot, URDFJoint, URDFLink, URDFCollider } from "urdf-loader";
+import URDFLoader from "urdf-loader";
+import {
+    URDFRobot,
+    URDFJoint,
+    URDFVisual,
+    URDFLink,
+    URDFCollider,
+} from "urdf-loader";
+import { LinkAxesHelper, JointAxesHelper } from "./threejs_tools";
 
 // 导入自定义URDFDragControls
 import { CustomURDFDragControls } from "./CustomURDFDragControls";
@@ -63,10 +70,10 @@ export class ModuleURDF {
     // 机器人
     robot: URDFRobot | null = null;
     // 显示关节轴
-    jointAxes: { [key: string]: THREE.AxesHelper } = {};
+    jointAxes: { [key: string]: JointAxesHelper } = {};
     jointAxesSize = 1.0;
     // 显示link坐标系
-    linkAxes: { [key: string]: THREE.AxesHelper } = {};
+    linkAxes: { [key: string]: LinkAxesHelper } = {};
     linkAxesSize = 1.0;
     // 是否显示 visual 和 collision
     showVisual = true;
@@ -88,8 +95,8 @@ export class ModuleURDF {
     waitInterval = 5; // 等待间隔
 
     renderCallback: () => void; // 渲染回调
-    onHoverCallback: () => void; // 鼠标悬停关节回调
-    onUnhoverCallback: () => void; // 鼠标移出关节回调
+    modelHoverCallback: () => void; // 鼠标悬停模型回调
+    modelUnhoverCallback: () => void; // 鼠标移出模型回调
 
     constructor(
         scene: THREE.Scene, // 场景
@@ -98,9 +105,9 @@ export class ModuleURDF {
         renderer: THREE.WebGLRenderer, // 渲染器
         uriPrefix: string, // 资源路径前缀
         vscode: any, // vscode 对象
-        renderCallback = () => {}, // 渲染回调
-        onHoverCallback = () => {}, // 鼠标悬停关节回调
-        onUnhoverCallback = () => {} // 鼠标移出关节回调
+        renderCallback = () => {},
+        modelHoverCallback = () => {},
+        modelUnhoverCallback = () => {}
     ) {
         // 确保所有元素都已加载
         if (
@@ -120,8 +127,8 @@ export class ModuleURDF {
         this.uriPrefix = uriPrefix;
         this.vscode = vscode;
         this.renderCallback = renderCallback;
-        this.onHoverCallback = onHoverCallback;
-        this.onUnhoverCallback = onUnhoverCallback;
+        this.modelHoverCallback = modelHoverCallback;
+        this.modelUnhoverCallback = modelUnhoverCallback;
         // 设置ROS功能包所在的目录
         this.loaderURDF.packages = {};
         // 解析visual和collison
@@ -284,7 +291,7 @@ export class ModuleURDF {
             const size = parseFloat(this.jointSizeInput.value);
             this.jointAxesSize = size;
             Object.values(this.jointAxes).forEach((joint) => {
-                joint.scale.set(size, size, size);
+                joint.setSize(size);
             });
             this.render();
         });
@@ -294,7 +301,7 @@ export class ModuleURDF {
             const size = parseFloat(this.linkSizeInput.value);
             this.linkAxesSize = size;
             Object.values(this.linkAxes).forEach((link) => {
-                link.scale.set(size, size, size);
+                link.setSize(size);
             });
             this.render();
         });
@@ -434,7 +441,7 @@ export class ModuleURDF {
     };
 
     /**
-     * 处理关节轴显示
+     * 处理 Joint 坐标系显示
      */
     loadJointAxes = () => {
         Object.entries<URDFJoint>(this.robot?.joints || {}).forEach(
@@ -444,12 +451,19 @@ export class ModuleURDF {
                 }
                 // @ts-ignore
                 if (this.showJointsToggle.checked) {
-                    const axes = new THREE.AxesHelper(this.jointAxesSize);
-                    axes.layers.set(1); // 让 axes 不被 Raycaster 检测到
+                    // 显示 joint 坐标系
+
+                    const axes = new JointAxesHelper(
+                        this.jointAxesSize,
+                        joint.axis
+                    );
+                    axes.setLayer(1); // 让 axes 不被 Raycaster 检测到
                     this.jointAxes[joint_name] = axes;
                     // @ts-ignore
                     joint.add(axes);
                 } else {
+                    // 隐藏 joint 坐标系
+
                     if (this.jointAxes[joint_name]) {
                         // @ts-ignore
                         joint.remove(this.jointAxes[joint_name]);
@@ -467,8 +481,8 @@ export class ModuleURDF {
         Object.entries<URDFLink>(this.robot?.links || {}).forEach(
             ([link_name, link]) => {
                 if (this.showLinksToggle.checked) {
-                    const axes = new THREE.AxesHelper(this.linkAxesSize);
-                    axes.layers.set(1); // 让 axes 不被 Raycaster 检测到
+                    const axes = new LinkAxesHelper(this.linkAxesSize);
+                    axes.setLayer(1); // 让 axes 不被 Raycaster 检测到
                     this.linkAxes[link_name] = axes;
                     link.add(axes);
                 } else {
@@ -524,6 +538,79 @@ export class ModuleURDF {
 
     render = () => {
         this.renderCallback();
+    };
+
+    /**
+     * 鼠标悬停在模型上回调
+     */
+    onHoverCallback = (joint: URDFJoint | null, link: URDFLink | null) => {
+        // 调用自身的悬停回调
+        this.selfHoverCallback(joint, link);
+
+        // 调用父类的悬停回调
+        this.modelHoverCallback();
+    };
+
+    /**
+     * 鼠标移出模型回调
+     */
+    onUnhoverCallback = (joint: URDFJoint | null, link: URDFLink | null) => {
+        // 调用自身的移出回调
+        this.selfUnhoverCallback(joint, link);
+
+        // 调用父类的移出回调
+        this.modelUnhoverCallback();
+    };
+
+    /**
+     * 鼠标悬停在模型上回调
+     */
+    public selfHoverCallback = (
+        joint: URDFJoint | null,
+        link: URDFLink | null
+    ) => {
+        if (joint) {
+            this.jointAxes[joint.name]?.setHovered(true);
+        }
+        if (link) {
+            this.linkAxes[link.name]?.setHovered(true);
+        }
+    };
+
+    /**
+     * 鼠标移出模型回调
+     */
+    public selfUnhoverCallback = (
+        joint: URDFJoint | null,
+        link: URDFLink | null,
+        fullUnhover = false
+    ) => {
+        if (fullUnhover) {
+            // 如果是全局移出, 则清除所有悬停状态
+            Object.values(this.jointAxes).forEach((joint) => {
+                joint.setHovered(false);
+            });
+            Object.values(this.linkAxes).forEach((link) => {
+                link.setHovered(false);
+            });
+            return;
+        }
+        // 如果是局部移出, 则只清除当前悬停状态
+        if (joint) {
+            this.jointAxes[joint.name]?.setHovered(false);
+        }
+        if (link) {
+            this.linkAxes[link.name]?.setHovered(false);
+        }
+    };
+
+    /**
+     * 鼠标移出画布回调
+     */
+    public onMouseLeaveCallback = () => {
+        this.dragControls.onMouseLeaveCallback();
+        // 清除所有悬停状态
+        this.selfUnhoverCallback(null, null, true);
     };
 
     set packages(packages: { [key: string]: string }) {

@@ -78,7 +78,7 @@ export function createLabel(label: string, position: THREE.Vector3) {
     const obj = new THREE.Sprite(spriteMaterial);
     obj.raycast = () => {}; // 禁用射线检测
 
-    // 关键：保持纹理原始宽高比
+    // 关键:保持纹理原始宽高比
     const aspectRatio = width / height;
     const baseHeight = 0.15; // 场景中的基本高度
     const baseWidth = baseHeight * aspectRatio;
@@ -93,7 +93,7 @@ export function createLabel(label: string, position: THREE.Vector3) {
 /**
  * 数字格式化
  * @param num 原始数值
- * @returns 格式化字符串（根据大小自动调整小数位数）
+ * @returns 格式化字符串(根据大小自动调整小数位数)
  */
 export function numberToString(num: number): string {
     const absNum = Math.abs(num);
@@ -111,7 +111,7 @@ export function numberToString(num: number): string {
  * @param startPoint 起点
  * @param middlePoint 控制点
  * @param endPoint 终点
- * @return 返回一个数组，包含两条边的方向向量和角平分线方向向量,
+ * @return 返回一个数组,包含两条边的方向向量和角平分线方向向量,
  * 例如: [dir0, dir1, dir2], 其中dir0是起点到控制点的方向, dir1是角平分线方向, dir2是控制点到终点的方向.
  */
 export function getAngleBisector(
@@ -128,10 +128,10 @@ export function getAngleBisector(
 }
 
 /**
- * 计算多边形面积（三角形分割法）
+ * 计算多边形面积(三角形分割法)
  * TODO: 对于凹多边形需要更复杂的算法
  * @param points 顶点数组
- * @returns 面积值（平方米）
+ * @returns 面积值(平方米)
  */
 export function calculateArea(points: THREE.Vector3[]) {
     let area = 0;
@@ -148,13 +148,13 @@ export function calculateArea(points: THREE.Vector3[]) {
 }
 
 /**
- * 计算两点间角度（角度制）
+ * 计算两点间角度(角度制)
  * @param dir0 边1方向向量
  * @param dir2 边2方向向量
- * @returns 角度值（0-180度）
+ * @returns 角度值(0-180度)
  */
 export function calculateAngle(dir0: THREE.Vector3, dir2: THREE.Vector3) {
-    // 计算夹角（弧度）并转为角度
+    // 计算夹角(弧度)并转为角度
     return (dir0.angleTo(dir2) * 180) / Math.PI;
 }
 
@@ -180,22 +180,22 @@ export function createCurve(
     const normal = new THREE.Vector3().crossVectors(dir0, dir2).normalize();
     const angle = dir0.angleTo(dir2); // 弧度制的夹角
 
-    // 在XY平面创建二维弧线（起点在正X轴，按逆时针旋转指定角度）
+    // 在XY平面创建二维弧线(起点在正X轴,按逆时针旋转指定角度)
     const curve = new THREE.EllipseCurve(
         0,
         0, // 圆心在局部坐标原点
         radius,
-        radius, // X/Y半径相同（正圆）
+        radius, // X/Y半径相同(正圆)
         0,
-        angle, // 起始角到终止角（弧度）
+        angle, // 起始角到终止角(弧度)
         false, // 逆时针
-        0 // 旋转偏移（弧度）
+        0 // 旋转偏移(弧度)
     );
 
-    // 获取弧线点集（二维）
+    // 获取弧线点集(二维)
     const points2D = curve.getPoints(10); // 10个分段点
 
-    // 创建旋转矩阵：使XY平面法线（Z轴）对齐实际法线方向
+    // 创建旋转矩阵:使XY平面法线(Z轴)对齐实际法线方向
     const rotation1 = new THREE.Quaternion().setFromUnitVectors(
         new THREE.Vector3(0, 0, 1),
         normal
@@ -208,7 +208,7 @@ export function createCurve(
 
     // 将点从二维平面转换到三维空间
     const points3D = points2D.map((point) => {
-        // 创建局部坐标点（Z=0）
+        // 创建局部坐标点(Z=0)
         const vec = new THREE.Vector3(point.x, point.y, 0);
 
         // 使法线方向对齐
@@ -226,4 +226,254 @@ export function createCurve(
     geometry.setFromPoints(points3D);
     const obj = new THREE.Line(geometry, material);
     return obj;
+}
+
+/**
+ * Link 的坐标系辅助器
+ */
+export class LinkAxesHelper extends THREE.Group {
+    private readonly dashSize = 0.02; // 虚线段的长度
+    private readonly gapSize = 0.02; // 间隔的长度
+    private readonly linewidth = 1; // 线宽(注意:实际效果可能受浏览器限制)
+    private readonly hoveredLinewidth = 2; // 鼠标悬停时的线宽
+
+    // 存储各坐标轴对象
+    public xAxis: THREE.Line;
+    public yAxis: THREE.Line;
+    public zAxis: THREE.Line;
+
+    /**
+     * 创建一个虚线坐标系辅助器
+     * @param size 轴线长度
+     */
+    constructor(size: number = 1) {
+        super();
+
+        // 创建虚线材质
+        const dashMaterial = new THREE.LineDashedMaterial({
+            color: 0xffffff,
+            dashSize: this.dashSize,
+            gapSize: this.gapSize,
+            linewidth: this.linewidth,
+        });
+
+        // 创建X轴(红色)
+        const xGeometry = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(1, 0, 0),
+        ]);
+        const xAxis = new THREE.Line(xGeometry, dashMaterial.clone());
+        xAxis.computeLineDistances(); // 必须调用,否则虚线不生效
+        // @ts-ignore
+        xAxis.material.color.setHex(0xff0000); // 红色
+        this.add(xAxis);
+
+        // 创建Y轴(绿色)
+        const yGeometry = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, 1, 0),
+        ]);
+        const yAxis = new THREE.Line(yGeometry, dashMaterial.clone());
+        yAxis.computeLineDistances();
+        // @ts-ignore
+        yAxis.material.color.setHex(0x00ff00); // 绿色
+        this.add(yAxis);
+
+        // 创建Z轴(蓝色)
+        const zGeometry = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, 0, 1),
+        ]);
+        const zAxis = new THREE.Line(zGeometry, dashMaterial.clone());
+        zAxis.computeLineDistances();
+        // @ts-ignore
+        zAxis.material.color.setHex(0x0000ff); // 蓝色
+        this.add(zAxis);
+
+        // 设置尺寸
+        this.scale.set(size, size, size);
+
+        // 存储轴线对象
+        this.xAxis = xAxis;
+        this.yAxis = yAxis;
+        this.zAxis = zAxis;
+    }
+
+    /**
+     * 设置渲染层(layers.set)
+     * @param layer 目标层(0-31)
+     */
+    public setLayer(layer: number): void {
+        this.layers.set(layer); // 设置 Group 的层
+        this.xAxis.layers.set(layer); // 设置 X 轴的层
+        this.yAxis.layers.set(layer); // 设置 Y 轴的层
+        this.zAxis.layers.set(layer); // 设置 Z 轴的层
+    }
+
+    /**
+     * 设置线长
+     * @param size 新的轴线长度
+     */
+    public setSize(size: number): void {
+        this.scale.set(size, size, size);
+    }
+
+    /**
+     * 鼠标悬停时高亮显示
+     * @param hovered 是否悬停
+     */
+    public setHovered(hovered: boolean): void {
+        const linewidth = hovered ? this.hoveredLinewidth : this.linewidth;
+
+        // 设置各轴线的线宽
+        // @ts-ignore
+        this.xAxis.material.linewidth = linewidth;
+        // @ts-ignore
+        this.yAxis.material.linewidth = linewidth;
+        // @ts-ignore
+        this.zAxis.material.linewidth = linewidth;
+
+        // 重新更新材质
+        // @ts-ignore
+        this.xAxis.material.needsUpdate = true;
+        // @ts-ignore
+        this.yAxis.material.needsUpdate = true;
+        // @ts-ignore
+        this.zAxis.material.needsUpdate = true;
+    }
+}
+
+/**
+ * Joint 的坐标系辅助器
+ */
+export class JointAxesHelper extends THREE.Group {
+    private readonly dashSize = 0.02; // 虚线段的长度
+    private readonly gapSize = 0.02; // 间隔的长度
+    private readonly linewidth = 1; // 线宽(注意:实际效果可能受浏览器限制)
+    private readonly hoveredLinewidth = 2; // 鼠标悬停时的线宽
+    // 存储各坐标轴对象
+    public xAxis: THREE.Line;
+    public yAxis: THREE.Line;
+    public zAxis: THREE.Line;
+    // 关节轴对象
+    public jointAxis: THREE.Line;
+
+    /**
+     * 创建一个 Joint 坐标系辅助器
+     * @param size 轴线长度
+     * @param axis 关节轴线方向(默认沿Z轴)
+     */
+    constructor(
+        size: number = 1,
+        axis: THREE.Vector3 = new THREE.Vector3(0, 0, 1)
+    ) {
+        super();
+
+        // 创建坐标系材质
+        const xyzMaterial = new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            linewidth: this.linewidth,
+        });
+
+        // 创建X轴(红色)
+        const xGeometry = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(1, 0, 0),
+        ]);
+        this.xAxis = new THREE.Line(xGeometry, xyzMaterial.clone());
+        // @ts-ignore
+        this.xAxis.material.color.setHex(0xff0000); // 红色
+        this.add(this.xAxis);
+
+        // 创建Y轴(绿色)
+        const yGeometry = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, 1, 0),
+        ]);
+        this.yAxis = new THREE.Line(yGeometry, xyzMaterial.clone());
+        // @ts-ignore
+        this.yAxis.material.color.setHex(0x00ff00); // 绿色
+        this.add(this.yAxis);
+
+        // 创建Z轴(蓝色)
+        const zGeometry = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, 0, 1),
+        ]);
+        this.zAxis = new THREE.Line(zGeometry, xyzMaterial.clone());
+        // @ts-ignore
+        this.zAxis.material.color.setHex(0x0000ff); // 蓝色
+        this.add(this.zAxis);
+
+        // 创建关节轴材质
+        const axisMaterial = new THREE.LineDashedMaterial({
+            color: 0x000000,
+            dashSize: this.dashSize,
+            gapSize: this.gapSize,
+            linewidth: this.linewidth,
+        });
+
+        // 归一化axis
+        const normalizedAxis = axis.clone().normalize();
+
+        // 创建关节轴线
+        const jointGeometry = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            normalizedAxis,
+        ]);
+        this.jointAxis = new THREE.Line(jointGeometry, axisMaterial);
+        this.jointAxis.computeLineDistances(); // 必须调用,否则虚线不生效
+        this.add(this.jointAxis);
+
+        // 设置尺寸
+        this.scale.set(size, size, size);
+    }
+
+    /**
+     * 设置渲染层(layers.set)
+     * @param layer 目标层(0-31)
+     */
+    public setLayer(layer: number): void {
+        this.layers.set(layer); // 设置 Group 的层
+        this.xAxis.layers.set(layer); // 设置 X 轴的层
+        this.yAxis.layers.set(layer); // 设置 Y 轴的层
+        this.zAxis.layers.set(layer); // 设置 Z 轴的层
+        this.jointAxis.layers.set(layer); // 设置关节轴线的层
+    }
+
+    /**
+     * 设置线长
+     * @param size 新的轴线长度
+     */
+    public setSize(size: number): void {
+        this.scale.set(size, size, size);
+    }
+
+    /**
+     * 鼠标悬停时高亮显示
+     * @param hovered 是否悬停
+     */
+    public setHovered(hovered: boolean): void {
+        const linewidth = hovered ? this.hoveredLinewidth : this.linewidth;
+
+        // 设置各轴线的线宽
+        // @ts-ignore
+        this.xAxis.material.linewidth = linewidth;
+        // @ts-ignore
+        this.yAxis.material.linewidth = linewidth;
+        // @ts-ignore
+        this.zAxis.material.linewidth = linewidth;
+        // @ts-ignore
+        this.jointAxis.material.linewidth = linewidth;
+
+        // 重新更新材质
+        // @ts-ignore
+        this.xAxis.material.needsUpdate = true;
+        // @ts-ignore
+        this.yAxis.material.needsUpdate = true;
+        // @ts-ignore
+        this.zAxis.material.needsUpdate = true;
+        // @ts-ignore
+        this.jointAxis.material.needsUpdate = true;
+    }
 }

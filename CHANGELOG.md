@@ -1,5 +1,37 @@
 # Change Log
 
+## [4.3.2]
+
+增加:
+
+Added: 
+
+- 部分选项的提示
+  
+  Tooltips for certain options
+- Joint 的轴显示
+
+  Display for Joint axis
+
+优化:
+
+Improved: 
+
+- Joint 和 Link 坐标系分别采用实线和虚线以加以区分
+
+  Differentiated Joint and Link coordinate frames with solid and dashed lines, respectively
+- 鼠标悬停在模型上时高亮对应的 Joint 和 Link 坐标系
+
+  Highlighted corresponding Joint and Link coordinate frames when hovering over the model
+
+修复:
+
+Fixed:
+
+- Bug: 初次打开时 Collider 意外得可操作(即使没有显示)
+
+  Bug: Colliders were unintentionally interactive upon initial launch
+
 ## [4.3.1]
 
 增加:

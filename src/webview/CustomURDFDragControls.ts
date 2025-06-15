@@ -48,15 +48,21 @@ function findNearestLink(child: THREE.Mesh): [URDFLink, boolean] {
 export class CustomURDFDragControls extends PointerURDFDragControls {
     private label: HTMLDivElement;
     private controls: OrbitControls;
-    enabled: boolean = true; // 控制是否启用拖拽
+    public enabled: boolean = true; // 控制是否启用拖拽
     private updateJointCallback: (joint: URDFJoint, angle: number) => void =
         () => {};
-    private onHoverCallback: () => void = () => {};
-    private onUnhoverCallback: () => void = () => {};
+    private onHoverCallback?: (
+        joint: URDFJoint | null,
+        link: URDFLink | null
+    ) => void;
+    private onUnhoverCallback?: (
+        joint: URDFJoint | null,
+        link: URDFLink | null
+    ) => void;
 
-    hoveredJoint: URDFJoint | null = null; // 当前悬停的 joint
-    hoveredLink: URDFLink | null = null; // 当前悬停的 link
-    isHoveredVisual: boolean = false; // 是否悬停在 Visual 元素上
+    public hoveredJoint: URDFJoint | null = null; // 当前悬停的 joint
+    public hoveredLink: URDFLink | null = null; // 当前悬停的 link
+    public isHoveredVisual: boolean = false; // 是否悬停在 Visual 元素上
 
     constructor(
         scene: THREE.Scene,
@@ -64,8 +70,14 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         controls: OrbitControls,
         rendererDom: HTMLElement, // 传入渲染器的 DOM 元素
         updateJointCallback?: (joint: URDFJoint, angle: number) => void,
-        onHoverCallback?: () => void,
-        onUnhoverCallback?: () => void
+        onHoverCallback?: (
+            joint: URDFJoint | null,
+            link: URDFLink | null
+        ) => void,
+        onUnhoverCallback?: (
+            joint: URDFJoint | null,
+            link: URDFLink | null
+        ) => void
     ) {
         super(scene, camera, rendererDom);
 
@@ -189,7 +201,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
             this.label.style.display = "block";
         }
         // 执行自定义操作
-        this.onHoverCallback && this.onHoverCallback();
+        this.onHoverCallback && this.onHoverCallback(joint, link);
     }
 
     onUnhover(joint: URDFJoint | null, link: URDFLink | null) {
@@ -199,7 +211,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         // 隐藏关节名称
         this.label.style.display = "none";
         // 执行自定义操作
-        this.onUnhoverCallback && this.onUnhoverCallback();
+        this.onUnhoverCallback && this.onUnhoverCallback(joint, link);
     }
 
     onDragStart(joint: URDFJoint) {
@@ -234,6 +246,20 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         super.updateJoint(joint, angle);
         // 执行自定义操作
         this.updateJointCallback && this.updateJointCallback(joint, angle);
+    }
+
+    /**
+     * 鼠标移出画布回调
+     */
+    public onMouseLeaveCallback() {
+        // 取消悬停状态
+        this.hoveredJoint = null;
+        this.hoveredLink = null;
+        this.isHoveredVisual = false;
+        // 隐藏标签
+        this.label.style.display = "none";
+        // 执行自定义操作
+        this.onUnhoverCallback && this.onUnhoverCallback(null, null);
     }
 
     // 清理事件监听器

@@ -8,7 +8,7 @@ const vscode = acquireVsCodeApi();
 import * as THREE from "three";
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { URDFJoint } from "urdf-loader";
+import { URDFJoint, URDFLink } from "urdf-loader";
 
 // 导入测量模块
 import { ModuleMeasure } from "./module_measure";
@@ -153,8 +153,8 @@ const module_urdf = new ModuleURDF(
     uriPrefix,
     vscode,
     render,
-    jointHoverCallback,
-    jointUnhoverCallback
+    modelHoverCallback,
+    modelUnhoverCallback
 );
 
 // 测量模块
@@ -349,6 +349,14 @@ function updateJointList() {
                 });
             }
 
+            // 悬停事件处理
+            li.addEventListener("mouseenter", () => {
+                module_urdf.selfHoverCallback(joint, null);
+            });
+            li.addEventListener("mouseleave", () => {
+                module_urdf.selfUnhoverCallback(joint, null);
+            });
+
             ulJoints?.appendChild(li);
         }
     );
@@ -462,13 +470,16 @@ degreesButton.addEventListener("click", () => {
     updateDegreeRadians();
 });
 
-function jointHoverCallback() {
+function modelHoverCallback() {
+    // 触发悬停
+    // 更新操作提示
     notifyDragJoint.classList.remove("disabled");
     notifyDragRotate.classList.add("disabled");
     notifyDragMove.classList.add("disabled");
 }
 
-function jointUnhoverCallback() {
+function modelUnhoverCallback() {
+    // 更新操作提示
     notifyDragJoint.classList.add("disabled");
     notifyDragRotate.classList.remove("disabled");
     notifyDragMove.classList.remove("disabled");
@@ -549,3 +560,10 @@ function measureUnhoverCallback() {
     notifyDragRotate.classList.remove("disabled");
     notifyDragMove.classList.remove("disabled");
 }
+
+/**
+ * 鼠标离开渲染器时的事件处理
+ */
+renderer.domElement.addEventListener("mouseleave", (event) => {
+    module_urdf.onMouseLeaveCallback();
+});

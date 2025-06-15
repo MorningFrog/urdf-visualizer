@@ -24,24 +24,36 @@
 <body>
     <div id="menu">
         <button id="re-load">%webview.reload%</button>
+
+        <!-- 左侧菜单 -->
         <div id="controls" class="hidden">
             <div id="toggle-controls"></div>
-            <div>
+            <!-- 显示Visual复选框 -->
+            <div class="width_full">
                 <input type="checkbox" name="show-visual" id="show-visual" checked />
                 <label for="show-visual">%webview.showVisual%</label>
             </div>
-            <div>
+            <!-- 显示Collision复选框 -->
+            <div class="width_full">
                 <input type="checkbox" name="show-collision" id="show-collision" />
                 <label for="show-collision">%webview.showCollision%</label>
             </div>
-            <div>
-                <input type="checkbox" name="show-world-frame" id="show-world-frame" checked />
-                <label for="show-world-frame">%webview.showWorldFrame%</label>
-            </div>
-            <div>
+            <!-- 显示世界坐标系复选框 -->
+            <div class="width_full div-checkbox-with-hint">
                 <div>
-                    <input type="checkbox" name="show-joints" id="show-joints" />
-                    <label for="show-joints">%webview.showJointFrames%</label>
+                    <input type="checkbox" name="show-world-frame" id="show-world-frame" checked />
+                    <label for="show-world-frame">%webview.showWorldFrame%</label>
+                </div>
+                <div class="hint" title="%webview.showWorldFrameHint%"></div>
+            </div>
+            <!-- 显示joint坐标系复选框, 调整joint坐标系尺寸滑块 -->
+            <div class="width_full">
+                <div class="div-checkbox-with-hint">
+                    <div>
+                        <input type="checkbox" name="show-joints" id="show-joints" />
+                        <label for="show-joints">%webview.showJointFrames%</label>
+                    </div>
+                    <div class="hint" title="%webview.showJointFramesHint%"></div>
                 </div>
                 <div class="div-frame-size">
                     <label for="joint-size">%webview.jointFrameSize%</label>
@@ -51,10 +63,14 @@
                     </div>
                 </div>
             </div>
-            <div>
-                <div>
-                    <input type="checkbox" name="show-links" id="show-links" />
-                    <label for="show-links">%webview.showLinkFrames%</label>
+            <!-- 显示link坐标系复选框, 调整link坐标系尺寸滑块 -->
+            <div class="width_full">
+                <div class="div-checkbox-with-hint">
+                    <div>
+                        <input type="checkbox" name="show-links" id="show-links" />
+                        <label for="show-links">%webview.showLinkFrames%</label>
+                    </div>
+                    <div class="hint" title="%webview.showLinkFramesHint%"></div>
                 </div>
                 <div class="div-frame-size">
                     <label for="link-size">%webview.linkFrameSize%</label>
@@ -64,7 +80,8 @@
                     </div>
                 </div>
             </div>
-            <div>
+            <!-- Joint列表 -->
+            <div class="width_full">
                 <h1 id="head-joints">Joints</h1>
                 <div class="switch-container">
                     <div>
@@ -80,8 +97,9 @@
             </div>
         </div>
     </div>
-    <!-- 左侧菜单 -->
 
+
+    <!-- 右下消息栏 -->
     <div id="notify-container">
         <!-- `case-` 表示显示的情况
                 - normal: 一般情况(无测量)
@@ -144,8 +162,8 @@
             <span class="notify-content"> %webview.scrollZoom% </span>
         </div>
     </div>
-    <!-- 右下消息栏 -->
 
+    <!-- 右侧菜单 -->
     <div id="operation">
         <div id="div-measure">
             <div class="div-measure-button">
@@ -162,13 +180,12 @@
             </div>
         </div>
     </div>
-    <!-- 右侧菜单 -->
 
-    <div id="urdf-viewer"></div>
     <!-- 主页面 -->
+    <div id="urdf-viewer"></div>
 
-    <div id="tooltip"></div>
     <!-- 悬浮提示框 -->
+    <div id="tooltip"></div>
 
     <script type="module" src="../../dist/webview/preview.js"></script>
 </body>

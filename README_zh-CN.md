@@ -85,6 +85,22 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
+### 4.3.2
+
+增加:
+
+- 部分选项的提示
+- Joint 的轴显示
+
+优化: 
+
+- Joint 和 Link 坐标系分别采用实线和虚线以加以区分
+- 鼠标悬停在模型上时高亮对应的 Joint 和 Link 坐标系
+
+修复:
+
+- Bug: 初次打开时 Collider 意外得可操作(即使没有显示)
+
 ### 4.3.1
 
 增加:
@@ -99,34 +115,20 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 - 测量时图标和功能的同步
 
-### 4.2.0
+### 4.2.x
 
 - 在鼠标悬停时增加了 Link 名称的显示
-- 修复以下 bug: 不论 Visual 和 Collider 是否显示, 都按照 Visual 来显示提示和进行操作
 
-### 4.1.2
-
-- 增加了世界坐标系的显示和隐藏的切换
-
-### 4.1.1
-
-- 修复了 SSH remote server 中加载 mesh 的问题
-- 优化了关节类型的显示
-
-### 4.1.0
+### 4.1.x
 
 - 侧边栏的 Joint 右侧增加类型提示.
 - continuous 关节角度可以在 $-2\pi$-$2\pi$ 之间调节.
-- 使用更高版本的 `Three.js`, 这可能解决与Nvidia高版本驱动不相容的问题.
+- 增加了世界坐标系的显示和隐藏的切换.
 
-### 4.0.1
-
-- 修复了 1.75 版本以下 VSCode 在 urdf 未被配置为 xml 时无法预览的问题.
-- 优化了操作提示, 添加了切换操作提示显示与否的设置.
-
-### 4.0.0
+### 4.0.x
 
 - 添加了多语言支持(i18n), 根据 VSCode 语言自动选择扩展语言.
+- 优化了操作提示, 添加了切换操作提示显示与否的设置.
 
 ### 3.x
 

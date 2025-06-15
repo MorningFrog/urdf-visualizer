@@ -91,6 +91,23 @@ ul {
     margin-top: 5px;
 }
 
+/* 让checkbox和hint两端对齐 */
+div.div-checkbox-with-hint {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 固定hint的尺寸和背景图标 */
+div.hint {
+    width: 15px;
+    height: 15px;
+    background-image: url("../../media/icons/hint.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
 #ul-joints li {
     font-size: 12px;
     font-weight: normal;

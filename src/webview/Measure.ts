@@ -69,27 +69,27 @@ export class Measure {
     // 测量完成状态
     isCompleted = false;
 
-    // 几何对象：存储测量生成的图形
+    // 几何对象:存储测量生成的图形
     EnsuredPoints?: THREE.Points; // 测量点集合
     EnsuredPolyline?: THREE.Line; // 测量线
-    EnsuredFaces?: THREE.Mesh; // 测量面（面积测量专用）
+    EnsuredFaces?: THREE.Mesh; // 测量面(面积测量专用)
     EnsuredCurve?: THREE.Line; // 角度测量弧线
 
-    // 临时对象：用于鼠标移动过程中的预览
-    tempPoints?: THREE.Points; // 临时点（鼠标当前位置）
-    tempLine?: THREE.Line; // 临时线（最后一点到鼠标位置）
+    // 临时对象:用于鼠标移动过程中的预览
+    tempPoints?: THREE.Points; // 临时点(鼠标当前位置)
+    tempLine?: THREE.Line; // 临时线(最后一点到鼠标位置)
     tempLineForArea?: THREE.Line; // 面积测量专用临时线
     tempLabel?: THREE.Sprite; // 临时标签
 
     // 测量点管理
     pointCount = 0; // 已放置点数量
     pointArray: THREE.Vector3[] = []; // 存储所有测量点的坐标
-    lastClickTime?: number; // 记录上次点击时间（用于双击检测）
+    lastClickTime?: number; // 记录上次点击时间(用于双击检测)
 
     // 回调函数集合
     cancleCallback: () => void; // 取消测量回调
     startMeasureCallback: () => void; // 开始测量回调
-    continueMeasureCallback: () => void; // 继续测量（添加点）回调
+    continueMeasureCallback: () => void; // 继续测量(添加点)回调
     completeMeasureCallback: () => void; // 完成测量回调
     closeMeasureCallback: () => void; // 关闭测量回调
     onHoverCallback: () => void; // 悬停模型回调
@@ -156,7 +156,7 @@ export class Measure {
         this.EnsuredPoints = this.createPoints(); // 测量点容器
         this.scene.add(this.EnsuredPoints);
 
-        // 除了坐标测量模式，其他模式都需要创建测量线
+        // 除了坐标测量模式,其他模式都需要创建测量线
         if (this.mode !== MeasureMode.Coordinates) {
             this.EnsuredPolyline = this.createLine(); // 测量线容器
             this.scene.add(this.EnsuredPolyline);
@@ -177,7 +177,7 @@ export class Measure {
     }
 
     /**
-     * 结束测量流程（清理资源）
+     * 结束测量流程(清理资源)
      * 1. 移除所有事件监听
      * 2. 从场景中移除所有测量对象
      * 3. 重置所有状态变量
@@ -218,12 +218,12 @@ export class Measure {
 
     /**
      * 创建点集合对象
-     * @param pointCount 最大点数（默认MAX_POINTS）
+     * @param pointCount 最大点数(默认MAX_POINTS)
      * @returns 配置好的Points对象
      */
     private createPoints(pointCount = this.MAX_POINTS): THREE.Points {
         const geom = new THREE.BufferGeometry();
-        // 预先分配足够空间（MAX_POINTS个三维点）
+        // 预先分配足够空间(MAX_POINTS个三维点)
         const pos = new Float32Array(this.MAX_POINTS * 3);
         geom.setAttribute("position", new THREE.BufferAttribute(pos, 3));
         geom.setDrawRange(0, 0); // 初始不绘制任何点
@@ -234,7 +234,7 @@ export class Measure {
 
     /**
      * 创建线对象
-     * @param pointCount 最大点数（默认MAX_POINTS）
+     * @param pointCount 最大点数(默认MAX_POINTS)
      * @returns 配置好的Line对象
      */
     private createLine(pointCount = this.MAX_POINTS): THREE.Line {
@@ -247,7 +247,7 @@ export class Measure {
     }
 
     /**
-     * 创建面对象（面积测量专用）
+     * 创建面对象(面积测量专用)
      * @returns 配置好的Mesh对象
      */
     private createFaces() {
@@ -277,7 +277,7 @@ export class Measure {
         // 面积测量完成处理
         if (this.mode === MeasureMode.Area && this.EnsuredPolyline) {
             if (count > 2) {
-                // 闭合多边形（连接首尾点）
+                // 闭合多边形(连接首尾点)
                 const p0 = this.pointArray[0];
                 const p1 = this.pointArray[1];
                 const p2 = this.pointArray[count - 1];
@@ -413,7 +413,7 @@ export class Measure {
         this.mouseMoved = false;
     };
 
-    // 鼠标移动事件处理（实时更新预览）
+    // 鼠标移动事件处理(实时更新预览)
     mousemove = (e: MouseEvent) => {
         this.mouseMoved = true; // 标记已移动
 
@@ -436,7 +436,7 @@ export class Measure {
         }
         this.onHoverCallback(); // 触发悬停回调
 
-        // 更新/创建临时点（鼠标位置预览）
+        // 更新/创建临时点(鼠标位置预览)
         const points = this.tempPoints || this.createPoints(1);
         const geom = points.geometry;
         const pos = (geom.attributes && geom.attributes.position) || undefined;
@@ -445,7 +445,7 @@ export class Measure {
             geom.setDrawRange(0, 1);
             pos.needsUpdate = true;
         }
-        // 如果临时点不存在，则添加到场景中
+        // 如果临时点不存在,则添加到场景中
         if (!this.tempPoints) {
             this.scene.add(points);
             this.tempPoints = points;
@@ -474,7 +474,7 @@ export class Measure {
                 pos.setXYZ(0, p0.x, p0.y, p0.z); // 设置第一个点为上一个点
                 pos.setXYZ(1, point.x, point.y, point.z); // 设置第二个点为当前鼠标位置
                 let range = 2; // 默认绘制范围为2
-                // 如果是面积测量模式，设置第三个点为起点（闭合预览）
+                // 如果是面积测量模式,设置第三个点为起点(闭合预览)
                 if (
                     this.mode === MeasureMode.Area &&
                     this.pointArray.length > 1
@@ -491,7 +491,7 @@ export class Measure {
                 pos.needsUpdate = true;
             }
 
-            // 距离测量预览：添加距离标签
+            // 距离测量预览:添加距离标签
             if (this.mode === MeasureMode.Distance) {
                 const dist = p0.distanceTo(point);
                 const label = `${numberToString(dist)} ${this.getUnitString()}`;
@@ -519,7 +519,7 @@ export class Measure {
         }
     };
 
-    // 双击事件处理（完成测量）
+    // 双击事件处理(完成测量)
     dblclick = (e: MouseEvent) => {
         this.complete(true); // 强制检查有效性
     };
@@ -548,7 +548,7 @@ export class Measure {
             return;
         }
 
-        // 双击检测：如果上次点击时间在500毫秒内，则忽略此次点击
+        // 双击检测:如果上次点击时间在500毫秒内,则忽略此次点击
         const now = Date.now();
         if (this.lastClickTime && now - this.lastClickTime < 500) {
             return;
@@ -569,7 +569,7 @@ export class Measure {
                 pos.needsUpdate = true;
             }
             if (this.mode === MeasureMode.Coordinates) {
-                // 坐标测量模式：添加坐标标签
+                // 坐标测量模式:添加坐标标签
                 if (this.tempLabel) {
                     this.EnsuredPoints.add(this.tempLabel);
                 }
@@ -599,7 +599,7 @@ export class Measure {
             this.EnsuredPolyline.computeLineDistances(); // LineDashedMaterial requires to call this
         }
 
-        // 面积测量：更新三角面
+        // 面积测量:更新三角面
         if (this.mode === MeasureMode.Area && this.EnsuredFaces) {
             const geom = this.EnsuredFaces.geometry;
 
@@ -618,9 +618,9 @@ export class Measure {
             // 当点数≥3时创建新三角面
             const len = newPositions.length / 3;
             if (len > 2) {
-                // 添加顶点索引（新顶点与首两个顶点形成面）
+                // 添加顶点索引(新顶点与首两个顶点形成面)
                 let indices = geom.index ? Array.from(geom.index.array) : [];
-                indices.push(0, len - 2, len - 1); // 注意：这里形成面只连接首点
+                indices.push(0, len - 2, len - 1); // 注意:这里形成面只连接首点
 
                 // 更新索引缓冲
                 geom.setIndex(indices);
@@ -634,7 +634,7 @@ export class Measure {
         this.pointArray.push(point);
         this.continueMeasureCallback();
 
-        // 角度测量：满足三点自动完成
+        // 角度测量:满足三点自动完成
         if (this.mode === MeasureMode.Angle && this.pointArray.length >= 3) {
             this.complete();
         }
@@ -683,7 +683,7 @@ export class Measure {
                     item.object.name !== this.OBJ_NAME &&
                     item.object.name !== this.LABEL_NAME
             );
-            // 返回有效交点（在距离限制内）
+            // 返回有效交点(在距离限制内)
             if (
                 intersects.length > 0 &&
                 intersects[0].distance < this.MAX_DISTANCE
