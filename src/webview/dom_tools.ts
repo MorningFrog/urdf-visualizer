@@ -1,6 +1,6 @@
 import { vscode } from "./vscode_api";
 
-class DomElements {
+export class DomElements {
     public readonly reloadButton = document.getElementById(
         "re-load"
     ) as HTMLButtonElement; // 重新加载按钮
@@ -53,7 +53,13 @@ class DomElements {
         "notify-esc-cancle"
     ) as HTMLDivElement;
 
-    constructor() {
+    private havePoints = false; // 测量模式下是否已经有点了
+    public isDegree = false; // 当前角度模式是否为角度(而不是弧度)
+
+    /**
+     * @param updateDegreeRadiansCallback 更新角度显示模式时的回调
+     */
+    constructor(updateDegreeRadiansCallback: () => void) {
         // 确保所有元素都已加载
         if (
             !this.reloadButton ||
@@ -92,7 +98,299 @@ class DomElements {
             this.degreesButton.classList.add("checked");
             this.radiansButton.classList.remove("checked");
         });
+        this.radiansButton.addEventListener("click", () => {
+            if (!this.isDegree) {
+                return;
+            }
+            this.isDegree = false;
+            updateDegreeRadiansCallback();
+        });
+        this.degreesButton.addEventListener("click", () => {
+            if (this.isDegree) {
+                return;
+            }
+            this.isDegree = true;
+            updateDegreeRadiansCallback();
+        });
+    }
+
+    /**
+     * 更新 tooltip 显示的文本
+     */
+    public updateTooltipText(angle: number) {
+        if (this.isDegree) {
+            this.tooltip.textContent = Math.round(
+                (angle * 180) / Math.PI
+            ).toString();
+        } else {
+            this.tooltip.textContent = angle.toFixed(2);
+        }
+    }
+
+    /**
+     * 情况关节列表
+     */
+    public clearJointList() {
+        this.ulJoints.innerHTML = "";
+    }
+
+    /**
+     * 添加关节
+     */
+    public addJoint(
+        joint_name: string,
+        joint_name_processed: string,
+        joint_type: string,
+        joint_limit: {
+            lower: Number;
+            upper: Number;
+        },
+        updateJointValueFromSliderCallback: (
+            value: number,
+            joint_name: string
+        ) => void,
+        hoverCallback: (joint_name: string) => void,
+        unhoverCallback: (joint_name: string) => void
+    ) {
+        const li = document.createElement("li"); // 列表项
+        li.id = `joint_${joint_name_processed}`;
+        li.classList.add("joint-item");
+        li.classList.add("width_wrapper");
+        li.innerHTML = `
+        <div class="div-joint-name width_full">
+            <label>${joint_name}</label>
+            <label class="joint_type ${joint_type}">${joint_type}</label>
+        </div>
+        <div class="div-slider width_full">
+            <div>
+                <input
+                    type="range"
+                    name="slider_joint_${joint_name_processed}"
+                    id="slider_joint_${joint_name_processed}"
+                    class="slider-joint"
+                    min="${joint_limit.lower}"
+                    max="${joint_limit.upper}"
+                    step="0.01"
+                    value="0.0"
+                />
+            </div>
+            <div class="div-scale">
+                <div class="div-scale-item lower-limit">
+                    <div>|</div>
+                    <div id="joint_${joint_name_processed}_limit_lower"></div>
+                </div>
+                <div class="div-scale-item" style="left: ${
+                    // @ts-ignore
+                    ((0 - joint_limit.lower) /
+                        // @ts-ignore
+                        (joint_limit.upper - joint_limit.lower)) *
+                    // @ts-ignore
+                    100
+                }%;">
+                    <div>|</div>
+                </div>
+                <div class="div-scale-item upper-limit">
+                    <div>|</div>
+                    <div id="joint_${joint_name_processed}_limit_upper"></div>
+                </div>
+            </div>
+        </div>
+        `;
+        // 绑定滑块事件
+        const slider = li.querySelector(
+            `#slider_joint_${joint_name_processed}`
+        ) as HTMLInputElement;
+        if (slider) {
+            // 更新关节角度
+            slider.addEventListener("input", () => {
+                const value = parseFloat(slider.value);
+                updateJointValueFromSliderCallback(value, joint_name);
+                this.updateTooltipText(value);
+            });
+            // 显示值
+            slider.addEventListener("mouseover", (event) => {
+                const value = parseFloat(slider.value);
+                this.updateTooltipText(value);
+                this.tooltip.style.display = "block";
+                this.tooltip.style.left = `${event.pageX}px`;
+                const slider_top = slider.getBoundingClientRect().top;
+                this.tooltip.style.top = `${slider_top - 30}px`;
+            });
+            // 隐藏值
+            slider.addEventListener("mouseout", () => {
+                this.tooltip.style.display = "none";
+            });
+            // 更改位置
+            slider.addEventListener("mousemove", (event) => {
+                this.tooltip.style.left = `${event.pageX}px`;
+                const slider_top = slider.getBoundingClientRect().top;
+                this.tooltip.style.top = `${slider_top - 30}px`;
+            });
+        }
+        // 悬停事件处理
+        li.addEventListener("mouseenter", () => {
+            hoverCallback(joint_name);
+        });
+        li.addEventListener("mouseleave", () => {
+            unhoverCallback(joint_name);
+        });
+
+        this.ulJoints.appendChild(li);
+    }
+
+    /**
+     * 更新关节角度范围
+     */
+    public updateJointLimit(
+        joint_name_processed: string,
+        joint_limit: {
+            lower: Number;
+            upper: Number;
+        }
+    ) {
+        const element_joint_limit_upper = document.getElementById(
+            `joint_${joint_name_processed}_limit_upper`
+        ) as HTMLInputElement;
+        const element_joint_limit_lower = document.getElementById(
+            `joint_${joint_name_processed}_limit_lower`
+        ) as HTMLInputElement;
+        if (this.isDegree) {
+            element_joint_limit_upper.innerText = Math.round(
+                // @ts-ignore
+                (joint_limit.upper * 180) / Math.PI
+            ).toString();
+            element_joint_limit_lower.innerText = Math.round(
+                // @ts-ignore
+                (joint_limit.lower * 180) / Math.PI
+            ).toString();
+        } else {
+            element_joint_limit_upper.innerText = joint_limit.upper.toFixed(2);
+            element_joint_limit_lower.innerText = joint_limit.lower.toFixed(2);
+        }
+    }
+
+    /**
+     * 鼠标悬浮在模型上回调
+     */
+    public modelHoverCallback() {
+        // 更新操作提示
+        this.notifyDragJoint.classList.remove("disabled");
+        this.notifyDragRotate.classList.add("disabled");
+        this.notifyDragMove.classList.add("disabled");
+    }
+
+    /**
+     * 鼠标移出模型回调
+     */
+    public modelUnhoverCallback() {
+        // 更新操作提示
+        this.notifyDragJoint.classList.add("disabled");
+        this.notifyDragRotate.classList.remove("disabled");
+        this.notifyDragMove.classList.remove("disabled");
+    }
+
+    /**
+     * 开始测量模式回调
+     */
+    public startMeasureCallback() {
+        const notifyItems =
+            document.querySelectorAll<HTMLElement>(".notify-item");
+        notifyItems.forEach((item) => {
+            if (item.classList.contains("case-measure")) {
+                // 显示测量提示
+                item.classList.remove("hidden");
+
+                if (item.id === "notify-esc-cancle") {
+                    item.classList.remove("disabled");
+                } else {
+                    item.classList.add("disabled");
+                }
+            } else if (item.classList.contains("case-all")) {
+                item.classList.remove("disabled");
+            } else {
+                // 隐藏其他提示
+                item.classList.add("hidden");
+                item.classList.remove("disabled");
+            }
+        });
+        this.notifyClickMorePoints.classList.add("hidden");
+        this.notifyClickRestart.classList.add("hidden");
+        this.notifyDblclickComplete.classList.remove("disabled");
+
+        this.havePoints = false;
+    }
+
+    /**
+     * 继续测量回调
+     */
+    public continueMeasureCallback() {
+        this.notifyDblclickComplete.classList.remove("disabled");
+        this.notifyClickFirstPoint.classList.add("hidden");
+        this.notifyClickMorePoints.classList.remove("hidden");
+        this.havePoints = true;
+    }
+
+    /**
+     * 完成测量回调
+     */
+    public completeMeasureCallback() {
+        this.notifyDblclickComplete.classList.add("hidden");
+        this.notifyClickFirstPoint.classList.add("hidden");
+        this.notifyClickMorePoints.classList.add("hidden");
+        this.notifyClickRestart.classList.remove("hidden");
+        this.notifyClickRestart.classList.remove("disabled");
+    }
+
+    /**
+     * 关闭测量回调
+     */
+    public closeMeasureCallback() {
+        const notifyItems =
+            document.querySelectorAll<HTMLElement>(".notify-item");
+        notifyItems.forEach((item) => {
+            if (item.classList.contains("case-normal")) {
+                item.classList.remove("hidden");
+                item.classList.add("disabled");
+            } else if (item.classList.contains("case-all")) {
+                item.classList.remove("disabled");
+            } else {
+                item.classList.add("hidden");
+                item.classList.remove("disabled");
+            }
+        });
+    }
+
+    /**
+     * 测量模式下, 鼠标悬浮在模型回调
+     */
+    public measureHoverCallback() {
+        if (this.havePoints) {
+            this.notifyClickMorePoints.classList.remove("disabled");
+        } else {
+            this.notifyClickFirstPoint.classList.remove("disabled");
+        }
+        this.notifyDragRotate.classList.add("disabled");
+        this.notifyDragMove.classList.add("disabled");
+    }
+
+    /**
+     * 测量模式下, 鼠标移出模型回调
+     */
+    public measureUnhoverCallback() {
+        this.notifyClickFirstPoint.classList.add("disabled");
+        this.notifyClickMorePoints.classList.add("disabled");
+        this.notifyDragRotate.classList.remove("disabled");
+        this.notifyDragMove.classList.remove("disabled");
+    }
+
+    /**
+     * 设置是否显示操作提示
+     */
+    public setShowTips(show: boolean) {
+        if (show) {
+            this.notifyContainer.classList.remove("hidden");
+        } else {
+            this.notifyContainer.classList.add("hidden");
+        }
     }
 }
-
-export const domElements = new DomElements();

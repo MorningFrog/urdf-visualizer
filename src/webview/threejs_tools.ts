@@ -1,4 +1,54 @@
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+
+/**
+ * 创建 three.js scene
+ */
+export function createScene() {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xcccccc);
+
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.set(10, 10, 10);
+    camera.up.set(0, 0, 1);
+    camera.lookAt(0, 0, 0);
+    camera.layers.enable(1); // 显示关节轴等注释层
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setClearColor(0xffffff);
+    renderer.setClearAlpha(0);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const urdfViewerElement = document.getElementById("urdf-viewer");
+    if (urdfViewerElement) {
+        urdfViewerElement.appendChild(renderer.domElement);
+    } else {
+        throw new Error("urdf-viewer element not found");
+    }
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, Math.PI);
+    dirLight.position.set(4, 10, 10);
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.normalBias = 0.001;
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+    scene.add(dirLight.target);
+
+    const ambientLight = new THREE.HemisphereLight("#fff", "#000");
+    ambientLight.groundColor.lerp(ambientLight.color, 0.5 * Math.PI);
+    ambientLight.intensity = 0.5;
+    ambientLight.position.set(0, 0, 1);
+    scene.add(ambientLight);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.minDistance = 0.1;
+    controls.target.y = 1;
+    controls.update();
+
+    return { scene, camera, renderer, dirLight, ambientLight, controls };
+}
 
 function createTextTexture(
     text: string,

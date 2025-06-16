@@ -536,6 +536,29 @@ export class ModuleURDF {
         });
     };
 
+    /**
+     * 获取关节的最小和最大角度
+     */
+    public getJointLimit(joint_name: string) {
+        const joint = this.robot?.joints[joint_name];
+        if (joint) {
+            if (joint.jointType === "continuous") {
+                return {
+                    lower: -2 * Math.PI,
+                    upper: 2 * Math.PI,
+                };
+            }
+            return {
+                lower: joint.limit.lower,
+                upper: joint.limit.upper,
+            };
+        }
+        return {
+            lower: 0,
+            upper: 0,
+        };
+    }
+
     render = () => {
         this.renderCallback();
     };
