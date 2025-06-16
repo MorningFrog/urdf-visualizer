@@ -85,6 +85,10 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
+修复:
+
+- Bug: 第一次打开时有时不会加载模型
+
 ### 4.3.2
 
 增加:

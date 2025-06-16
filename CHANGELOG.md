@@ -1,5 +1,15 @@
 # Change Log
 
+## [4.3.3]
+
+修复:
+
+Fixed:
+
+- Bug: 第一次打开时有时不会加载模型
+  
+  Bug: Sometimes the model does not load when opened for the first time
+
 ## [4.3.2]
 
 增加:

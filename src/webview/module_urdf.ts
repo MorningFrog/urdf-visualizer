@@ -164,9 +164,12 @@ export class ModuleURDF {
             camera,
             controls,
             renderer.domElement,
-            this.updateJointCallback,
-            this.onHoverCallback,
-            this.onUnhoverCallback
+            (joint: URDFJoint, angle: number) =>
+                this.updateJointCallback(joint, angle),
+            (joint: URDFJoint | null, link: URDFLink | null) =>
+                this.onHoverCallback(joint, link),
+            (joint: URDFJoint | null, link: URDFLink | null) =>
+                this.onUnhoverCallback(joint, link)
         );
 
         // 创建坐标系
@@ -307,7 +310,7 @@ export class ModuleURDF {
     /**
      * 处理拖动导致的关节角度变化
      */
-    updateJointCallback = (joint: URDFJoint, angle: number) => {
+    updateJointCallback(joint: URDFJoint, angle: number) {
         const joint_name = joint.name;
         const joint_name_processed = this.postprocessIdAndClass(joint_name);
         const slider = document.getElementById(
@@ -316,18 +319,18 @@ export class ModuleURDF {
         if (slider) {
             slider.value = angle.toString();
         }
-    };
+    }
 
     /**
      * 处理 id 和 class, 将其中的 `/` 替换为 `__`
      * @param str
      */
-    postprocessIdAndClass = (str: string) => {
+    public postprocessIdAndClass(str: string) {
         return str.replace(/\//g, "__");
-    };
+    }
 
     // 等待所有 mesh 加载完成
-    waitForNumMeshLoadingToZero = (max_wait_time = 5000) => {
+    waitForNumMeshLoadingToZero(max_wait_time = 5000) {
         return new Promise((resolve) => {
             const interval = setInterval(() => {
                 max_wait_time -= this.waitInterval;
@@ -337,19 +340,19 @@ export class ModuleURDF {
                 }
             }, this.waitInterval); // 每 waitInterval 毫秒检查一次
         });
-    };
+    }
 
     // 删除机器人
-    removeRobot = () => {
+    removeRobot() {
         if (this.robot) {
             this.scene.remove(this.robot);
             this.robot = null;
             this.jointAxes = {};
         }
-    };
+    }
 
     // 加载 URDF
-    LoadURDF = async () => {
+    public async LoadURDF() {
         // 删除旧机器人
         this.removeRobot();
         // 解析 URDF
@@ -387,12 +390,12 @@ export class ModuleURDF {
         this.loadJointAxes();
         // 添加 link 坐标系
         this.loadLinkAxes();
-    };
+    }
 
     /**
      * 处理重置视野
      */
-    resetCameraView = () => {
+    resetCameraView() {
         if (!this.resetCamera) {
             return;
         }
@@ -435,12 +438,12 @@ export class ModuleURDF {
         // 重设坐标系尺寸
         const max_coord = Math.max(box.max.x, box.max.y, box.max.z) * 1.5;
         this.axesHelper.scale.set(max_coord, max_coord, max_coord);
-    };
+    }
 
     /**
      * 处理 Joint 坐标系显示
      */
-    loadJointAxes = () => {
+    loadJointAxes() {
         Object.entries<URDFJoint>(this.robot?.joints || {}).forEach(
             ([joint_name, joint]) => {
                 if (joint.jointType === "fixed") {
@@ -469,12 +472,12 @@ export class ModuleURDF {
                 }
             }
         );
-    };
+    }
 
     /**
      * 处理 link 坐标系显示
      */
-    loadLinkAxes = () => {
+    loadLinkAxes() {
         Object.entries<URDFLink>(this.robot?.links || {}).forEach(
             ([link_name, link]) => {
                 if (this.showLinksToggle.checked) {
@@ -490,22 +493,22 @@ export class ModuleURDF {
                 }
             }
         );
-    };
+    }
 
     /**
      * 更新关节值
      */
-    updateJointValue = (joint_name: string, value: number) => {
+    public updateJointValue(joint_name: string, value: number) {
         const joint = this.robot?.joints[joint_name];
         if (joint) {
             joint.setJointValue(value);
         }
-    };
+    }
 
     /**
      * 处理 Visual 和 Collision 的显示切换
      */
-    showVisualCollison = () => {
+    showVisualCollison() {
         function setLayerRecursive(object: THREE.Object3D, layer: number) {
             object.layers.set(layer); // 设置当前对象
             object.traverse((child1) => child1.layers.set(layer)); // 递归子对象
@@ -531,7 +534,7 @@ export class ModuleURDF {
                 }
             }
         });
-    };
+    }
 
     /**
      * 获取关节的最小和最大角度
@@ -556,55 +559,52 @@ export class ModuleURDF {
         };
     }
 
-    render = () => {
+    public render() {
         this.renderCallback();
-    };
+    }
 
     /**
      * 鼠标悬停在模型上回调
      */
-    onHoverCallback = (joint: URDFJoint | null, link: URDFLink | null) => {
+    onHoverCallback(joint: URDFJoint | null, link: URDFLink | null) {
         // 调用自身的悬停回调
         this.selfHoverCallback(joint, link);
 
         // 调用父类的悬停回调
         this.modelHoverCallback();
-    };
+    }
 
     /**
      * 鼠标移出模型回调
      */
-    onUnhoverCallback = (joint: URDFJoint | null, link: URDFLink | null) => {
+    onUnhoverCallback(joint: URDFJoint | null, link: URDFLink | null) {
         // 调用自身的移出回调
         this.selfUnhoverCallback(joint, link);
 
         // 调用父类的移出回调
         this.modelUnhoverCallback();
-    };
+    }
 
     /**
      * 鼠标悬停在模型上回调
      */
-    public selfHoverCallback = (
-        joint: URDFJoint | null,
-        link: URDFLink | null
-    ) => {
+    public selfHoverCallback(joint: URDFJoint | null, link: URDFLink | null) {
         if (joint) {
             this.jointAxes[joint.name]?.setHovered(true);
         }
         if (link) {
             this.linkAxes[link.name]?.setHovered(true);
         }
-    };
+    }
 
     /**
      * 鼠标移出模型回调
      */
-    public selfUnhoverCallback = (
+    public selfUnhoverCallback(
         joint: URDFJoint | null,
         link: URDFLink | null,
         fullUnhover = false
-    ) => {
+    ) {
         if (fullUnhover) {
             // 如果是全局移出, 则清除所有悬停状态
             Object.values(this.jointAxes).forEach((joint) => {
@@ -622,16 +622,16 @@ export class ModuleURDF {
         if (link) {
             this.linkAxes[link.name]?.setHovered(false);
         }
-    };
+    }
 
     /**
      * 鼠标移出画布回调
      */
-    public onMouseLeaveCallback = () => {
+    public onMouseLeaveCallback() {
         this.dragControls.onMouseLeaveCallback();
         // 清除所有悬停状态
         this.selfUnhoverCallback(null, null, true);
-    };
+    }
 
     set packages(packages: { [key: string]: string }) {
         this.loaderURDF.packages = packages;

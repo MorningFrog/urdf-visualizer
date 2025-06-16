@@ -83,7 +83,8 @@ export function activate(context: vscode.ExtensionContext) {
     // 向 webview 发送完整的 URDF 文件内容
     function sendURDFContent(
         document: vscode.TextDocument,
-        other_params: object = {}
+        other_params: object = {},
+        message_type = "urdf"
     ) {
         if (!activePanel) {
             return;
@@ -109,7 +110,7 @@ export function activate(context: vscode.ExtensionContext) {
         // 发送 URDF 文件内容
         function sendURDF(urdfText: string, workingPath: string) {
             activePanel?.webview.postMessage({
-                type: "urdf",
+                type: message_type,
                 urdfText: urdfText,
                 packages: packagesResolved,
                 workingPath: workingPath,
@@ -129,6 +130,7 @@ export function activate(context: vscode.ExtensionContext) {
                     // 更新 previousDocument
                     previousDocument = editor.document;
                 } else {
+                    // 还没有Webview panel, 则创建
                     activePanel = vscode.window.createWebviewPanel(
                         "urdfVisualizer",
                         "URDF/Xacro Preview",
@@ -162,19 +164,22 @@ export function activate(context: vscode.ExtensionContext) {
                         )
                     );
 
-                    uriPrefix = activePanel.webview.asWebviewUri(vscode.Uri.file(
-                        path.dirname(editor.document.fileName)
-                    )).authority;
+                    uriPrefix = activePanel.webview.asWebviewUri(
+                        vscode.Uri.file(path.dirname(editor.document.fileName))
+                    ).authority;
 
-                    // 发送初始的 URDF 文件内容到 Webview
-                    sendURDFContent(editor.document, { reset_camera: true, uriPrefix: uriPrefix });
-
-                    // 发送背景颜色和是否显示提示
-                    activePanel.webview.postMessage({
-                        type: "settings",
-                        backgroundColor: config.get<string>("backgroundColor"),
-                        showTips: config.get<boolean>("showTips"),
-                    });
+                    // 让 Webview 初始化页面并发送 URDF
+                    sendURDFContent(
+                        editor.document,
+                        {
+                            reset_camera: true,
+                            uriPrefix: uriPrefix,
+                            backgroundColor:
+                                config.get<string>("backgroundColor"),
+                            showTips: config.get<boolean>("showTips"),
+                        },
+                        "init"
+                    );
 
                     // 更新 previousDocument
                     previousDocument = editor.document;
@@ -191,7 +196,8 @@ export function activate(context: vscode.ExtensionContext) {
                             }
                             if (document) {
                                 sendURDFContent(document, {
-                                    reset_camera: true, uriPrefix: uriPrefix
+                                    reset_camera: true,
+                                    uriPrefix: uriPrefix,
                                 });
                             }
                         } else if (message.type === "error") {
@@ -235,7 +241,10 @@ export function activate(context: vscode.ExtensionContext) {
                 checkURDFXacroFile(editor.document)
             ) {
                 previousDocument = editor.document;
-                sendURDFContent(editor.document, { reset_camera: true, uriPrefix: uriPrefix });
+                sendURDFContent(editor.document, {
+                    reset_camera: true,
+                    uriPrefix: uriPrefix,
+                });
             }
         }
     );

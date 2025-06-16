@@ -41,7 +41,7 @@ class Main {
     // 资源路径前缀
     uriPrefix = "https://file%2B.vscode-resource.vscode-cdn.net";
 
-    constructor() {
+    constructor(message: any = undefined) {
         this.domElements = new DomElements(() => {
             this.updateDegreeRadians();
         });
@@ -90,6 +90,9 @@ class Main {
         this.renderer.domElement.addEventListener("mouseleave", (event) => {
             this.module_urdf.onMouseLeaveCallback();
         });
+
+        // 处理消息
+        message && this.vscodeMessageCallback(message);
     }
 
     /**
@@ -204,7 +207,18 @@ class Main {
      * @param message 必须包含 type 键
      */
     public vscodeMessageCallback(message: any) {
-        if (message.type === "urdf") {
+        if (message.type === "settings" || message.type === "init") {
+            if (message.backgroundColor) {
+                this.scene.background = new THREE.Color(
+                    message.backgroundColor
+                );
+                this.render();
+            }
+            if (message.showTips !== undefined) {
+                this.domElements.setShowTips(message.showTips);
+            }
+        }
+        if (message.type === "urdf" || message.type === "init") {
             if (message.uriPrefix) {
                 // 去除末尾的 `/`
                 if (message.uriPrefix.endsWith("/")) {
@@ -233,16 +247,6 @@ class Main {
                 this.module_urdf.urdfText = message.urdfText;
                 this.loadRobot();
             }
-        } else if (message.type === "settings") {
-            if (message.backgroundColor) {
-                this.scene.background = new THREE.Color(
-                    message.backgroundColor
-                );
-                this.render();
-            }
-            if (message.showTips !== undefined) {
-                this.domElements.setShowTips(message.showTips);
-            }
         }
     }
 
@@ -266,12 +270,11 @@ class Main {
     }
 }
 
-main = new Main();
-
 // 监听来自 vscode 的消息
 window.addEventListener("message", (event) => {
     const message = event.data;
     if (message.type === "init") {
+        main = new Main(message);
     } else {
         main?.vscodeMessageCallback(message);
     }

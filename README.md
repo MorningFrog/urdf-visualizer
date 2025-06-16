@@ -84,6 +84,12 @@ There are three installation methods:
 
 ## Release Notes
 
+### 4.3.3
+
+Fixed:
+
+- Bug: Sometimes the model does not load when opened for the first time
+
 ### 4.3.2
 
 Added: 
