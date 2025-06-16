@@ -80,9 +80,14 @@ ul {
     opacity: 0.5;
 }
 
-#controls #head-joints {
+#controls .head-joints-and-links {
     text-align: center;
     font-size: 16px;
+    font-weight: normal;
+}
+
+#controls .ul-joints-and-links li {
+    font-size: 12px;
     font-weight: normal;
 }
 
@@ -106,11 +111,6 @@ div.hint {
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
-}
-
-#ul-joints li {
-    font-size: 12px;
-    font-weight: normal;
 }
 
 .width_wrapper {

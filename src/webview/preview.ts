@@ -1,9 +1,4 @@
-declare function acquireVsCodeApi(): {
-    postMessage: (message: any) => void;
-    getState: () => any;
-    setState: (newState: any) => void;
-};
-const vscode = acquireVsCodeApi();
+import { vscode } from "./vscode_api";
 
 import * as THREE from "three";
 
@@ -16,69 +11,8 @@ import { ModuleMeasure } from "./module_measure";
 // 导入URDF模块
 import { ModuleURDF } from "./module_urdf";
 
-// 获取可操作元素
-const reloadButton = document.getElementById("re-load") as HTMLButtonElement; // 重新加载按钮
-const controlsToggle = document.getElementById(
-    "toggle-controls"
-) as HTMLDivElement; // 切换控制按钮的显示
-const controlsel = document.getElementById("controls") as HTMLDivElement; // 控制按钮
-const ulJoints = document.getElementById("ul-joints") as HTMLUListElement;
-const tooltip = document.getElementById("tooltip") as HTMLDivElement;
-const radiansButton = document.getElementById(
-    "switch-radians"
-) as HTMLButtonElement;
-const degreesButton = document.getElementById(
-    "switch-degrees"
-) as HTMLButtonElement;
-const notifyContainer = document.getElementById(
-    "notify-container"
-) as HTMLDivElement;
-const notifyDragJoint = document.getElementById(
-    "notify-drag-joint"
-) as HTMLDivElement;
-const notifyDragRotate = document.getElementById(
-    "notify-drag-rotate"
-) as HTMLDivElement;
-const notifyDragMove = document.getElementById(
-    "notify-drag-move"
-) as HTMLDivElement;
-const notifyClickFirstPoint = document.getElementById(
-    "notify-click-first-point"
-) as HTMLDivElement;
-const notifyClickMorePoints = document.getElementById(
-    "notify-click-more-points"
-) as HTMLDivElement;
-const notifyClickRestart = document.getElementById(
-    "notify-click-restart"
-) as HTMLDivElement;
-const notifyDblclickComplete = document.getElementById(
-    "notify-dblclick-complete"
-) as HTMLDivElement;
-const notifyEscCancle = document.getElementById(
-    "notify-esc-cancle"
-) as HTMLDivElement;
-
-// 确保所有元素都已加载
-if (
-    !reloadButton ||
-    !controlsToggle ||
-    !controlsel ||
-    !ulJoints ||
-    !tooltip ||
-    !radiansButton ||
-    !degreesButton ||
-    !notifyContainer ||
-    !notifyDragJoint ||
-    !notifyDragRotate ||
-    !notifyDragMove ||
-    !notifyClickFirstPoint ||
-    !notifyClickMorePoints ||
-    !notifyClickRestart ||
-    !notifyDblclickComplete ||
-    !notifyEscCancle
-) {
-    throw new Error("Element not found");
-}
+// 导入dom部分
+import { domElements } from "./dom_tools";
 
 /**
  * init three.js scene
@@ -213,9 +147,9 @@ window.addEventListener("message", (event) => {
         }
         if (message.showTips !== undefined) {
             if (message.showTips === true) {
-                notifyContainer.classList.remove("hidden");
+                domElements.notifyContainer.classList.remove("hidden");
             } else {
-                notifyContainer.classList.add("hidden");
+                domElements.notifyContainer.classList.add("hidden");
             }
         }
     }
@@ -257,12 +191,10 @@ function getJointLimit(joint_name: string) {
 }
 
 /**
- * 更新关节列表
+ * 更新 Joint 列表
  */
 function updateJointList() {
-    if (ulJoints) {
-        ulJoints.innerHTML = "";
-    }
+    domElements.ulJoints.innerHTML = "";
     Object.entries<URDFJoint>(module_urdf.robot?.joints || {}).forEach(
         ([joint_name, joint]) => {
             if (joint.jointType === "fixed") {
@@ -332,20 +264,20 @@ function updateJointList() {
                 slider.addEventListener("mouseover", (event) => {
                     const value = slider.value;
                     updateTooltipText(parseFloat(value));
-                    tooltip.style.display = "block";
-                    tooltip.style.left = `${event.pageX}px`;
+                    domElements.tooltip.style.display = "block";
+                    domElements.tooltip.style.left = `${event.pageX}px`;
                     const slider_top = slider.getBoundingClientRect().top;
-                    tooltip.style.top = `${slider_top - 30}px`;
+                    domElements.tooltip.style.top = `${slider_top - 30}px`;
                 });
                 // 隐藏值
                 slider.addEventListener("mouseout", () => {
-                    tooltip.style.display = "none";
+                    domElements.tooltip.style.display = "none";
                 });
                 // 更改位置
                 slider.addEventListener("mousemove", (event) => {
-                    tooltip.style.left = `${event.pageX}px`;
+                    domElements.tooltip.style.left = `${event.pageX}px`;
                     const slider_top = slider.getBoundingClientRect().top;
-                    tooltip.style.top = `${slider_top - 30}px`;
+                    domElements.tooltip.style.top = `${slider_top - 30}px`;
                 });
             }
 
@@ -357,11 +289,16 @@ function updateJointList() {
                 module_urdf.selfUnhoverCallback(joint, null);
             });
 
-            ulJoints?.appendChild(li);
+            domElements.ulJoints.appendChild(li);
         }
     );
     updateDegreeRadians();
 }
+
+/**
+ * 更新 Link 列表
+ */
+function updateLinkList() {}
 
 /**
  * 根据显示弧度制和角度制切换显示
@@ -416,9 +353,11 @@ function updateJointValueFromSlider(value: string, joint_name: string) {
  */
 function updateTooltipText(angle: number) {
     if (isDegree) {
-        tooltip.textContent = Math.round((angle * 180) / Math.PI).toString();
+        domElements.tooltip.textContent = Math.round(
+            (angle * 180) / Math.PI
+        ).toString();
     } else {
-        tooltip.textContent = angle.toFixed(2);
+        domElements.tooltip.textContent = angle.toFixed(2);
     }
 }
 
@@ -442,47 +381,36 @@ function render() {
 }
 
 // 处理交互
-reloadButton.addEventListener("click", () => {
-    vscode.postMessage({ type: "getNewURDF" });
-});
 
-controlsToggle.addEventListener("click", () =>
-    controlsel.classList.toggle("hidden")
-);
-
-radiansButton.addEventListener("click", () => {
+domElements.radiansButton.addEventListener("click", () => {
     if (!isDegree) {
         return;
     }
     isDegree = false;
-    radiansButton.classList.add("checked");
-    degreesButton.classList.remove("checked");
     updateDegreeRadians();
 });
 
-degreesButton.addEventListener("click", () => {
+domElements.degreesButton.addEventListener("click", () => {
     if (isDegree) {
         return;
     }
     isDegree = true;
-    degreesButton.classList.add("checked");
-    radiansButton.classList.remove("checked");
     updateDegreeRadians();
 });
 
 function modelHoverCallback() {
     // 触发悬停
     // 更新操作提示
-    notifyDragJoint.classList.remove("disabled");
-    notifyDragRotate.classList.add("disabled");
-    notifyDragMove.classList.add("disabled");
+    domElements.notifyDragJoint.classList.remove("disabled");
+    domElements.notifyDragRotate.classList.add("disabled");
+    domElements.notifyDragMove.classList.add("disabled");
 }
 
 function modelUnhoverCallback() {
     // 更新操作提示
-    notifyDragJoint.classList.add("disabled");
-    notifyDragRotate.classList.remove("disabled");
-    notifyDragMove.classList.remove("disabled");
+    domElements.notifyDragJoint.classList.add("disabled");
+    domElements.notifyDragRotate.classList.remove("disabled");
+    domElements.notifyDragMove.classList.remove("disabled");
 }
 
 let havePoints = false; // 是否已经有点了
@@ -507,26 +435,26 @@ function startMeasureCallback() {
             item.classList.remove("disabled");
         }
     });
-    notifyClickMorePoints.classList.add("hidden");
-    notifyClickRestart.classList.add("hidden");
-    notifyDblclickComplete.classList.remove("disabled");
+    domElements.notifyClickMorePoints.classList.add("hidden");
+    domElements.notifyClickRestart.classList.add("hidden");
+    domElements.notifyDblclickComplete.classList.remove("disabled");
 
     havePoints = false;
 }
 
 function continueMeasureCallback() {
-    notifyDblclickComplete.classList.remove("disabled");
-    notifyClickFirstPoint.classList.add("hidden");
-    notifyClickMorePoints.classList.remove("hidden");
+    domElements.notifyDblclickComplete.classList.remove("disabled");
+    domElements.notifyClickFirstPoint.classList.add("hidden");
+    domElements.notifyClickMorePoints.classList.remove("hidden");
     havePoints = true;
 }
 
 function completeMeasureCallback() {
-    notifyDblclickComplete.classList.add("hidden");
-    notifyClickFirstPoint.classList.add("hidden");
-    notifyClickMorePoints.classList.add("hidden");
-    notifyClickRestart.classList.remove("hidden");
-    notifyClickRestart.classList.remove("disabled");
+    domElements.notifyDblclickComplete.classList.add("hidden");
+    domElements.notifyClickFirstPoint.classList.add("hidden");
+    domElements.notifyClickMorePoints.classList.add("hidden");
+    domElements.notifyClickRestart.classList.remove("hidden");
+    domElements.notifyClickRestart.classList.remove("disabled");
 }
 
 function closeMeasureCallback() {
@@ -546,19 +474,19 @@ function closeMeasureCallback() {
 
 function measureHoverCallback() {
     if (havePoints) {
-        notifyClickMorePoints.classList.remove("disabled");
+        domElements.notifyClickMorePoints.classList.remove("disabled");
     } else {
-        notifyClickFirstPoint.classList.remove("disabled");
+        domElements.notifyClickFirstPoint.classList.remove("disabled");
     }
-    notifyDragRotate.classList.add("disabled");
-    notifyDragMove.classList.add("disabled");
+    domElements.notifyDragRotate.classList.add("disabled");
+    domElements.notifyDragMove.classList.add("disabled");
 }
 
 function measureUnhoverCallback() {
-    notifyClickFirstPoint.classList.add("disabled");
-    notifyClickMorePoints.classList.add("disabled");
-    notifyDragRotate.classList.remove("disabled");
-    notifyDragMove.classList.remove("disabled");
+    domElements.notifyClickFirstPoint.classList.add("disabled");
+    domElements.notifyClickMorePoints.classList.add("disabled");
+    domElements.notifyDragRotate.classList.remove("disabled");
+    domElements.notifyDragMove.classList.remove("disabled");
 }
 
 /**
