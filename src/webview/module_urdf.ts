@@ -1,5 +1,7 @@
 /* URDF 加载模块 */
 
+import { vscode } from "./vscode_api";
+
 import * as THREE from "three";
 import { LoadingManager } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
@@ -84,9 +86,6 @@ export class ModuleURDF {
     // 资源路径前缀
     uriPrefix: string;
 
-    // vscode 对象
-    vscode: any;
-
     controls: OrbitControls; // 控制器
 
     // URDFDragControls
@@ -104,7 +103,6 @@ export class ModuleURDF {
         controls: OrbitControls, // 控制器
         renderer: THREE.WebGLRenderer, // 渲染器
         uriPrefix: string, // 资源路径前缀
-        vscode: any, // vscode 对象
         renderCallback = () => {},
         modelHoverCallback = () => {},
         modelUnhoverCallback = () => {}
@@ -125,7 +123,6 @@ export class ModuleURDF {
         this.camera = camera;
         this.controls = controls;
         this.uriPrefix = uriPrefix;
-        this.vscode = vscode;
         this.renderCallback = renderCallback;
         this.modelHoverCallback = modelHoverCallback;
         this.modelUnhoverCallback = modelUnhoverCallback;
@@ -142,7 +139,7 @@ export class ModuleURDF {
             if (url_parts.length > 1) {
                 url = url_parts[1];
             }
-            this.vscode.postMessage({
+            vscode.postMessage({
                 type: "error",
                 message: `Failed to load ${url}`,
             });
