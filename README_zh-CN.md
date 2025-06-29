@@ -85,6 +85,14 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
+### 4.3.4
+
+修复:
+
+- Bug: Xacro 文件中 Mesh 使用 `file://$(find <package_name>)` 无法正常加载资源 ([Issue#14](https://github.com/MorningFrog/urdf-visualizer/issues/14))
+
+### 4.3.3
+
 修复:
 
 - Bug: 第一次打开时有时不会加载模型

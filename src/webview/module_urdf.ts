@@ -155,6 +155,11 @@ export class ModuleURDF {
             if (!url.startsWith("/")) {
                 url = "/" + url;
             }
+            // 如果出现两个 `//` 忽略第一个 `/` 前的所有内容
+            const doubleSlashIndex = url.indexOf("//");
+            if (doubleSlashIndex !== -1) {
+                url = url.slice(doubleSlashIndex + 1);
+            }
             // console.log("url", url);
             return this.uriPrefix + url;
         });

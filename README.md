@@ -84,6 +84,12 @@ There are three installation methods:
 
 ## Release Notes
 
+### 4.3.4
+
+Fixed:
+
+- Bug: Cannot load mesh files using `file://$(find <package_name>)` syntax in xacro files ([Issue#14](https://github.com/MorningFrog/urdf-visualizer/issues/14))
+
 ### 4.3.3
 
 Fixed:

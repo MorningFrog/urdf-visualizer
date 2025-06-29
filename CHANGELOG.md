@@ -1,5 +1,15 @@
 # Change Log
 
+## [4.3.4]
+
+修复:
+
+Fixed:
+
+- Bug: Cannot load mesh files using `file://$(find <package_name>)` syntax in xacro files ([Issue#14](https://github.com/MorningFrog/urdf-visualizer/issues/14))
+  
+  Bug: Xacro 文件中 Mesh 使用 `file://$(find <package_name>)` 无法正常加载资源 ([Issue#14](https://github.com/MorningFrog/urdf-visualizer/issues/14))
+
 ## [4.3.3]
 
 修复:
