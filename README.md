@@ -134,47 +134,18 @@ Improved:
 - Optimized the display of coordinate frames, automatically adjusting their size based on the model scale. 
 - Improved the display and adjustment of joints. 
 
-### 4.3.4
-
-Fixed:
-
-- Bug: Cannot load mesh files using `file://$(find <package_name>)` syntax in xacro files ([Issue#14](https://github.com/MorningFrog/urdf-visualizer/issues/14))
-
-### 4.3.3
-
-Fixed:
-
-- Bug: Sometimes the model does not load when opened for the first time
-
-### 4.3.2
+### 4.3.x
 
 Added: 
 
 - Tooltips for certain options
 - Display for Joint axis
+- Measurement of coordinate values
 
 Improved: 
 
 - Differentiated Joint and Link coordinate frames with solid and dashed lines, respectively
 - Highlighted corresponding Joint and Link coordinate frames when hovering over the model
-
-Fixed:
-
-- Bug: Colliders were unintentionally interactive upon initial launch
-
-### 4.3.1
-
-Added:
-
-- Measurement of coordinate values
-
-Improved:
-
-- The display of measured angle
-
-Fixed:
-
-- Synchronizing icons and functions during measurement
 
 ### 4.2.x
 

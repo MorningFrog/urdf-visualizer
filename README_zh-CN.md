@@ -135,47 +135,18 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 优化坐标系的显示，使其根据模型尺度自动调整尺寸
 - 优化关节的显示和调节
 
-### 4.3.4
-
-修复:
-
-- Bug: Xacro 文件中 Mesh 使用 `file://$(find <package_name>)` 无法正常加载资源 ([Issue#14](https://github.com/MorningFrog/urdf-visualizer/issues/14))
-
-### 4.3.3
-
-修复:
-
-- Bug: 第一次打开时有时不会加载模型
-
-### 4.3.2
+### 4.3.x
 
 增加:
 
 - 部分选项的提示
 - Joint 的轴显示
+- 坐标值的测量
 
 优化: 
 
 - Joint 和 Link 坐标系分别采用实线和虚线以加以区分
 - 鼠标悬停在模型上时高亮对应的 Joint 和 Link 坐标系
-
-修复:
-
-- Bug: 初次打开时 Collider 意外得可操作(即使没有显示)
-
-### 4.3.1
-
-增加:
-
-- 坐标值的测量
-
-优化:
-
-- 测量角度的显示
-
-修复:
-
-- 测量时图标和功能的同步
 
 ### 4.2.x
 
