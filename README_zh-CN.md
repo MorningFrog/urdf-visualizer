@@ -34,9 +34,22 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 该扩展包括以下设置:
 
-- `urdf-visualizer.packages`: ROS/ROS2 功能包的根目录, 用于定位 URDF/Xacro 文件中的 `package://<package_name>` 路径. 建议在工作空间的 `.vscode/settings.json` 中设置, 为一个对象, key 为功能包名称, value 为其路径, 例:
+- `urdf-visualizer.packages`
+  
+  ROS/ROS2 功能包的根目录, 用于定位 URDF/Xacro 文件中的 `package://<package_name>` 路径. 建议在工作空间的 `.vscode/settings.json` 中设置, 为一个对象, key 为功能包名称, value 为其路径, 例:
+  
   ```json
   // settings.json
+  {
+    // other settings
+    "urdf-visualizer.packages": {
+        "fake_robot": "src/fake_robot"
+    },
+    // other settings
+  }
+  ```
+  等价于:
+  ```json
   {
     // other settings
     "urdf-visualizer.packages": {
@@ -45,13 +58,37 @@ A VSCode extension for visualizing URDF files and xacro files.
     // other settings
   }
   ```
-  当前只支持 `${workspaceFolder}` 和 `${env:<environment_variables>}` 作为特殊符号出现在路径中: 
+
+  当前支持 `${workspaceFolder}`、`${workspaceFolder:<workspace_name>}` 和 `${env:<environment_variables>}` 作为特殊符号出现在路径中: 
   - `${workspaceFolder}` 表示工作空间路径
+  - `${workspaceFolder:<workspace_name>}` 表示多根工作区(multi-root workspace)中某个工作空间的路径
   - `${env:<environment_variables>}` 表示环境变量 `<environment_variables>` 的值
-- `urdf-visualizer.renderOnSave`: 是否在文件保存时自动重新渲染.
-- `urdf-visualizer.reRenderWhenSwitchFile`: 是否在激活的文件切换时自动重新渲染.
-- `urdf-visualizer.backgroundColor`: 设置背景颜色, 需要为 `#` 开头的十六进制颜色代码.
-- `urdf-visualizer.showTips`: 切换操作提示的显示与否.
+  
+  > 在 ≥4.4.0 的 URDF Visualizer 中可以直接使用相对路径表示相对于工作空间的路径, 无需 `${workspaceFolder}/` 前缀
+
+- `urdf-visualizer.renderOnSave`
+  
+  是否在文件保存时自动重新渲染.
+
+- `urdf-visualizer.reRenderWhenSwitchFile`
+  
+  是否在激活的文件切换时自动重新渲染.
+
+- `urdf-visualizer.backgroundColor`
+  
+  设置背景颜色, 需要为 `#` 开头的十六进制颜色代码.
+  
+- `urdf-visualizer.showTips`
+  
+  切换操作提示的显示与否.
+
+- `urdf-visualizer.highlightJointWhenHover`
+
+  切换鼠标悬停时是否强制顶端高亮显示 joint 坐标系.
+
+- `urdf-visualizer.highlightLinkWhenHover`
+
+  切换鼠标悬停时是否强制顶端高亮显示 link 坐标系.
 
 ## 说明
 
@@ -84,6 +121,19 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 面积测量时, 如果出现凹多边形, 面积结果可能错误.
 
 ## Release Notes
+
+### 4.4.0
+
+增加:
+
+- 鼠标悬停时强制顶端高亮显示 joint 坐标系或/和 link 坐标系(默认显示 joint 坐标系)
+- `urdf-visualizer.highlightJointWhenHover` 和 `urdf-visualizer.highlightLinkWhenHover` 可用于设置鼠标悬停时强制顶端高亮显示 joint 坐标系或/和 link 坐标系
+
+优化:
+
+- `urdf-visualizer.packages` 可以直接使用相对路径，不再需要添加 `${workspaceFolder}`
+- 优化坐标系的显示，使其根据模型尺度自动调整尺寸
+- 优化关节的显示和调节
 
 ### 4.3.4
 

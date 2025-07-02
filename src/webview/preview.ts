@@ -68,8 +68,10 @@ class Main {
             this.renderer,
             this.uriPrefix,
             () => this.render(),
-            () => this.modelHoverCallback(),
-            () => this.modelUnhoverCallback()
+            (joint, angle) => this.domElements.updateJointValue(joint, angle),
+            (joint, link) => this.domElements.modelHoverCallback(joint, link),
+            (joint, link, fullUnhover) =>
+                this.domElements.modelUnhoverCallback(joint, link, fullUnhover)
         );
 
         // 测量模块
@@ -78,12 +80,12 @@ class Main {
             this.scene,
             this.camera,
             this.module_urdf.dragControls,
-            () => this.startMeasureCallback(),
-            () => this.continueMeasureCallback(),
-            () => this.completeMeasureCallback(),
-            () => this.closeMeasureCallback(),
-            () => this.measureHoverCallback(),
-            () => this.measureUnhoverCallback()
+            () => this.domElements.startMeasureCallback(),
+            () => this.domElements.continueMeasureCallback(),
+            () => this.domElements.completeMeasureCallback(),
+            () => this.domElements.closeMeasureCallback(),
+            () => this.domElements.measureHoverCallback(),
+            () => this.domElements.measureUnhoverCallback()
         );
 
         // 添加鼠标离开渲染器时的事件处理
@@ -117,15 +119,9 @@ class Main {
                     return;
                 }
 
-                const joint_name_processed =
-                    this.module_urdf.postprocessIdAndClass(joint_name);
-
                 const joint_limit = this.module_urdf.getJointLimit(joint_name);
 
-                this.domElements.updateJointLimit(
-                    joint_name_processed,
-                    joint_limit
-                );
+                this.domElements.updateJointLimit(joint_name, joint_limit);
             }
         );
     }
@@ -142,12 +138,9 @@ class Main {
                 }
 
                 const joint_limit = this.module_urdf.getJointLimit(joint_name);
-                const joint_name_processed =
-                    this.module_urdf.postprocessIdAndClass(joint_name);
 
                 this.domElements.addJoint(
                     joint_name,
-                    joint_name_processed,
                     joint.jointType,
                     joint_limit,
                     (value: number, joint_name: string) => {
@@ -170,38 +163,6 @@ class Main {
      */
     updateLinkList() {}
 
-    modelHoverCallback() {
-        this.domElements.modelHoverCallback();
-    }
-
-    modelUnhoverCallback() {
-        this.domElements.modelUnhoverCallback();
-    }
-
-    startMeasureCallback() {
-        this.domElements.startMeasureCallback();
-    }
-
-    continueMeasureCallback() {
-        this.domElements.continueMeasureCallback();
-    }
-
-    completeMeasureCallback() {
-        this.domElements.completeMeasureCallback();
-    }
-
-    closeMeasureCallback() {
-        this.domElements.closeMeasureCallback();
-    }
-
-    measureHoverCallback() {
-        this.domElements.measureHoverCallback();
-    }
-
-    measureUnhoverCallback() {
-        this.domElements.measureUnhoverCallback();
-    }
-
     /**
      * VSCode 消息回调
      * @param message 必须包含 type 键
@@ -216,6 +177,14 @@ class Main {
             }
             if (message.showTips !== undefined) {
                 this.domElements.setShowTips(message.showTips);
+            }
+            if (message.highlightJointWhenHover !== undefined) {
+                this.module_urdf.highlightJointWhenHover =
+                    message.highlightJointWhenHover;
+            }
+            if (message.highlightLinkWhenHover !== undefined) {
+                this.module_urdf.highlightLinkWhenHover =
+                    message.highlightLinkWhenHover;
             }
         }
         if (message.type === "urdf" || message.type === "init") {

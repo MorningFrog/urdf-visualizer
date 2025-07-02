@@ -1,5 +1,35 @@
 # Change Log
 
+## [4.4.0]
+
+增加:
+
+Added:
+
+- 鼠标悬停时强制顶端高亮显示 joint 坐标系或/和 link 坐标系(默认显示 joint 坐标系)
+
+  Force highlighting of joint frames or/and link frames (joint frames shown by default) when hovering.
+
+- `urdf-visualizer.highlightJointWhenHover` 和 `urdf-visualizer.highlightLinkWhenHover` 可用于设置鼠标悬停时强制顶端高亮显示 joint 坐标系或/和 link 坐标系
+
+  `urdf-visualizer.highlightJointWhenHover` and `urdf-visualizer.highlightLinkWhenHover` can be used to configure whether to force highlighting of joint frames or/and link frames when hovering.
+
+优化:
+
+Improved:
+
+- `urdf-visualizer.packages` 可以直接使用相对路径，不再需要添加 `${workspaceFolder}`
+
+  `urdf-visualizer.packages` now supports relative paths directly, eliminating the need to add `${workspaceFolder}`.
+
+- 优化坐标系的显示，使其根据模型尺度自动调整尺寸
+
+  Optimized the display of coordinate frames, automatically adjusting their size based on the model scale. 
+
+- 优化关节的显示和调节
+
+  Improved the display and adjustment of joints. 
+
 ## [4.3.4]
 
 修复:
@@ -29,6 +59,7 @@ Added:
 - 部分选项的提示
   
   Tooltips for certain options
+
 - Joint 的轴显示
 
   Display for Joint axis
@@ -40,6 +71,7 @@ Improved:
 - Joint 和 Link 坐标系分别采用实线和虚线以加以区分
 
   Differentiated Joint and Link coordinate frames with solid and dashed lines, respectively
+
 - 鼠标悬停在模型上时高亮对应的 Joint 和 Link 坐标系
 
   Highlighted corresponding Joint and Link coordinate frames when hovering over the model
@@ -83,6 +115,7 @@ Fixed:
 - 在鼠标悬停时增加了 Link 名称的显示
 
   Added display of Link names when hovering.
+
 - 修复以下 bug: 不论 Visual 和 Collider 是否显示, 都按照 Visual 来显示提示和进行操作
   
   Fix the bug: Operations and prompts always follow the Visual, ignoring Collider visibility.
@@ -98,6 +131,7 @@ Fixed:
 - 修复了 SSH remote server 中加载 mesh 的问题
   
   Fixed the issue of loading mesh in SSH remote server
+
 - 优化了关节类型的显示
   
   Optimized the display of joint types
@@ -107,9 +141,11 @@ Fixed:
 - 侧边栏的 Joint 右侧增加类型提示.
   
   Add type prompts to the right of the Joint name in the sidebar.
+
 - continuous 关节角度可以在 $-2\pi$-$2\pi$ 之间调节.
   
   The continuous joint angle can be adjusted from $-2\pi$ to $2\pi$.
+
 - 使用更高版本的 `Three.js`, 这可能解决与Nvidia高版本驱动不相容的问题.
   
   Using a higher version of `Three.js`, it may solve the issue of incompatibility with Nvidia's higher version drivers.
@@ -119,6 +155,7 @@ Fixed:
 - 修复了 1.75 版本以下 VSCode 在 urdf 未被配置为 xml 时无法预览的问题.
   
   Fixed the issue where VSCode below version 1.75 cannot preview when urdf is not configured as XML.
+
 - 优化了操作提示, 添加了切换操作提示显示与否的设置.
   
   Optimized the operation tips and added a setting to switch the display of operation tips.
@@ -212,18 +249,23 @@ Fixed:
 - 实现了基本的URDF显示功能
   
   Implemented basic URDF display functionality
+
 - 可以实现visual和/或collision的显示
   
   Achieve visual and/or collision display
+
 - 可视化joint和link坐标系
   
   Achieve joint frame and/or link frame display
+
 - 鼠标悬浮时显示joint名称
   
   Display the joint name when hovering the mouse
+
 - 启用了关节的拖动控制
   
   Joint drag control enabled
+
 - 实现了Xacro解析
   
   Implemented Xacro parsing

@@ -1,4 +1,5 @@
 import { vscode } from "./vscode_api";
+import { URDFJoint, URDFLink } from "urdf-loader";
 
 export class DomElements {
     public readonly reloadButton = document.getElementById(
@@ -10,6 +11,9 @@ export class DomElements {
     public readonly controlsel = document.getElementById(
         "controls"
     ) as HTMLDivElement; // 控制栏
+    public readonly resetJoints = document.getElementById(
+        "reset-joints"
+    ) as HTMLDivElement; // 重置所有 Joint 位置按钮
     public readonly ulJoints = document.getElementById(
         "ul-joints"
     ) as HTMLUListElement; // Joint 列表
@@ -65,6 +69,7 @@ export class DomElements {
             !this.reloadButton ||
             !this.controlsToggle ||
             !this.controlsel ||
+            !this.resetJoints ||
             !this.ulJoints ||
             !this.ulLinks ||
             !this.tooltip ||
@@ -112,6 +117,16 @@ export class DomElements {
             this.isDegree = true;
             updateDegreeRadiansCallback();
         });
+        this.resetJoints.addEventListener("click", () => {
+            // 重置所有关节位置
+            const sliders =
+                document.querySelectorAll<HTMLInputElement>(".slider-joint");
+            sliders.forEach((slider) => {
+                slider.value = "0.0"; // 重置滑块值
+                // 触发 input 事件
+                slider.dispatchEvent(new Event("input"));
+            });
+        });
     }
 
     /**
@@ -135,11 +150,18 @@ export class DomElements {
     }
 
     /**
+     * 处理 id 和 class, 将其中的 `/` 替换为 `__`
+     * @param str
+     */
+    private postprocessIdAndClass(str: string) {
+        return str.replace(/\//g, "__");
+    }
+
+    /**
      * 添加关节
      */
     public addJoint(
         joint_name: string,
-        joint_name_processed: string,
         joint_type: string,
         joint_limit: {
             lower: Number;
@@ -152,6 +174,15 @@ export class DomElements {
         hoverCallback: (joint_name: string) => void,
         unhoverCallback: (joint_name: string) => void
     ) {
+        // 保留两位小数
+        const joint_limit_processed = {
+            // @ts-ignore
+            lower: Math.round(joint_limit.lower * 100) / 100,
+            // @ts-ignore
+            upper: Math.round(joint_limit.upper * 100) / 100,
+        };
+
+        const joint_name_processed = this.postprocessIdAndClass(joint_name);
         const li = document.createElement("li"); // 列表项
         li.id = `joint_${joint_name_processed}`;
         li.classList.add("joint-item");
@@ -168,8 +199,8 @@ export class DomElements {
                     name="slider_joint_${joint_name_processed}"
                     id="slider_joint_${joint_name_processed}"
                     class="slider-joint"
-                    min="${joint_limit.lower}"
-                    max="${joint_limit.upper}"
+                    min="${joint_limit_processed.lower}"
+                    max="${joint_limit_processed.upper}"
                     step="0.01"
                     value="0.0"
                 />
@@ -181,9 +212,10 @@ export class DomElements {
                 </div>
                 <div class="div-scale-item" style="left: ${
                     // @ts-ignore
-                    ((0 - joint_limit.lower) /
+                    ((0 - joint_limit_processed.lower) /
                         // @ts-ignore
-                        (joint_limit.upper - joint_limit.lower)) *
+                        (joint_limit_processed.upper -
+                            joint_limit_processed.lower)) *
                     // @ts-ignore
                     100
                 }%;">
@@ -205,26 +237,29 @@ export class DomElements {
             slider.addEventListener("input", () => {
                 const value = parseFloat(slider.value);
                 updateJointValueFromSliderCallback(value, joint_name);
-                this.updateTooltipText(value);
+                this.showTooltip(slider, null);
             });
+            // 自定义事件
+
             // 显示值
             slider.addEventListener("mouseover", (event) => {
-                const value = parseFloat(slider.value);
-                this.updateTooltipText(value);
-                this.tooltip.style.display = "block";
-                this.tooltip.style.left = `${event.pageX}px`;
-                const slider_top = slider.getBoundingClientRect().top;
-                this.tooltip.style.top = `${slider_top - 30}px`;
+                this.showTooltip(slider);
             });
             // 隐藏值
             slider.addEventListener("mouseout", () => {
-                this.tooltip.style.display = "none";
+                this.showTooltip(null, false);
             });
             // 更改位置
-            slider.addEventListener("mousemove", (event) => {
-                this.tooltip.style.left = `${event.pageX}px`;
-                const slider_top = slider.getBoundingClientRect().top;
-                this.tooltip.style.top = `${slider_top - 30}px`;
+            // slider.addEventListener("mousemove", (event) => {
+            //     this.tooltip.style.left = `${event.pageX}px`;
+            //     const slider_top = slider.getBoundingClientRect().top;
+            //     this.tooltip.style.top = `${slider_top - 30}px`;
+            // });
+            // 双击重置关节位置
+            slider.addEventListener("dblclick", () => {
+                slider.value = "0.0"; // 重置滑块值
+                // 触发 input 事件
+                slider.dispatchEvent(new Event("input"));
             });
         }
         // 悬停事件处理
@@ -239,15 +274,61 @@ export class DomElements {
     }
 
     /**
+     * 显示或隐藏 tooltip
+     */
+    private showTooltip(
+        slider: HTMLInputElement | null,
+        show: boolean | null = true,
+        updateTooltipText: boolean = true
+    ) {
+        if (show !== null) {
+            this.tooltip.style.display = show ? "block" : "none";
+        }
+        if (this.tooltip.style.display === "none") {
+            return; // 如果 tooltip 已经隐藏, 则不进行任何操作
+        }
+
+        // 设置 tooltip 位置
+        if (!slider) {
+            return;
+        }
+        const value = parseFloat(slider.value);
+        if (updateTooltipText) {
+            this.updateTooltipText(value);
+        }
+        // 计算百分比
+        // @ts-ignore
+        const limit_min = parseFloat(slider.getAttribute("min"));
+        // @ts-ignore
+        const limit_max = parseFloat(slider.getAttribute("max"));
+        const percentage =
+            ((value - limit_min) / (limit_max - limit_min)) * 100;
+        // 计算 x 位置
+        const thumbWidth = 12; // 滑块的宽度
+        const leftPosition =
+            percentage * ((slider.offsetWidth - thumbWidth) / 100) +
+            thumbWidth / 2;
+        const sliderRect = slider.getBoundingClientRect();
+        const controlselRect = this.controlsel.getBoundingClientRect();
+        const leftStart =
+            sliderRect.left - controlselRect.left + this.controlsel.scrollLeft;
+        const topStart =
+            sliderRect.top - controlselRect.top + this.controlsel.scrollTop;
+        this.tooltip.style.left = `${leftPosition + leftStart}px`;
+        this.tooltip.style.top = `${topStart - 35}px`;
+    }
+
+    /**
      * 更新关节角度范围
      */
     public updateJointLimit(
-        joint_name_processed: string,
+        joint_name: string,
         joint_limit: {
             lower: Number;
             upper: Number;
         }
     ) {
+        const joint_name_processed = this.postprocessIdAndClass(joint_name);
         const element_joint_limit_upper = document.getElementById(
             `joint_${joint_name_processed}_limit_upper`
         ) as HTMLInputElement;
@@ -270,23 +351,78 @@ export class DomElements {
     }
 
     /**
+     * 关节角度改变回调(外部触发)
+     */
+    public updateJointValue(joint: URDFJoint, value: number) {
+        const joint_name_processed = this.postprocessIdAndClass(joint.name);
+        const slider = document.getElementById(
+            `slider_joint_${joint_name_processed}`
+        ) as HTMLInputElement;
+        if (slider) {
+            slider.value = value.toString();
+            this.showTooltip(slider);
+        }
+    }
+
+    /**
      * 鼠标悬浮在模型上回调
      */
-    public modelHoverCallback() {
+    public modelHoverCallback(joint: URDFJoint | null, link: URDFLink | null) {
         // 更新操作提示
         this.notifyDragJoint.classList.remove("disabled");
         this.notifyDragRotate.classList.add("disabled");
         this.notifyDragMove.classList.add("disabled");
+        // 高亮对应关节项
+        if (joint) {
+            const joint_name_processed = this.postprocessIdAndClass(joint.name);
+            const jointItem = document.getElementById(
+                `joint_${joint_name_processed}`
+            );
+            if (jointItem) {
+                jointItem.classList.add("active");
+                // 显示关节角度
+                const slider = jointItem.querySelector(
+                    `#slider_joint_${joint_name_processed}`
+                ) as HTMLInputElement;
+                if (slider) {
+                    this.showTooltip(slider);
+                }
+            }
+        }
     }
 
     /**
      * 鼠标移出模型回调
      */
-    public modelUnhoverCallback() {
+    public modelUnhoverCallback(
+        joint: URDFJoint | null,
+        link: URDFLink | null,
+        fullUnhover = false
+    ) {
         // 更新操作提示
         this.notifyDragJoint.classList.add("disabled");
         this.notifyDragRotate.classList.remove("disabled");
         this.notifyDragMove.classList.remove("disabled");
+        this.showTooltip(null, false);
+        // 取消高亮对应关节项
+        if (fullUnhover) {
+            // 全部取消高亮
+            const jointItems =
+                document.querySelectorAll<HTMLElement>(".joint-item.active");
+            jointItems.forEach((item) => {
+                item.classList.remove("active");
+            });
+            return;
+        }
+        if (joint) {
+            const joint_name_processed = this.postprocessIdAndClass(joint.name);
+            const jointItem = document.getElementById(
+                `joint_${joint_name_processed}`
+            );
+            if (jointItem) {
+                jointItem.classList.remove("active");
+            }
+        }
     }
 
     /**

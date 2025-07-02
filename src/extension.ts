@@ -3,48 +3,17 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import { resolveVariablesInObject, getWebviewContent } from "./extension_utils";
+import {
+    resolveVariablesInObject,
+    getWebviewContent,
+    isUrdfOrXacroFile,
+    isXacroFile,
+} from "./extension_utils";
 const { XacroParser } = require("xacro-parser");
 const { JSDOM } = require("jsdom");
 const { XMLSerializer, XMLDocument } = require("xmldom");
 
 global.DOMParser = new JSDOM().window.DOMParser;
-
-/**
- * 获取文件扩展名
- * @param fileName 文件名
- * @returns 文件扩展名
- */
-function getExt(fileName: string): string | null {
-    // 扩展名
-    const ext = fileName.split(/\./g)?.pop()?.toLowerCase();
-    if (!ext) {
-        return null;
-    }
-    return ext;
-}
-
-function checkURDFXacroFile(document: vscode.TextDocument) {
-    const ext = getExt(document.fileName);
-    return (
-        ext &&
-        document.languageId === "xml" &&
-        (ext === "urdf" || ext === "xacro")
-    );
-}
-
-/**
- * 判断是否为 Xacro 文件
- * @param document 文档
- * @returns 是否为 Xacro 文件
- */
-function isXacroFile(document: vscode.TextDocument): boolean {
-    const ext = getExt(document.fileName);
-    if (!ext) {
-        return false;
-    }
-    return ext === "xacro";
-}
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -123,7 +92,7 @@ export function activate(context: vscode.ExtensionContext) {
         "urdf-visualizer.previewURDFXacro", // 预览 URDF 或 Xacro 文件
         () => {
             const editor = vscode.window.activeTextEditor;
-            if (editor && checkURDFXacroFile(editor.document)) {
+            if (editor && isUrdfOrXacroFile(editor.document)) {
                 if (activePanel) {
                     // 如果已有Webview panel,则直接重新显示
                     activePanel.reveal(vscode.ViewColumn.Beside);
@@ -177,6 +146,12 @@ export function activate(context: vscode.ExtensionContext) {
                             backgroundColor:
                                 config.get<string>("backgroundColor"),
                             showTips: config.get<boolean>("showTips"),
+                            highlightJointWhenHover: config.get<boolean>(
+                                "highlightJointWhenHover"
+                            ),
+                            highlightLinkWhenHover: config.get<boolean>(
+                                "highlightLinkWhenHover"
+                            ),
                         },
                         "init"
                     );
@@ -190,7 +165,7 @@ export function activate(context: vscode.ExtensionContext) {
                             // 获取新的 URDF 文件内容
                             const editor = vscode.window.activeTextEditor;
                             let document = previousDocument;
-                            if (editor && checkURDFXacroFile(editor.document)) {
+                            if (editor && isUrdfOrXacroFile(editor.document)) {
                                 document = editor.document;
                                 previousDocument = document;
                             }
@@ -218,7 +193,7 @@ export function activate(context: vscode.ExtensionContext) {
                 config.get<boolean>("renderOnSave", true) &&
                 activePanel &&
                 document.languageId === "xml" &&
-                checkURDFXacroFile(document)
+                isUrdfOrXacroFile(document)
             ) {
                 sendURDFContent(document);
             }
@@ -237,8 +212,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (
                 config.get<boolean>("reRenderWhenSwitchFile", true) &&
                 activePanel &&
-                editor.document.languageId === "xml" &&
-                checkURDFXacroFile(editor.document)
+                isUrdfOrXacroFile(editor.document)
             ) {
                 previousDocument = editor.document;
                 sendURDFContent(editor.document, {
@@ -279,6 +253,34 @@ export function activate(context: vscode.ExtensionContext) {
                     activePanel.webview.postMessage({
                         type: "settings",
                         showTips: config.get<boolean>("showTips"),
+                    });
+                }
+            }
+            if (
+                event.affectsConfiguration(
+                    "urdf-visualizer.highlightJointWhenHover"
+                )
+            ) {
+                if (activePanel) {
+                    activePanel.webview.postMessage({
+                        type: "settings",
+                        highlightJointWhenHover: config.get<boolean>(
+                            "highlightJointWhenHover"
+                        ),
+                    });
+                }
+            }
+            if (
+                event.affectsConfiguration(
+                    "urdf-visualizer.highlightLinkWhenHover"
+                )
+            ) {
+                if (activePanel) {
+                    activePanel.webview.postMessage({
+                        type: "settings",
+                        highlightLinkWhenHover: config.get<boolean>(
+                            "highlightLinkWhenHover"
+                        ),
                     });
                 }
             }

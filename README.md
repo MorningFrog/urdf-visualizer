@@ -34,9 +34,22 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 This extension contributes the following settings:
 
-- `urdf-visualizer.packages`: The root directory of ROS/ROS2 packages, used to resolve the `package://<package_name>` paths in URDF/Xacro files. It is recommended to set this in the `.vscode/settings.json` of your workspace as an object, where the key is the package name and the value is its path. Example:
+- `urdf-visualizer.packages`
+  
+  The root directory of ROS/ROS2 packages, used to resolve the `package://<package_name>` paths in URDF/Xacro files. It is recommended to set this in the `.vscode/settings.json` of your workspace as an object, where the key is the package name and the value is its path. Example:
+
   ```json
   // settings.json
+  {
+    // other settings
+    "urdf-visualizer.packages": {
+        "fake_robot": "src/fake_robot"
+    },
+    // other settings
+  }
+  ```
+  Equivalent to:
+  ```json
   {
     // other settings
     "urdf-visualizer.packages": {
@@ -45,13 +58,37 @@ This extension contributes the following settings:
     // other settings
   }
   ```
-  Currently, only `${workspaceFolder}` and `${env:<environment_variables>}` are supported as special symbols in the path:
+
+  Currently, only `${workspaceFolder}`, `${workspaceFolder:<workspace_name>}` and `${env:<environment_variables>}` are supported as special symbols in the path:
   - `${workspaceFolder}` represents the absolute path of the workspace
+  - `${workspaceFolder:<workspace_name>}` represents the path of a specific workspace in a multi-root workspace.
   - `${env:<environment_variables>}` represents the value of the environment variable `<environment_variables>`
-- `urdf-visualizer.renderOnSave`: Whether to automatically re-render when the file is saved.
-- `urdf-visualizer.reRenderWhenSwitchFile`: Whether to automatically re-render when switching between active files.
-- `urdf-visualizer.backgroundColor`: Set the background color; it needs to be a hexadecimal color code starting with `#`.
-- `urdf-visualizer.showTips`: Switch the display of operation tips.
+  
+  > In URDF Visualizer ≥4.4.0, you can directly use relative paths to represent paths relative to the workspace, without needing the `${workspaceFolder}/` prefix.
+
+- `urdf-visualizer.renderOnSave`
+  
+  Whether to automatically re-render when the file is saved.
+
+- `urdf-visualizer.reRenderWhenSwitchFile`
+  
+  Whether to automatically re-render when switching between active files.
+
+- `urdf-visualizer.backgroundColor`
+  
+  Set the background color; it needs to be a hexadecimal color code starting with `#`.
+
+- `urdf-visualizer.showTips`
+  
+  Switch the display of operation tips.
+
+- `urdf-visualizer.highlightJointWhenHover`
+
+  Switch whether to highlight joint frame at top on hover.
+
+- `urdf-visualizer.highlightLinkWhenHover`
+
+  Switch whether to highlight link frame at top on hover.
 
 ## Instructions
 
@@ -83,6 +120,19 @@ There are three installation methods:
 - When measuring area, if concave polygons appear, the area result may be incorrect
 
 ## Release Notes
+
+### 4.4.0
+
+Added:
+
+- Force highlighting of joint frames or/and link frames (joint frames shown by default) when hovering.
+- `urdf-visualizer.highlightJointWhenHover` and `urdf-visualizer.highlightLinkWhenHover` can be used to configure whether to force highlighting of joint frames or/and link frames when hovering.
+
+Improved:
+
+- `urdf-visualizer.packages` now supports relative paths directly, eliminating the need to add `${workspaceFolder}`.
+- Optimized the display of coordinate frames, automatically adjusting their size based on the model scale. 
+- Improved the display and adjustment of joints. 
 
 ### 4.3.4
 

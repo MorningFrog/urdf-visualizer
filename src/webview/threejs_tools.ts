@@ -292,11 +292,16 @@ export class LinkAxesHelper extends THREE.Group {
     public yAxis: THREE.Line;
     public zAxis: THREE.Line;
 
+    // 全局尺寸缩放
+    public globalScale: number;
+    // size 值
+    public localSize: number;
+
     /**
      * 创建一个虚线坐标系辅助器
      * @param size 轴线长度
      */
-    constructor(size: number = 1) {
+    constructor(size: number = 1, scale: number = 1.0) {
         super();
 
         // 创建虚线材质
@@ -340,13 +345,17 @@ export class LinkAxesHelper extends THREE.Group {
         zAxis.material.color.setHex(0x0000ff); // 蓝色
         this.add(zAxis);
 
-        // 设置尺寸
-        this.scale.set(size, size, size);
-
         // 存储轴线对象
         this.xAxis = xAxis;
         this.yAxis = yAxis;
         this.zAxis = zAxis;
+
+        // 设置全局缩放
+        this.globalScale = scale;
+
+        // 设置尺寸
+        this.localSize = size;
+        this.setSize(size);
     }
 
     /**
@@ -365,14 +374,30 @@ export class LinkAxesHelper extends THREE.Group {
      * @param size 新的轴线长度
      */
     public setSize(size: number): void {
-        this.scale.set(size, size, size);
+        this.localSize = size;
+        this.scale.set(
+            size * this.globalScale,
+            size * this.globalScale,
+            size * this.globalScale
+        );
+    }
+
+    /**
+     * 设置全局缩放
+     * @param scale 新的全局缩放值
+     */
+    public setGlobalScale(scale: number): void {
+        this.globalScale = scale;
+        // 重新设置尺寸
+        this.setSize(this.localSize);
     }
 
     /**
      * 鼠标悬停时高亮显示
      * @param hovered 是否悬停
+     * @param forceTop 是否强制置于最上层
      */
-    public setHovered(hovered: boolean): void {
+    public setHovered(hovered: boolean, forceTop: boolean = false): void {
         const linewidth = hovered ? this.hoveredLinewidth : this.linewidth;
 
         // 设置各轴线的线宽
@@ -382,6 +407,23 @@ export class LinkAxesHelper extends THREE.Group {
         this.yAxis.material.linewidth = linewidth;
         // @ts-ignore
         this.zAxis.material.linewidth = linewidth;
+
+        // 设置不被阻挡
+        if (hovered && forceTop) {
+            // @ts-ignore
+            this.xAxis.material.depthTest = false;
+            // @ts-ignore
+            this.yAxis.material.depthTest = false;
+            // @ts-ignore
+            this.zAxis.material.depthTest = false;
+        } else {
+            // @ts-ignore
+            this.xAxis.material.depthTest = true;
+            // @ts-ignore
+            this.yAxis.material.depthTest = true;
+            // @ts-ignore
+            this.zAxis.material.depthTest = true;
+        }
 
         // 重新更新材质
         // @ts-ignore
@@ -407,6 +449,10 @@ export class JointAxesHelper extends THREE.Group {
     public zAxis: THREE.Line;
     // 关节轴对象
     public jointAxis: THREE.Line;
+    // 全局尺寸缩放
+    public globalScale: number;
+    // size 值
+    public localSize: number;
 
     /**
      * 创建一个 Joint 坐标系辅助器
@@ -415,6 +461,7 @@ export class JointAxesHelper extends THREE.Group {
      */
     constructor(
         size: number = 1,
+        scale: number = 1.0,
         axis: THREE.Vector3 = new THREE.Vector3(0, 0, 1)
     ) {
         super();
@@ -475,8 +522,12 @@ export class JointAxesHelper extends THREE.Group {
         this.jointAxis.computeLineDistances(); // 必须调用,否则虚线不生效
         this.add(this.jointAxis);
 
+        // 设置全局缩放
+        this.globalScale = scale;
+
         // 设置尺寸
-        this.scale.set(size, size, size);
+        this.localSize = size;
+        this.setSize(size);
     }
 
     /**
@@ -496,14 +547,30 @@ export class JointAxesHelper extends THREE.Group {
      * @param size 新的轴线长度
      */
     public setSize(size: number): void {
-        this.scale.set(size, size, size);
+        this.localSize = size;
+        this.scale.set(
+            size * this.globalScale,
+            size * this.globalScale,
+            size * this.globalScale
+        );
+    }
+
+    /**
+     * 设置全局缩放
+     * @param scale 新的全局缩放值
+     */
+    public setGlobalScale(scale: number): void {
+        this.globalScale = scale;
+        // 重新设置尺寸
+        this.setSize(this.localSize);
     }
 
     /**
      * 鼠标悬停时高亮显示
      * @param hovered 是否悬停
+     * @param forceTop 是否强制置于最上层
      */
-    public setHovered(hovered: boolean): void {
+    public setHovered(hovered: boolean, forceTop: boolean = false): void {
         const linewidth = hovered ? this.hoveredLinewidth : this.linewidth;
 
         // 设置各轴线的线宽
@@ -515,6 +582,27 @@ export class JointAxesHelper extends THREE.Group {
         this.zAxis.material.linewidth = linewidth;
         // @ts-ignore
         this.jointAxis.material.linewidth = linewidth;
+
+        // 设置不被阻挡
+        if (hovered && forceTop) {
+            // @ts-ignore
+            this.xAxis.material.depthTest = false;
+            // @ts-ignore
+            this.yAxis.material.depthTest = false;
+            // @ts-ignore
+            this.zAxis.material.depthTest = false;
+            // @ts-ignore
+            this.jointAxis.material.depthTest = false;
+        } else {
+            // @ts-ignore
+            this.xAxis.material.depthTest = true;
+            // @ts-ignore
+            this.yAxis.material.depthTest = true;
+            // @ts-ignore
+            this.zAxis.material.depthTest = true;
+            // @ts-ignore
+            this.jointAxis.material.depthTest = true;
+        }
 
         // 重新更新材质
         // @ts-ignore

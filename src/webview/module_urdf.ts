@@ -44,7 +44,7 @@ export class ModuleURDF {
     linkSizeInput = document.getElementById("link-size") as HTMLInputElement;
 
     // 默认碰撞体材料
-    collisionMaterial = new THREE.MeshPhongMaterial({
+    private collisionMaterial = new THREE.MeshPhongMaterial({
         transparent: true,
         opacity: 0.35,
         shininess: 2.5,
@@ -55,7 +55,7 @@ export class ModuleURDF {
         polygonOffsetUnits: -1,
     });
 
-    axesHelper: THREE.AxesHelper; // 世界坐标系
+    worldAxes: THREE.AxesHelper; // 世界坐标系
 
     // mesh文件加载器
     manager = new LoadingManager();
@@ -80,8 +80,14 @@ export class ModuleURDF {
     // 是否显示 visual 和 collision
     showVisual = true;
     showCollision = false;
+    // 是否在悬停时高亮 joint 坐标系
+    highlightJointWhenHover = true;
+    // 是否在悬停时高亮 link 坐标系
+    highlightLinkWhenHover = false;
     // 是否刷新视野
     resetCamera = false;
+    // 全局尺寸, 用于缩放坐标系
+    globalScale = 1.0;
 
     // 资源路径前缀
     uriPrefix: string;
@@ -93,9 +99,17 @@ export class ModuleURDF {
 
     waitInterval = 5; // 等待间隔
 
-    renderCallback: () => void; // 渲染回调
-    modelHoverCallback: () => void; // 鼠标悬停模型回调
-    modelUnhoverCallback: () => void; // 鼠标移出模型回调
+    extraRenderCallback: () => void; // 渲染回调
+    extraUpdateJointCallback: (joint: URDFJoint, angle: number) => void; // 处理拖动导致的关节角度变化
+    extraModelHoverCallback: (
+        joint: URDFJoint | null,
+        link: URDFLink | null
+    ) => void; // 鼠标悬停模型回调
+    extraModelUnhoverCallback: (
+        joint: URDFJoint | null,
+        link: URDFLink | null,
+        fullUnhover?: boolean
+    ) => void; // 鼠标移出模型回调
 
     constructor(
         scene: THREE.Scene, // 场景
@@ -103,9 +117,17 @@ export class ModuleURDF {
         controls: OrbitControls, // 控制器
         renderer: THREE.WebGLRenderer, // 渲染器
         uriPrefix: string, // 资源路径前缀
-        renderCallback = () => {},
-        modelHoverCallback = () => {},
-        modelUnhoverCallback = () => {}
+        extraRenderCallback = () => {},
+        extraUpdateJointCallback = (joint: URDFJoint, angle: number) => {},
+        extraModelHoverCallback = (
+            joint: URDFJoint | null,
+            link: URDFLink | null
+        ) => {},
+        extraModelUnhoverCallback = (
+            joint: URDFJoint | null,
+            link: URDFLink | null,
+            fullUnhover?: boolean
+        ) => {}
     ) {
         // 确保所有元素都已加载
         if (
@@ -123,9 +145,10 @@ export class ModuleURDF {
         this.camera = camera;
         this.controls = controls;
         this.uriPrefix = uriPrefix;
-        this.renderCallback = renderCallback;
-        this.modelHoverCallback = modelHoverCallback;
-        this.modelUnhoverCallback = modelUnhoverCallback;
+        this.extraRenderCallback = extraRenderCallback;
+        this.extraUpdateJointCallback = extraUpdateJointCallback;
+        this.extraModelHoverCallback = extraModelHoverCallback;
+        this.extraModelUnhoverCallback = extraModelUnhoverCallback;
         // 设置ROS功能包所在的目录
         this.loaderURDF.packages = {};
         // 解析visual和collison
@@ -178,10 +201,10 @@ export class ModuleURDF {
         );
 
         // 创建坐标系
-        this.axesHelper = new THREE.AxesHelper(1); // 1 是坐标轴的长度
-        this.axesHelper.layers.set(1);
-        this.axesHelper.visible = this.showWorldFrameToggle.checked;
-        this.scene.add(this.axesHelper);
+        this.worldAxes = new THREE.AxesHelper(1); // 1 是坐标轴的长度
+        this.worldAxes.layers.set(1);
+        this.worldAxes.visible = this.showWorldFrameToggle.checked;
+        this.scene.add(this.worldAxes);
 
         // 设置 mesh 处理函数
         this.loaderURDF.loadMeshCb = (
@@ -265,7 +288,7 @@ export class ModuleURDF {
         };
 
         this.showWorldFrameToggle.addEventListener("change", () => {
-            this.axesHelper.visible = this.showWorldFrameToggle.checked;
+            this.worldAxes.visible = this.showWorldFrameToggle.checked;
             this.render();
         });
 
@@ -316,22 +339,7 @@ export class ModuleURDF {
      * 处理拖动导致的关节角度变化
      */
     updateJointCallback(joint: URDFJoint, angle: number) {
-        const joint_name = joint.name;
-        const joint_name_processed = this.postprocessIdAndClass(joint_name);
-        const slider = document.getElementById(
-            `slider_joint_${joint_name_processed}`
-        ) as HTMLInputElement;
-        if (slider) {
-            slider.value = angle.toString();
-        }
-    }
-
-    /**
-     * 处理 id 和 class, 将其中的 `/` 替换为 `__`
-     * @param str
-     */
-    public postprocessIdAndClass(str: string) {
-        return str.replace(/\//g, "__");
+        this.extraUpdateJointCallback(joint, angle);
     }
 
     // 等待所有 mesh 加载完成
@@ -441,8 +449,11 @@ export class ModuleURDF {
         this.resetCamera = false;
 
         // 重设坐标系尺寸
-        const max_coord = Math.max(box.max.x, box.max.y, box.max.z) * 1.5;
-        this.axesHelper.scale.set(max_coord, max_coord, max_coord);
+        this.globalScale = Math.max(box.max.x, box.max.y, box.max.z);
+        this.loadJointAxes();
+        this.loadLinkAxes();
+        const max_coord = this.globalScale * 1.5;
+        this.worldAxes.scale.set(max_coord, max_coord, max_coord);
     }
 
     /**
@@ -454,26 +465,30 @@ export class ModuleURDF {
                 if (joint.jointType === "fixed") {
                     return;
                 }
-                // @ts-ignore
-                if (this.showJointsToggle.checked) {
-                    // 显示 joint 坐标系
-
-                    const axes = new JointAxesHelper(
+                // 创建 JointAxesHelper
+                if (this.jointAxes[joint_name]) {
+                    // 如果已经存在, 则更新大小
+                    this.jointAxes[joint_name].globalScale = this.globalScale;
+                    this.jointAxes[joint_name].setSize(this.jointAxesSize);
+                } else {
+                    // 如果不存在, 则创建新的 JointAxesHelper
+                    // @ts-ignore
+                    this.jointAxes[joint_name] = new JointAxesHelper(
                         this.jointAxesSize,
+                        this.globalScale,
                         joint.axis
                     );
-                    axes.setLayer(1); // 让 axes 不被 Raycaster 检测到
-                    this.jointAxes[joint_name] = axes;
+                    this.jointAxes[joint_name].setLayer(1); // 让 axes 不被 Raycaster 检测到
                     // @ts-ignore
-                    joint.add(axes);
+                    joint.add(this.jointAxes[joint_name]);
+                }
+
+                if (this.showJointsToggle.checked) {
+                    // 显示 joint 坐标系
+                    this.jointAxes[joint_name].visible = true;
                 } else {
                     // 隐藏 joint 坐标系
-
-                    if (this.jointAxes[joint_name]) {
-                        // @ts-ignore
-                        joint.remove(this.jointAxes[joint_name]);
-                        delete this.jointAxes[joint_name];
-                    }
+                    this.jointAxes[joint_name].visible = false;
                 }
             }
         );
@@ -485,23 +500,33 @@ export class ModuleURDF {
     loadLinkAxes() {
         Object.entries<URDFLink>(this.robot?.links || {}).forEach(
             ([link_name, link]) => {
-                if (this.showLinksToggle.checked) {
-                    const axes = new LinkAxesHelper(this.linkAxesSize);
-                    axes.setLayer(1); // 让 axes 不被 Raycaster 检测到
-                    this.linkAxes[link_name] = axes;
-                    link.add(axes);
+                // 如果已经存在, 则更新大小
+                if (this.linkAxes[link_name]) {
+                    this.linkAxes[link_name].globalScale = this.globalScale;
+                    this.linkAxes[link_name].setSize(this.linkAxesSize);
                 } else {
-                    if (this.linkAxes[link_name]) {
-                        link.remove(this.linkAxes[link_name]);
-                        delete this.linkAxes[link_name];
-                    }
+                    // 如果不存在, 则创建新的 LinkAxesHelper
+                    // @ts-ignore
+                    this.linkAxes[link_name] = new LinkAxesHelper(
+                        this.linkAxesSize,
+                        this.globalScale
+                    );
+                    this.linkAxes[link_name].setLayer(1); // 让 axes 不被 Raycaster 检测到
+                    // @ts-ignore
+                    link.add(this.linkAxes[link_name]);
+                }
+
+                if (this.showLinksToggle.checked) {
+                    this.linkAxes[link_name].visible = true;
+                } else {
+                    this.linkAxes[link_name].visible = false;
                 }
             }
         );
     }
 
     /**
-     * 更新关节值
+     * 更新关节值(外部触发)
      */
     public updateJointValue(joint_name: string, value: number) {
         const joint = this.robot?.joints[joint_name];
@@ -565,7 +590,7 @@ export class ModuleURDF {
     }
 
     public render() {
-        this.renderCallback();
+        this.extraRenderCallback();
     }
 
     /**
@@ -576,7 +601,7 @@ export class ModuleURDF {
         this.selfHoverCallback(joint, link);
 
         // 调用父类的悬停回调
-        this.modelHoverCallback();
+        this.extraModelHoverCallback(joint, link);
     }
 
     /**
@@ -587,7 +612,7 @@ export class ModuleURDF {
         this.selfUnhoverCallback(joint, link);
 
         // 调用父类的移出回调
-        this.modelUnhoverCallback();
+        this.extraModelUnhoverCallback(joint, link);
     }
 
     /**
@@ -595,10 +620,28 @@ export class ModuleURDF {
      */
     public selfHoverCallback(joint: URDFJoint | null, link: URDFLink | null) {
         if (joint) {
-            this.jointAxes[joint.name]?.setHovered(true);
+            if (!this.jointAxes[joint.name]) {
+                return;
+            }
+            this.jointAxes[joint.name].setHovered(
+                true,
+                this.highlightJointWhenHover
+            );
+            if (this.highlightJointWhenHover) {
+                this.jointAxes[joint.name].visible = true;
+            }
         }
         if (link) {
-            this.linkAxes[link.name]?.setHovered(true);
+            if (!this.linkAxes[link.name]) {
+                return;
+            }
+            this.linkAxes[link.name].setHovered(
+                true,
+                this.highlightLinkWhenHover
+            );
+            if (this.highlightLinkWhenHover) {
+                this.linkAxes[link.name].visible = true;
+            }
         }
     }
 
@@ -614,18 +657,30 @@ export class ModuleURDF {
             // 如果是全局移出, 则清除所有悬停状态
             Object.values(this.jointAxes).forEach((joint) => {
                 joint.setHovered(false);
+                joint.visible = this.showJointsToggle.checked; // 恢复可见性
             });
             Object.values(this.linkAxes).forEach((link) => {
                 link.setHovered(false);
+                link.visible = this.showLinksToggle.checked; // 恢复可见性
             });
             return;
         }
         // 如果是局部移出, 则只清除当前悬停状态
         if (joint) {
-            this.jointAxes[joint.name]?.setHovered(false);
+            if (!this.jointAxes[joint.name]) {
+                return;
+            }
+            this.jointAxes[joint.name].setHovered(false);
+
+            this.jointAxes[joint.name].visible = this.showJointsToggle.checked; // 恢复可见性
         }
         if (link) {
-            this.linkAxes[link.name]?.setHovered(false);
+            if (!this.linkAxes[link.name]) {
+                return;
+            }
+            this.linkAxes[link.name].setHovered(false);
+
+            this.linkAxes[link.name].visible = this.showLinksToggle.checked; // 恢复可见性
         }
     }
 
@@ -636,6 +691,7 @@ export class ModuleURDF {
         this.dragControls.onMouseLeaveCallback();
         // 清除所有悬停状态
         this.selfUnhoverCallback(null, null, true);
+        this.extraModelUnhoverCallback(null, null, true);
     }
 
     set packages(packages: { [key: string]: string }) {

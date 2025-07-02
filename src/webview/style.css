@@ -27,13 +27,13 @@ ul {
     overflow-y: hidden;
     width: 200px;
     margin: 0;
-    padding: 10px;
+    padding: 0;
     max-height: calc(100vh - 60px);
     background-color: rgba(255, 255, 255, 0.5);
 }
 
 #menu > button {
-    margin: 5px 0;
+    margin: 5px 10px;
 }
 
 #controls {
@@ -41,10 +41,13 @@ ul {
     display: flex;
     flex-direction: column;
     width: 100%;
+    box-sizing: border-box;
+    padding: 0 10px;
     transition: 0.5s opacity ease;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: #bbb #f1f1f1;
+    position: relative;
 }
 
 #controls > * {
@@ -89,6 +92,8 @@ ul {
 #controls .ul-joints-and-links li {
     font-size: 12px;
     font-weight: normal;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 #controls .div-frame-size {
@@ -103,6 +108,14 @@ div.div-checkbox-with-hint {
     align-items: center;
 }
 
+/* 让title居中, hint居右 */
+div.div-title-with-hint {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 /* 固定hint的尺寸和背景图标 */
 div.hint {
     width: 15px;
@@ -111,6 +124,12 @@ div.hint {
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
+}
+
+/* 让div-title-with-hint中的hint居右 */
+div.div-title-with-hint .hint {
+    position: absolute;
+    right: 0;
 }
 
 .width_wrapper {
@@ -148,32 +167,47 @@ input[type="range"]:hover::-webkit-slider-thumb {
     background: blueviolet;
 }
 
+/* 关节列表容器 */
+ul {
+    overflow: visible;
+}
+/* 关节项 */
 li.joint-item {
     position: relative;
     left: 8px;
 }
-
+li.joint-item.active::before {
+    width: 110%;
+    height: 110%;
+    content: "";
+    border-radius: 6px;
+    background-color: rgba(255, 255, 0, 0.1);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+/* 关节名称 */
 .div-joint-name {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
-
+/* 关节类型 */
 label.joint_type {
     padding: 0 5px;
     margin-left: 5px;
     border: 1px solid blue;
     border-radius: 5px;
 }
-
+/* 关节位置滑块 */
 .div-slider {
     position: relative;
 }
-
 .slider-joint {
     margin-bottom: 0;
 }
-
+/* 关节位置范围标识 */
 .div-scale {
     margin-top: 0;
     width: calc(100% - 12px);
@@ -181,7 +215,6 @@ label.joint_type {
     position: relative;
     left: 8px;
 }
-
 .div-scale-item {
     text-align: center;
     color: gray;
@@ -234,6 +267,22 @@ label.joint_type {
     background-color: dodgerblue;
     color: white;
     border-color: dodgerblue;
+}
+
+#div-reset-joints {
+    display: flex;
+    justify-content: right;
+    align-items: center;
+    margin: 5px 0;
+}
+
+#reset-joints {
+    font-size: 12px;
+    cursor: pointer;
+    margin: 5px 5px;
+}
+#reset-joints:hover {
+    text-decoration: underline;
 }
 
 /*********/

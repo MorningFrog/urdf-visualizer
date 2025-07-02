@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/MorningFrog/urdf-visualizer"
   },
-  "version": "4.3.4",
+  "version": "4.4.0",
   "publisher": "morningfrog",
   "engines": {
     "vscode": "^1.70.0"
@@ -68,6 +68,16 @@
           "type": "boolean",
           "default": true,
           "description": "%extension.configuration.showTips.description%"
+        },
+        "urdf-visualizer.highlightJointWhenHover": {
+          "type": "boolean",
+          "default": true,
+          "description": "%extension.configuration.highlightJointWhenHover.description%"
+        },
+        "urdf-visualizer.highlightLinkWhenHover": {
+          "type": "boolean",
+          "default": false,
+          "description": "%extension.configuration.highlightLinkWhenHover.description%"
         }
       }
     }
