@@ -156,17 +156,17 @@ export class ModuleURDF {
         this.loaderURDF.parseVisual = true;
 
         // 设置 manager 报错时的处理
-        this.manager.onError = (url: string) => {
-            // 删除 url 中 `vscode-cdn.net` 及其之前的部分
-            const url_parts = url.split("vscode-cdn.net");
-            if (url_parts.length > 1) {
-                url = url_parts[1];
-            }
-            vscode.postMessage({
-                type: "error",
-                message: `Failed to load ${url}`,
-            });
-        };
+        // this.manager.onError = (url: string) => {
+        //     // 删除 url 中 `vscode-cdn.net` 及其之前的部分
+        //     const url_parts = url.split(this.uriPrefix);
+        //     if (url_parts.length > 1) {
+        //         url = url_parts[1];
+        //     }
+        //     vscode.postMessage({
+        //         type: "error",
+        //         message: `Failed to load ${url}`,
+        //     });
+        // };
 
         // 设置资源处理函数
         this.manager.setURLModifier((url: string): string => {
@@ -695,6 +695,10 @@ export class ModuleURDF {
     }
 
     set packages(packages: { [key: string]: string }) {
+        // 去除末尾的 `/` 或 `\` 后导入 packages
+        for (const key in packages) {
+            packages[key] = packages[key].trimEnd().replace(/[\\/]+$/, "");
+        }
         this.loaderURDF.packages = packages;
     }
 

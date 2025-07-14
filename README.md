@@ -121,7 +121,17 @@ There are three installation methods:
 
 ## Release Notes
 
-### 4.4.0
+### 4.5.0
+
+Added:
+
+- Support for more mathematical expressions
+
+Improved:
+
+- More user-friendly prompts when packages are not found
+
+### 4.4.x
 
 Added:
 

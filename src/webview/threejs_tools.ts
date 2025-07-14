@@ -29,17 +29,11 @@ export function createScene() {
 
     const dirLight = new THREE.DirectionalLight(0xffffff, Math.PI);
     dirLight.position.set(4, 10, 10);
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.normalBias = 0.001;
     dirLight.castShadow = true;
     scene.add(dirLight);
     scene.add(dirLight.target);
 
-    const ambientLight = new THREE.HemisphereLight("#fff", "#000");
-    ambientLight.groundColor.lerp(ambientLight.color, 0.5 * Math.PI);
-    ambientLight.intensity = 0.5;
-    ambientLight.position.set(0, 0, 1);
+    const ambientLight = new THREE.AmbientLight("#fff", 1.0);
     scene.add(ambientLight);
 
     const controls = new OrbitControls(camera, renderer.domElement);

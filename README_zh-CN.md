@@ -122,7 +122,17 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
-### 4.4.0
+### 4.5.0
+
+增加:
+
+- 支持更多数学表达式
+
+优化:
+
+- 找不到包时的提示更友好
+
+### 4.4.x
 
 增加:
 

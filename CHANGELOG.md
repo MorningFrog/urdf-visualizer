@@ -1,5 +1,23 @@
 # Change Log
 
+## [4.5.0]
+
+增加:
+
+Added:
+
+- 支持更多数学表达式
+
+  Support for more mathematical expressions
+
+优化:
+
+Improved:
+
+- 找不到包时的提示更友好
+
+  More user-friendly prompts when packages are not found
+
 ## [4.4.0]
 
 增加:

@@ -35,7 +35,7 @@ class Main {
     camera: THREE.PerspectiveCamera;
     renderer: THREE.WebGLRenderer;
     dirLight: THREE.DirectionalLight;
-    ambientLight: THREE.HemisphereLight;
+    ambientLight: THREE.AmbientLight;
     controls: OrbitControls;
 
     // 资源路径前缀

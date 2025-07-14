@@ -9,11 +9,8 @@ import {
     isUrdfOrXacroFile,
     isXacroFile,
 } from "./extension_utils";
-const { XacroParser } = require("xacro-parser");
-const { JSDOM } = require("jsdom");
 const { XMLSerializer, XMLDocument } = require("xmldom");
-
-global.DOMParser = new JSDOM().window.DOMParser;
+import { xacroParser } from "./xacro_parser_instance";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -31,20 +28,15 @@ export function activate(context: vscode.ExtensionContext) {
 
     let uriPrefix: string | null = null; // 保存当前文件的 URI 前缀
 
-    const xacroParser = new XacroParser(); // xacro 解析器
     const serializer = new XMLSerializer(); // XML 序列化器
 
-    // 在 xacroParser 中使用 fs 读取文件内容
-    xacroParser.getFileContents = (filePath: string) => {
-        return fs.readFileSync(filePath, { encoding: "utf8" });
-    };
     // 设置 ROS 功能包路径
     xacroParser.rospackCommands = {
         find: function (pkg: string) {
             if (packagesResolved && packagesResolved[pkg]) {
                 return packagesResolved[pkg];
             } else {
-                return "";
+                throw new Error(`Package "${pkg}" not found`);
             }
         },
     };
@@ -70,6 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
                 .catch((error: { message: string }) => {
                     vscode.window.showErrorMessage(error.message);
                 })
+                // @ts-ignore
                 .then((data: XMLDocument) => {
                     sendURDF(serializer.serializeToString(data), workingPath);
                 });
