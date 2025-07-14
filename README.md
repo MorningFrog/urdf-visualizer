@@ -36,7 +36,7 @@ This extension contributes the following settings:
 
 - `urdf-visualizer.packages`
   
-  The root directory of ROS/ROS2 packages, used to resolve the `package://<package_name>` paths in URDF/Xacro files. It is recommended to set this in the `.vscode/settings.json` of your workspace as an object, where the key is the package name and the value is its path. Example:
+  The root directory of ROS/ROS2 packages, used to resolve the `package://<package_name>` paths in URDF/Xacro files. It is recommended to set this in the `.vscode/settings.json` of your workspace as key-value pairs, where **the key is the package name** and **the value is its path**. Example:
 
   ```json
   // settings.json

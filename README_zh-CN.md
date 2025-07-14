@@ -36,7 +36,7 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 - `urdf-visualizer.packages`
   
-  ROS/ROS2 功能包的根目录, 用于定位 URDF/Xacro 文件中的 `package://<package_name>` 路径. 建议在工作空间的 `.vscode/settings.json` 中设置, 为一个对象, key 为功能包名称, value 为其路径, 例:
+  ROS/ROS2 功能包的根目录, 用于定位 URDF/Xacro 文件中的 `package://<package_name>` 路径. 建议在工作空间的 `.vscode/settings.json` 中设置, 为键值对, **key 为功能包名称**, **value 为其路径**, 例:
   
   ```json
   // settings.json
