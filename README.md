@@ -121,6 +121,12 @@ There are three installation methods:
 
 ## Release Notes
 
+### 4.5.1
+
+Fixed:
+
+- The list fails to display when there is a `.` in the Joint name
+
 ### 4.5.0
 
 Added:

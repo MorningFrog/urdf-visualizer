@@ -154,7 +154,7 @@ export class DomElements {
      * @param str
      */
     private postprocessIdAndClass(str: string) {
-        return str.replace(/\//g, "__");
+        return str.replace(/\//g, "__").replace(/\./g, "__dot__");
     }
 
     /**

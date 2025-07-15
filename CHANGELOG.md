@@ -1,5 +1,15 @@
 # Change Log
 
+## [4.5.1]
+
+修复:
+
+Fixed:
+
+- 当 Joint 名称中出现 `.` 时列表无法显示
+
+  The list fails to display when there is a `.` in the Joint name
+
 ## [4.5.0]
 
 增加:
