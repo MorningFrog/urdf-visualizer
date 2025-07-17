@@ -66,6 +66,7 @@ export class ModuleURDF {
     private loaderSTL = new STLLoader(this.manager);
     // mesh缓存对象
     private meshCache = new Map<string, THREE.Object3D>();
+    private _cacheMesh = true; // 是否缓存 mesh 文件
 
     // 正在加载的 mesh 数量
     private numMeshLoading = 0;
@@ -215,7 +216,7 @@ export class ModuleURDF {
             onComplete: (mesh: THREE.Object3D, err?: Error) => void
         ) => {
             // 如果缓存中有该 mesh, 则直接返回
-            if (this.meshCache.has(path)) {
+            if (this._cacheMesh && this.meshCache.has(path)) {
                 const cachedMesh = this.meshCache.get(path)!.clone();
                 onComplete(cachedMesh);
                 return;
@@ -231,7 +232,7 @@ export class ModuleURDF {
                 mesh: THREE.Object3D | null,
                 err?: Error
             ) => {
-                if (mesh) {
+                if (this._cacheMesh && mesh) {
                     // 成功时缓存结果
                     this.meshCache.set(path, mesh.clone());
                 }
@@ -725,5 +726,12 @@ export class ModuleURDF {
 
     set workingPath(workingPath: string) {
         this.loaderURDF.workingPath = workingPath;
+    }
+
+    set cacheMesh(cache: boolean) {
+        this._cacheMesh = cache;
+        if (!cache) {
+            this.clearMeshCache();
+        }
     }
 }

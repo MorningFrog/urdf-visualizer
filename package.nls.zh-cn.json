@@ -6,6 +6,7 @@
     "extension.configuration.packages.description": "ROS/ROS2 功能包的路径, 用于解析 URDF 文件中的 `package://<package_name>`.",
     "extension.configuration.renderOnSave.description": "保存文件时重新渲染 URDF/Xacro 预览.",
     "extension.configuration.reRenderWhenSwitchFile.description": "切换活动文件时重新渲染 URDF/Xacro 预览.",
+    "extension.configuration.cacheMesh.description": "缓存 mesh 文件以加速加载.",
     "extension.configuration.backgroundColor.description": "3D 视图的背景颜色.",
     "extension.configuration.backgroundColor.patternErrorMessage": "颜色值必须是十六进制颜色值, 如 #FFFFFF.",
     "extension.configuration.showTips.description": "显示操作提示.",

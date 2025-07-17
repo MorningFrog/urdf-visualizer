@@ -169,6 +169,9 @@ class Main {
      */
     public vscodeMessageCallback(message: any) {
         if (message.type === "settings" || message.type === "init") {
+            if (message.cacheMesh !== undefined) {
+                this.module_urdf.cacheMesh = message.cacheMesh;
+            }
             if (message.backgroundColor) {
                 this.scene.background = new THREE.Color(
                     message.backgroundColor

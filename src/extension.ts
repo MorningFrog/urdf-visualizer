@@ -136,6 +136,7 @@ export function activate(context: vscode.ExtensionContext) {
                         {
                             reset_camera: true,
                             uriPrefix: uriPrefix,
+                            cacheMesh: config.get<boolean>("cacheMesh", true),
                             backgroundColor:
                                 config.get<string>("backgroundColor"),
                             showTips: config.get<boolean>("showTips"),
@@ -233,6 +234,15 @@ export function activate(context: vscode.ExtensionContext) {
                     });
                 }
             }
+            if (event.affectsConfiguration("urdf-visualizer.cacheMesh")) {
+                if (activePanel) {
+                    activePanel.webview.postMessage({
+                        type: "settings",
+                        cacheMesh: config.get<boolean>("cacheMesh", true),
+                    });
+                }
+            }
+
             if (event.affectsConfiguration("urdf-visualizer.backgroundColor")) {
                 if (activePanel) {
                     activePanel.webview.postMessage({

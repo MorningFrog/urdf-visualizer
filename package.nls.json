@@ -6,6 +6,7 @@
     "extension.configuration.packages.description": "The path of ROS/ROS2 packages, it is used for parse `package://<package_name>` in URDF files.",
     "extension.configuration.renderOnSave.description": "Render the URDF/Xacro file when saving.",
     "extension.configuration.reRenderWhenSwitchFile.description": "Re render the URDF/Xacro file when switching active file.",
+    "extension.configuration.cacheMesh.description": "Cache the mesh files to speed up loading.",
     "extension.configuration.backgroundColor.description": "The background color of the 3D viewer.",
     "extension.configuration.backgroundColor.patternErrorMessage": "The color must be a valid hex color code, i.e. #FFFFFF.",
     "extension.configuration.showTips.description": "Show operation tips.",

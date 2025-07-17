@@ -128,6 +128,8 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 - 支持 mesh 缓存, 加速同一资源文件的加载
 
+- `urdf-visualizer.cacheMesh` 设置: 是否使用 mesh 缓存
+
 ### 4.5.x
 
 增加:

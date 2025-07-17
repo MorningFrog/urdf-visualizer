@@ -10,6 +10,10 @@ Added:
 
   Support for Mesh caching to speed up loading for the same resource files
 
+- `urdf-visualizer.cacheMesh` 设置: 是否使用 mesh 缓存
+
+  `urdf-visualizer.cacheMesh` setting: enable/disable mesh caching
+
 ## [4.5.1]
 
 修复:

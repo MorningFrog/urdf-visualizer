@@ -127,6 +127,8 @@ Added:
 
 - Support for Mesh caching to speed up loading for the same resource files
 
+- `urdf-visualizer.cacheMesh` setting: enable/disable mesh caching
+
 ### 4.5.x
 
 Added:

@@ -57,6 +57,11 @@
           "default": true,
           "description": "%extension.configuration.reRenderWhenSwitchFile.description%"
         },
+        "urdf-visualizer.cacheMesh": {
+          "type": "boolean",
+          "default": true,
+          "description": "%extension.configuration.cacheMesh.description%"
+        },
         "urdf-visualizer.backgroundColor": {
           "type": "string",
           "default": "#cccccc",
