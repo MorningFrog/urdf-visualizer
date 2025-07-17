@@ -74,6 +74,10 @@ This extension contributes the following settings:
   
   Whether to automatically re-render when switching between active files.
 
+- `urdf-visualizer.cacheMesh`
+
+  Whether to enable mesh caching.
+
 - `urdf-visualizer.backgroundColor`
   
   Set the background color; it needs to be a hexadecimal color code starting with `#`.

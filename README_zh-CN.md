@@ -74,6 +74,10 @@ A VSCode extension for visualizing URDF files and xacro files.
   
   是否在激活的文件切换时自动重新渲染.
 
+- `urdf-visualizer.cacheMesh`
+
+  是否使用 mesh 缓存.
+
 - `urdf-visualizer.backgroundColor`
   
   设置背景颜色, 需要为 `#` 开头的十六进制颜色代码.
