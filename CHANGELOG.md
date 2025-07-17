@@ -1,5 +1,15 @@
 # Change Log
 
+## [4.6.0]
+
+增加:
+
+Added:
+
+- 支持 mesh 缓存, 加速同一资源文件的加载
+
+  Support for Mesh caching to speed up loading for the same resource files
+
 ## [4.5.1]
 
 修复:

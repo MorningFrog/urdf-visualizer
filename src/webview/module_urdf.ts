@@ -23,8 +23,8 @@ import { LinkAxesHelper, JointAxesHelper } from "./threejs_tools";
 import { CustomURDFDragControls } from "./CustomURDFDragControls";
 
 export class ModuleURDF {
-    scene: THREE.Scene; // 场景
-    camera: THREE.PerspectiveCamera; // 相机
+    private scene: THREE.Scene; // 场景
+    private camera: THREE.PerspectiveCamera; // 相机
 
     // HTML 元素
     showWorldFrameToggle = document.getElementById(
@@ -55,49 +55,51 @@ export class ModuleURDF {
         polygonOffsetUnits: -1,
     });
 
-    worldAxes: THREE.AxesHelper; // 世界坐标系
+    private worldAxes: THREE.AxesHelper; // 世界坐标系
 
     // mesh文件加载器
-    manager = new LoadingManager();
-    loaderURDF = new URDFLoader(this.manager);
-    loaderGLTF = new GLTFLoader(this.manager);
-    loaderOBJ = new OBJLoader(this.manager);
-    loaderCollada = new ColladaLoader(this.manager);
-    loaderSTL = new STLLoader(this.manager);
+    private manager = new LoadingManager();
+    private loaderURDF = new URDFLoader(this.manager);
+    private loaderGLTF = new GLTFLoader(this.manager);
+    private loaderOBJ = new OBJLoader(this.manager);
+    private loaderCollada = new ColladaLoader(this.manager);
+    private loaderSTL = new STLLoader(this.manager);
+    // mesh缓存对象
+    private meshCache = new Map<string, THREE.Object3D>();
 
     // 正在加载的 mesh 数量
-    numMeshLoading = 0;
+    private numMeshLoading = 0;
     // URDF 文本
-    urdfText = "";
+    public urdfText = "";
     // 机器人
-    robot: URDFRobot | null = null;
+    public robot: URDFRobot | null = null;
     // 显示关节轴
-    jointAxes: { [key: string]: JointAxesHelper } = {};
-    jointAxesSize = 1.0;
+    private jointAxes: { [key: string]: JointAxesHelper } = {};
+    private jointAxesSize = 1.0;
     // 显示link坐标系
-    linkAxes: { [key: string]: LinkAxesHelper } = {};
-    linkAxesSize = 1.0;
+    private linkAxes: { [key: string]: LinkAxesHelper } = {};
+    private linkAxesSize = 1.0;
     // 是否显示 visual 和 collision
-    showVisual = true;
-    showCollision = false;
+    public showVisual = true;
+    public showCollision = false;
     // 是否在悬停时高亮 joint 坐标系
-    highlightJointWhenHover = true;
+    public highlightJointWhenHover = true;
     // 是否在悬停时高亮 link 坐标系
-    highlightLinkWhenHover = false;
+    public highlightLinkWhenHover = false;
     // 是否刷新视野
-    resetCamera = false;
+    public resetCamera = false;
     // 全局尺寸, 用于缩放坐标系
-    globalScale = 1.0;
+    public globalScale = 1.0;
 
     // 资源路径前缀
-    uriPrefix: string;
+    public uriPrefix: string;
 
-    controls: OrbitControls; // 控制器
+    private controls: OrbitControls; // 控制器
 
     // URDFDragControls
-    dragControls: CustomURDFDragControls;
+    public dragControls: CustomURDFDragControls;
 
-    waitInterval = 5; // 等待间隔
+    private waitInterval = 5; // 等待间隔
 
     extraRenderCallback: () => void; // 渲染回调
     extraUpdateJointCallback: (joint: URDFJoint, angle: number) => void; // 处理拖动导致的关节角度变化
@@ -212,58 +214,59 @@ export class ModuleURDF {
             manager: LoadingManager,
             onComplete: (mesh: THREE.Object3D, err?: Error) => void
         ) => {
+            // 如果缓存中有该 mesh, 则直接返回
+            if (this.meshCache.has(path)) {
+                const cachedMesh = this.meshCache.get(path)!.clone();
+                onComplete(cachedMesh);
+                return;
+            }
+
             this.numMeshLoading += 1;
             const webview_path = path;
             // 扩展名
             const ext = webview_path?.split(/\./g)?.pop()?.toLowerCase();
+
+            // 封装处理函数
+            const handleComplete = (
+                mesh: THREE.Object3D | null,
+                err?: Error
+            ) => {
+                if (mesh) {
+                    // 成功时缓存结果
+                    this.meshCache.set(path, mesh.clone());
+                }
+                // @ts-ignore: 符合URDFLoader的回调签名
+                onComplete(mesh, err);
+                this.numMeshLoading -= 1;
+            };
+
             switch (ext) {
                 case "gltf":
                 case "glb":
                     this.loaderGLTF.load(
                         webview_path,
-                        (result: any) => {
-                            onComplete(result.scene);
-                            this.numMeshLoading -= 1;
-                        },
+                        (result: any) => handleComplete(result.scene),
+                        undefined,
                         // @ts-ignore
-                        null,
-                        (err: Error) => {
-                            // @ts-ignore
-                            onComplete(null, err);
-                            this.numMeshLoading -= 1;
-                        }
+                        (err: Error) => handleComplete(null, err)
                     );
                     break;
                 case "obj":
                     this.loaderOBJ.load(
                         webview_path,
-                        (result: any) => {
-                            onComplete(result);
-                            this.numMeshLoading -= 1;
-                        },
+                        (result: any) => handleComplete(result),
+                        undefined,
                         // @ts-ignore
-                        null,
-                        (err: Error) => {
-                            // @ts-ignore
-                            onComplete(null, err);
-                            this.numMeshLoading -= 1;
-                        }
+                        (err: Error) => handleComplete(null, err)
                     );
                     break;
                 case "dae":
                     this.loaderCollada.load(
                         webview_path,
-                        (result: any) => {
-                            onComplete(result.scene);
-                            this.numMeshLoading -= 1;
-                        },
+                        (result: any) => handleComplete(result.scene),
+                        undefined,
                         // @ts-ignore
-                        null,
-                        (err: Error) => {
-                            // @ts-ignore
-                            onComplete(null, err);
-                            this.numMeshLoading -= 1;
-                        }
+                        (err: Error) => handleComplete(null, err)
                     );
                     break;
                 case "stl":
@@ -271,19 +274,19 @@ export class ModuleURDF {
                         webview_path,
                         (result: any) => {
                             const material = new THREE.MeshPhongMaterial();
-                            const mesh = new THREE.Mesh(result, material);
-                            onComplete(mesh);
-                            this.numMeshLoading -= 1;
+                            handleComplete(new THREE.Mesh(result, material));
                         },
+                        undefined,
                         // @ts-ignore
-                        null,
-                        (err: Error) => {
-                            // @ts-ignore
-                            onComplete(null, err);
-                            this.numMeshLoading -= 1;
-                        }
+                        (err: Error) => handleComplete(null, err)
                     );
                     break;
+                default:
+                    // 如果是其他格式, 则直接返回错误
+                    handleComplete(
+                        null,
+                        new Error(`Unsupported mesh file format: ${ext}`)
+                    );
             }
         };
 
@@ -358,9 +361,11 @@ export class ModuleURDF {
     // 删除机器人
     removeRobot() {
         if (this.robot) {
+            // 从场景中移除机器人
             this.scene.remove(this.robot);
             this.robot = null;
             this.jointAxes = {};
+            this.linkAxes = {};
         }
     }
 
@@ -692,6 +697,22 @@ export class ModuleURDF {
         // 清除所有悬停状态
         this.selfUnhoverCallback(null, null, true);
         this.extraModelUnhoverCallback(null, null, true);
+    }
+
+    /**
+     * 清除 mesh 缓存
+     */
+    public clearMeshCache() {
+        this.meshCache.clear();
+    }
+    /**
+     * 清除某个 mesh 缓存
+     * @param path mesh 文件路径
+     */
+    public invalidateMeshCache(path: string) {
+        if (this.meshCache.has(path)) {
+            this.meshCache.delete(path);
+        }
     }
 
     set packages(packages: { [key: string]: string }) {

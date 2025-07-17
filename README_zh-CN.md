@@ -122,13 +122,13 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
-### 4.5.1
+### 4.6.0
 
-修复:
+增加:
 
-- 当 Joint 名称中出现 `.` 时列表无法显示
+- 支持 mesh 缓存, 加速同一资源文件的加载
 
-### 4.5.0
+### 4.5.x
 
 增加:
 

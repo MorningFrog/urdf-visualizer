@@ -121,13 +121,13 @@ There are three installation methods:
 
 ## Release Notes
 
-### 4.5.1
+### 4.6.0
 
-Fixed:
+Added:
 
-- The list fails to display when there is a `.` in the Joint name
+- Support for Mesh caching to speed up loading for the same resource files
 
-### 4.5.0
+### 4.5.x
 
 Added:
 
