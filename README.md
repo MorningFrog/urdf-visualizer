@@ -125,6 +125,12 @@ There are three installation methods:
 
 ## Release Notes
 
+### 4.6.1
+
+Fixed:
+
+- Restore color display of STL files
+
 ### 4.6.0
 
 Added:

@@ -1,143 +1,143 @@
 {
-  "name": "urdf-visualizer",
-  "displayName": "%extension.displayName%",
-  "description": "%extension.description%",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/MorningFrog/urdf-visualizer"
-  },
-  "version": "4.6.0",
-  "publisher": "morningfrog",
-  "engines": {
-    "vscode": "^1.70.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [
-    "onLanguage:xml",
-    "onCommand:urdf-visualizer.previewURDFXacro"
-  ],
-  "icon": "media/icons/URDF-Visualizer.png",
-  "main": "./dist/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "urdf-visualizer.previewURDFXacro",
-        "title": "%extension.commands.previewURDFXacro.title%",
-        "category": "URDF Visualizer",
-        "icon": "$(eye)"
-      }
-    ],
-    "menus": {
-      "editor/title": [
-        {
-          "command": "urdf-visualizer.previewURDFXacro",
-          "when": "resourceExtname == .urdf || resourceExtname == .xacro || resourceExtname == .URDF",
-          "group": "navigation"
-        }
-      ]
+    "name": "urdf-visualizer",
+    "displayName": "%extension.displayName%",
+    "description": "%extension.description%",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/MorningFrog/urdf-visualizer"
     },
-    "configuration": {
-      "type": "object",
-      "title": "%extension.configuration.title%",
-      "properties": {
-        "urdf-visualizer.packages": {
-          "type": "object",
-          "default": {},
-          "description": "%extension.configuration.packages.description%"
+    "version": "4.6.1",
+    "publisher": "morningfrog",
+    "engines": {
+        "vscode": "^1.70.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onLanguage:xml",
+        "onCommand:urdf-visualizer.previewURDFXacro"
+    ],
+    "icon": "media/icons/URDF-Visualizer.png",
+    "main": "./dist/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "urdf-visualizer.previewURDFXacro",
+                "title": "%extension.commands.previewURDFXacro.title%",
+                "category": "URDF Visualizer",
+                "icon": "$(eye)"
+            }
+        ],
+        "menus": {
+            "editor/title": [
+                {
+                    "command": "urdf-visualizer.previewURDFXacro",
+                    "when": "resourceExtname == .urdf || resourceExtname == .xacro || resourceExtname == .URDF",
+                    "group": "navigation"
+                }
+            ]
         },
-        "urdf-visualizer.renderOnSave": {
-          "type": "boolean",
-          "default": true,
-          "description": "%extension.configuration.renderOnSave.description%"
-        },
-        "urdf-visualizer.reRenderWhenSwitchFile": {
-          "type": "boolean",
-          "default": true,
-          "description": "%extension.configuration.reRenderWhenSwitchFile.description%"
-        },
-        "urdf-visualizer.cacheMesh": {
-          "type": "boolean",
-          "default": true,
-          "description": "%extension.configuration.cacheMesh.description%"
-        },
-        "urdf-visualizer.backgroundColor": {
-          "type": "string",
-          "default": "#cccccc",
-          "description": "%extension.configuration.backgroundColor.description%",
-          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
-          "patternErrorMessage": "%extension.configuration.backgroundColor.patternErrorMessage%"
-        },
-        "urdf-visualizer.showTips": {
-          "type": "boolean",
-          "default": true,
-          "description": "%extension.configuration.showTips.description%"
-        },
-        "urdf-visualizer.highlightJointWhenHover": {
-          "type": "boolean",
-          "default": true,
-          "description": "%extension.configuration.highlightJointWhenHover.description%"
-        },
-        "urdf-visualizer.highlightLinkWhenHover": {
-          "type": "boolean",
-          "default": false,
-          "description": "%extension.configuration.highlightLinkWhenHover.description%"
+        "configuration": {
+            "type": "object",
+            "title": "%extension.configuration.title%",
+            "properties": {
+                "urdf-visualizer.packages": {
+                    "type": "object",
+                    "default": {},
+                    "description": "%extension.configuration.packages.description%"
+                },
+                "urdf-visualizer.renderOnSave": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%extension.configuration.renderOnSave.description%"
+                },
+                "urdf-visualizer.reRenderWhenSwitchFile": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%extension.configuration.reRenderWhenSwitchFile.description%"
+                },
+                "urdf-visualizer.cacheMesh": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%extension.configuration.cacheMesh.description%"
+                },
+                "urdf-visualizer.backgroundColor": {
+                    "type": "string",
+                    "default": "#cccccc",
+                    "description": "%extension.configuration.backgroundColor.description%",
+                    "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+                    "patternErrorMessage": "%extension.configuration.backgroundColor.patternErrorMessage%"
+                },
+                "urdf-visualizer.showTips": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%extension.configuration.showTips.description%"
+                },
+                "urdf-visualizer.highlightJointWhenHover": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%extension.configuration.highlightJointWhenHover.description%"
+                },
+                "urdf-visualizer.highlightLinkWhenHover": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%extension.configuration.highlightLinkWhenHover.description%"
+                }
+            }
         }
-      }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "webpack",
+        "watch": "webpack --watch",
+        "package": "webpack --mode production --devtool hidden-source-map",
+        "compile-tests": "tsc -p . --outDir out",
+        "watch-tests": "tsc -p . -w --outDir out",
+        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "lint": "eslint src",
+        "test": "vscode-test",
+        "vscode:package": "npx @vscode/vsce package --no-dependencies",
+        "vscode:publish": "npx @vscode/vsce publish --no-dependencies"
+    },
+    "devDependencies": {
+        "@eslint-community/eslint-utils": "^4.4.0",
+        "@eslint-community/regexpp": "^4.11.1",
+        "@eslint/config-array": "^0.18.0",
+        "@eslint/eslintrc": "^3.1.0",
+        "@eslint/js": "^9.10.0",
+        "@eslint/object-schema": "^2.1.4",
+        "@eslint/plugin-kit": "^0.2.0",
+        "@types/fs-extra": "^11.0.4",
+        "@types/mocha": "^10.0.7",
+        "@types/node": "20.x",
+        "@types/three": "^0.168.0",
+        "@types/vscode": "^1.70.0",
+        "@typescript-eslint/eslint-plugin": "^8.3.0",
+        "@typescript-eslint/parser": "^8.3.0",
+        "@typescript-eslint/scope-manager": "^8.6.0",
+        "@typescript-eslint/type-utils": "^8.6.0",
+        "@typescript-eslint/types": "^8.6.0",
+        "@typescript-eslint/typescript-estree": "^8.6.0",
+        "@typescript-eslint/utils": "^8.6.0",
+        "@typescript-eslint/visitor-keys": "^8.6.0",
+        "@vscode/test-cli": "^0.0.10",
+        "@vscode/test-electron": "^2.4.1",
+        "eslint": "^9.9.1",
+        "eslint-scope": "^8.0.2",
+        "eslint-visitor-keys": "^4.0.0",
+        "ts-loader": "^9.5.1",
+        "typescript": "^5.5.4",
+        "webpack": "^5.94.0",
+        "webpack-cli": "^5.1.4"
+    },
+    "dependencies": {
+        "expr-eval": "^2.0.2",
+        "fs-extra": "^11.2.0",
+        "jsdom": "^25.0.0",
+        "three": "^0.168.0",
+        "urdf-loader": "^0.12.3",
+        "xacro-parser": "^0.3.9",
+        "xmldom": "^0.6.0"
     }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "lint": "eslint src",
-    "test": "vscode-test",
-    "vscode:package": "npx @vscode/vsce package --no-dependencies",
-    "vscode:publish": "npx @vscode/vsce publish --no-dependencies"
-  },
-  "devDependencies": {
-    "@eslint-community/eslint-utils": "^4.4.0",
-    "@eslint-community/regexpp": "^4.11.1",
-    "@eslint/config-array": "^0.18.0",
-    "@eslint/eslintrc": "^3.1.0",
-    "@eslint/js": "^9.10.0",
-    "@eslint/object-schema": "^2.1.4",
-    "@eslint/plugin-kit": "^0.2.0",
-    "@types/fs-extra": "^11.0.4",
-    "@types/mocha": "^10.0.7",
-    "@types/node": "20.x",
-    "@types/three": "^0.168.0",
-    "@types/vscode": "^1.70.0",
-    "@typescript-eslint/eslint-plugin": "^8.3.0",
-    "@typescript-eslint/parser": "^8.3.0",
-    "@typescript-eslint/scope-manager": "^8.6.0",
-    "@typescript-eslint/type-utils": "^8.6.0",
-    "@typescript-eslint/types": "^8.6.0",
-    "@typescript-eslint/typescript-estree": "^8.6.0",
-    "@typescript-eslint/utils": "^8.6.0",
-    "@typescript-eslint/visitor-keys": "^8.6.0",
-    "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1",
-    "eslint": "^9.9.1",
-    "eslint-scope": "^8.0.2",
-    "eslint-visitor-keys": "^4.0.0",
-    "ts-loader": "^9.5.1",
-    "typescript": "^5.5.4",
-    "webpack": "^5.94.0",
-    "webpack-cli": "^5.1.4"
-  },
-  "dependencies": {
-    "expr-eval": "^2.0.2",
-    "fs-extra": "^11.2.0",
-    "jsdom": "^25.0.0",
-    "three": "^0.168.0",
-    "urdf-loader": "^0.12.3",
-    "xacro-parser": "^0.3.9",
-    "xmldom": "^0.6.0"
-  }
 }

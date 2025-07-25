@@ -126,6 +126,12 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
+## [4.6.1]
+
+修复:
+
+- 恢复 STL 文件的颜色显示
+
 ### 4.6.0
 
 增加:

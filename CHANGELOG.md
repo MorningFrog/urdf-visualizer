@@ -1,5 +1,15 @@
 # Change Log
 
+## [4.6.1]
+
+修复:
+
+Fixed:
+
+- 恢复 STL 文件的颜色显示
+
+  Restore color display of STL files
+
 ## [4.6.0]
 
 增加:
