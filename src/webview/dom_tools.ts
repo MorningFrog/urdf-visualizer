@@ -2,9 +2,6 @@ import { vscode } from "./vscode_api";
 import { URDFJoint, URDFLink } from "urdf-loader";
 
 export class DomElements {
-    public readonly reloadButton = document.getElementById(
-        "re-load"
-    ) as HTMLButtonElement; // 重新加载按钮
     public readonly controlsToggle = document.getElementById(
         "toggle-controls"
     ) as HTMLDivElement; // 切换控制按钮的显示
@@ -66,7 +63,6 @@ export class DomElements {
     constructor(updateDegreeRadiansCallback: () => void) {
         // 确保所有元素都已加载
         if (
-            !this.reloadButton ||
             !this.controlsToggle ||
             !this.controlsel ||
             !this.resetJoints ||
@@ -88,10 +84,6 @@ export class DomElements {
             throw new Error("Element not found");
         }
 
-        // 处理交互
-        this.reloadButton.addEventListener("click", () => {
-            vscode.postMessage({ type: "getNewURDF" });
-        });
         this.controlsToggle.addEventListener("click", () =>
             this.controlsel.classList.toggle("hidden")
         );

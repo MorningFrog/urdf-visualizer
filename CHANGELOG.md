@@ -1,5 +1,15 @@
 # Change Log
 
+## [4.7.0]-dev
+
+增加:
+
+Added:
+
+- 相机视角缓存. 使得在不同 URDF/Xacro 文件中切换时恢复之前的相机位置.
+
+  Camera view caching. Restores the previous camera position when switching between different URDF/Xacro files.
+
 ## [4.6.1]
 
 修复:

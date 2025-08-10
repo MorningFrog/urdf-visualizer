@@ -100,8 +100,8 @@ class Main {
     /**
      * 加载机器人模型
      */
-    async loadRobot() {
-        await this.module_urdf.LoadURDF();
+    async loadRobot(ignore_camera_and_joint_cache: boolean = false) {
+        await this.module_urdf.LoadURDF(ignore_camera_and_joint_cache);
 
         // 更新关节列表
         this.updateJointList();
@@ -210,6 +210,9 @@ class Main {
                 } else {
                     this.module_urdf.workingPath = message.workingPath + "/";
                 }
+            }
+            if (message.filename) {
+                this.module_urdf.filename = message.filename;
             }
             if (message.reset_camera && message.reset_camera === true) {
                 this.module_urdf.resetCamera = true;

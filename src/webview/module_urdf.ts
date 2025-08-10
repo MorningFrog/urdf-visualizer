@@ -27,6 +27,9 @@ export class ModuleURDF {
     private camera: THREE.PerspectiveCamera; // 相机
 
     // HTML 元素
+    public readonly reloadButton = document.getElementById(
+        "re-load"
+    ) as HTMLButtonElement; // 重新加载按钮
     showWorldFrameToggle = document.getElementById(
         "show-world-frame"
     ) as HTMLInputElement;
@@ -94,6 +97,22 @@ export class ModuleURDF {
 
     // 资源路径前缀
     public uriPrefix: string;
+    // 工作目录
+    private _workingPathOld: string = "";
+    private _workingPath: string = "";
+    // 当前文件名
+    private _filenameOld: string = "";
+    private _filename: string = "";
+
+    // 记录当前 load robot 时初始的相机位姿
+    private _initialCameraPosition: THREE.Vector3 = new THREE.Vector3();
+    private _initialCameraRotation: THREE.Euler = new THREE.Euler();
+    // 记录各个文件的相机位姿, 格式: { workingPath: { filename: { position, lookat } } }
+    private _cameraPositions: {
+        [key: string]: {
+            [key: string]: { position: THREE.Vector3; lookat: THREE.Vector3 };
+        };
+    } = {};
 
     private controls: OrbitControls; // 控制器
 
@@ -139,7 +158,8 @@ export class ModuleURDF {
             !this.showVisualToggle ||
             !this.showCollisionToggle ||
             !this.jointSizeInput ||
-            !this.linkSizeInput
+            !this.linkSizeInput ||
+            !this.reloadButton
         ) {
             throw new Error("Element not found");
         }
@@ -337,6 +357,21 @@ export class ModuleURDF {
             });
             this.render();
         });
+
+        this.reloadButton.addEventListener("click", () => {
+            // 清除 camera 缓存
+            if (
+                this._workingPath &&
+                this._filename &&
+                this._cameraPositions[this._workingPath] &&
+                this._cameraPositions[this._workingPath][this._filename]
+            ) {
+                delete this._cameraPositions[this._workingPath][this._filename];
+            }
+
+            // 请求新 URDF 内容
+            vscode.postMessage({ type: "getNewURDF" });
+        });
     }
 
     /**
@@ -418,40 +453,76 @@ export class ModuleURDF {
         if (!this.resetCamera) {
             return;
         }
-        // 1. 计算物体的包围盒
+        // 保存相机位姿
+        if (this._workingPathOld && this._filenameOld) {
+            if (
+                !this.camera.position.equals(this._initialCameraPosition) ||
+                !this.camera.rotation.equals(this._initialCameraRotation)
+            ) {
+                this._cameraPositions[this._workingPathOld] =
+                    this._cameraPositions[this._workingPathOld] || {};
+                this._cameraPositions[this._workingPathOld][this._filenameOld] =
+                    {
+                        position: this.camera.position.clone(),
+                        lookat: this.controls.target.clone(),
+                    };
+            }
+        }
+
+        // 计算物体的包围盒
         // @ts-ignore
         const box = new THREE.Box3().setFromObject(this.robot);
 
-        // 2. 获取包围盒的中心和尺寸
-        const size = new THREE.Vector3();
-        const center = new THREE.Vector3();
-        box.getSize(size); // 获取物体的大小
-        box.getCenter(center); // 获取物体的中心
+        // 看是否存在相机姿态缓存
+        if (
+            this._workingPath &&
+            this._filename &&
+            this._cameraPositions[this._workingPath] &&
+            this._cameraPositions[this._workingPath][this._filename]
+        ) {
+            // 如果存在, 则使用缓存的相机位姿
+            const cameraPos =
+                this._cameraPositions[this._workingPath][this._filename];
+            this.camera.position.copy(cameraPos.position);
+            this.camera.lookAt(cameraPos.lookat);
+            this.controls.target.copy(cameraPos.lookat);
+        } else {
+            // 如果不存在, 则计算新的相机位姿
+            // 获取包围盒的中心和尺寸
+            const size = new THREE.Vector3();
+            const center = new THREE.Vector3();
+            box.getSize(size); // 获取物体的大小
+            box.getCenter(center); // 获取物体的中心
 
-        // 3. 计算包围盒对角线长度,用于确定摄像机的合适距离
-        const maxSize = Math.max(size.x, size.y, size.z);
-        const distance =
-            maxSize / (2 * Math.tan((this.camera.fov * Math.PI) / 360)); // 摄像机距离
-        const offset = 1.0; // 添加偏移量,确保物体完全在视野内
+            // 计算包围盒对角线长度,用于确定摄像机的合适距离
+            const maxSize = Math.max(size.x, size.y, size.z);
+            const distance =
+                maxSize / (2 * Math.tan((this.camera.fov * Math.PI) / 360)); // 摄像机距离
+            const offset = 1.0; // 添加偏移量,确保物体完全在视野内
 
-        // 4. 设置摄像机位置并使其看向物体的中心
-        this.camera.position.set(
-            center.x + distance * offset,
-            center.y + distance * offset,
-            center.z + distance * offset
-        );
-        this.camera.lookAt(center);
+            // 设置摄像机位置并使其看向物体的中心
+            this.camera.position.set(
+                center.x + distance * offset,
+                center.y + distance * offset,
+                center.z + distance * offset
+            );
+            this.camera.lookAt(center);
 
-        // 5. 更新摄像机的投影矩阵
-        this.camera.updateProjectionMatrix();
+            // 更新摄像机的投影矩阵
+            this.camera.updateProjectionMatrix();
 
-        // 6. 设置OrbitControls的目标为物体中心
-        this.controls.target.set(center.x, center.y, center.z);
+            // 设置OrbitControls的目标为物体中心
+            this.controls.target.set(center.x, center.y, center.z);
 
-        // 7. 更新OrbitControls
-        this.controls.update();
+            // 更新OrbitControls
+            this.controls.update();
+        }
 
-        // 8. 清除重置视野标志
+        // 保存当前相机位姿
+        this._initialCameraPosition.copy(this.camera.position);
+        this._initialCameraRotation.copy(this.camera.rotation);
+
+        // 清除重置视野标志
         this.resetCamera = false;
 
         // 重设坐标系尺寸
@@ -725,7 +796,14 @@ export class ModuleURDF {
     }
 
     set workingPath(workingPath: string) {
+        this._workingPathOld = this._workingPath;
+        this._workingPath = workingPath;
         this.loaderURDF.workingPath = workingPath;
+    }
+
+    set filename(filename: string) {
+        this._filenameOld = this._filename;
+        this._filename = filename;
     }
 
     set cacheMesh(cache: boolean) {

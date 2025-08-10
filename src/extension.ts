@@ -50,11 +50,14 @@ export function activate(context: vscode.ExtensionContext) {
         if (!activePanel) {
             return;
         }
+        // 获取文件名和工作目录
+        const workingPath = path.dirname(document.fileName);
+        const fileName = path.basename(document.fileName);
+
         // 设置 Webview 标题为当前文件名+Preview
-        activePanel.title = path.basename(document.fileName) + " Preview";
+        activePanel.title = fileName + " Preview";
 
         if (isXacroFile(document)) {
-            const workingPath = path.dirname(document.fileName);
             // console.log(document.getText());
             xacroParser.workingPath = workingPath;
             xacroParser
@@ -64,18 +67,19 @@ export function activate(context: vscode.ExtensionContext) {
                 })
                 // @ts-ignore
                 .then((data: XMLDocument) => {
-                    sendURDF(serializer.serializeToString(data), workingPath);
+                    sendURDF(serializer.serializeToString(data));
                 });
         } else {
-            sendURDF(document.getText(), path.dirname(document.fileName));
+            sendURDF(document.getText());
         }
         // 发送 URDF 文件内容
-        function sendURDF(urdfText: string, workingPath: string) {
+        function sendURDF(urdfText: string) {
             activePanel?.webview.postMessage({
                 type: message_type,
                 urdfText: urdfText,
                 packages: packagesResolved,
                 workingPath: workingPath,
+                filename: fileName,
                 ...other_params,
             });
         }
