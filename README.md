@@ -125,13 +125,13 @@ There are three installation methods:
 
 ## Release Notes
 
-### 4.6.1
+### 4.7.0
 
-Fixed:
+Added:
 
-- Restore color display of STL files
+- Camera view caching. Restores the previous camera position when switching between different URDF/Xacro files.
 
-### 4.6.0
+### 4.6.x
 
 Added:
 

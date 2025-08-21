@@ -100,8 +100,8 @@ class Main {
     /**
      * 加载机器人模型
      */
-    async loadRobot(ignore_camera_and_joint_cache: boolean = false) {
-        await this.module_urdf.LoadURDF(ignore_camera_and_joint_cache);
+    async loadRobot() {
+        await this.module_urdf.LoadURDF();
 
         // 更新关节列表
         this.updateJointList();

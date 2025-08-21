@@ -126,13 +126,13 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
-## 4.6.1
+### 4.7.0
 
-修复:
+增加:
 
-- 恢复 STL 文件的颜色显示
+- 相机视角缓存. 使得在不同 URDF/Xacro 文件中切换时恢复之前的相机位置.
 
-### 4.6.0
+### 4.6.x
 
 增加:
 

@@ -17,7 +17,7 @@ import {
     URDFLink,
     URDFCollider,
 } from "urdf-loader";
-import { LinkAxesHelper, JointAxesHelper } from "./threejs_tools";
+import { LinkAxesHelper, JointAxesHelper } from "./custom_axes";
 
 // 导入自定义URDFDragControls
 import { CustomURDFDragControls } from "./CustomURDFDragControls";
