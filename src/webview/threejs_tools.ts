@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { LengthUnit, AngleUnit, measureSettings } from "./measure_settings";
 
 /**
  * 创建 three.js scene
@@ -102,9 +103,13 @@ function createTextTexture(
     };
 }
 
-export function createLabel(label: string, position: THREE.Vector3) {
+export function createLabel(
+    label: string,
+    position: THREE.Vector3,
+    labelSize: number = 8
+) {
     const resolution_scale = 0.5; // 提高基础清晰度
-    const obj_scale = 0.3; // 调整整体缩放
+    const obj_scale = (0.3 * labelSize) / 8; // 调整整体缩放
 
     const { texture, width, height } = createTextTexture(
         label,
@@ -137,17 +142,33 @@ export function createLabel(label: string, position: THREE.Vector3) {
 /**
  * 数字格式化
  * @param num 原始数值
- * @returns 格式化字符串(根据大小自动调整小数位数)
+ * @returns 格式化字符串(根据 precision 和 useSciNotation 调整小数位数)
  */
 export function numberToString(num: number): string {
-    const absNum = Math.abs(num);
-    if (absNum < 1e-6) {
-        return "0";
-    } else if (absNum < 1) {
-        return num.toPrecision(2);
-    } else {
-        return num.toFixed(2);
+    if (measureSettings.useSciNotation) {
+        return num.toExponential(measureSettings.precision - 1);
     }
+
+    const numAbs = Math.abs(num);
+    const numSign = num < 0 ? -1 : 1;
+    const precision = measureSettings.precision;
+
+    // 根据数值大小动态调整小数位数
+    if (numAbs !== 0) {
+        const log10 = Math.log10(numAbs);
+        if (log10 >= precision) {
+            // 大于等于 10^precision 的数值
+            return Math.round(num).toString();
+        } else if (log10 >= 0) {
+            // 介于 1 和 10^precision 之间的数值 (含 1)
+            return num.toFixed(precision - Math.floor(log10) - 1);
+        } else {
+            // 小于 1 的数值
+            return num.toFixed(precision + Math.ceil(-log10) - 1);
+        }
+    }
+
+    return num.toString();
 }
 
 /**
@@ -175,7 +196,7 @@ export function getAngleBisector(
  * 计算多边形面积(三角形分割法)
  * TODO: 对于凹多边形需要更复杂的算法
  * @param points 顶点数组
- * @returns 面积值(平方米)
+ * @returns 面积值(根据 lengthUnit 确定单位)
  */
 export function calculateArea(points: THREE.Vector3[]) {
     let area = 0;
@@ -188,18 +209,42 @@ export function calculateArea(points: THREE.Vector3[]) {
         const p = (a + b + c) / 2;
         area += Math.sqrt(p * (p - a) * (p - b) * (p - c));
     }
-    return area;
+    // 单位转换
+    const multiplier = getLengthUnitMultiplier();
+    return area * multiplier * multiplier;
 }
 
 /**
- * 计算两点间角度(角度制)
+ * 获取长度单位转换倍率
+ * @returns
+ */
+export function getLengthUnitMultiplier() {
+    switch (measureSettings.lengthUnit) {
+        case LengthUnit.Millimeters:
+            return 1000;
+        case LengthUnit.Centimeters:
+            return 100;
+        case LengthUnit.Meters:
+            return 1;
+        default:
+            return 1;
+    }
+}
+
+/**
+ * 计算两点间角度
  * @param dir0 边1方向向量
  * @param dir2 边2方向向量
- * @returns 角度值(0-180度)
+ * @returns 角度值/弧度值(0-180度或0-pi弧度)
  */
 export function calculateAngle(dir0: THREE.Vector3, dir2: THREE.Vector3) {
-    // 计算夹角(弧度)并转为角度
-    return (dir0.angleTo(dir2) * 180) / Math.PI;
+    // 计算夹角(弧度)
+    const angleRad = dir0.angleTo(dir2);
+    if (measureSettings.angleUnit === AngleUnit.Radians) {
+        return angleRad;
+    }
+    // 转换为角度制
+    return (angleRad * 180) / Math.PI;
 }
 
 /**

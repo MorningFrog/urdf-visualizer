@@ -126,7 +126,13 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
-### 4.7.0
+### 4.8.0
+
+增加:
+
+- 测量工具设置面板, 可设置长度和角度测量单位、是否显示精度、是否使用科学计数法显示、标签字体大小、线条颜色和粗细、点颜色和大小等.
+
+### 4.7.x
 
 增加:
 

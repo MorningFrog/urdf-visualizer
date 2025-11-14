@@ -32,7 +32,7 @@ ul {
     background-color: rgba(255, 255, 255, 0.5);
 }
 
-#menu > button {
+#menu>button {
     margin: 5px 10px;
 }
 
@@ -50,7 +50,7 @@ ul {
     position: relative;
 }
 
-#controls > * {
+#controls>* {
     margin: 5px 0;
 }
 
@@ -75,7 +75,7 @@ ul {
     content: "show controls";
 } */
 
-#controls.hidden > *:not(#toggle-controls) {
+#controls.hidden>*:not(#toggle-controls) {
     display: none;
 }
 
@@ -142,7 +142,8 @@ div.div-title-with-hint .hint {
 
 /* 隐藏默认的滑块样式 */
 input[type="range"] {
-    -webkit-appearance: none; /* Chrome, Safari, Opera */
+    -webkit-appearance: none;
+    /* Chrome, Safari, Opera */
     appearance: none;
     width: 100%;
     height: 8px;
@@ -171,11 +172,13 @@ input[type="range"]:hover::-webkit-slider-thumb {
 ul {
     overflow: visible;
 }
+
 /* 关节项 */
 li.joint-item {
     position: relative;
     left: 8px;
 }
+
 li.joint-item.active::before {
     width: 110%;
     height: 110%;
@@ -187,12 +190,14 @@ li.joint-item.active::before {
     top: 50%;
     transform: translate(-50%, -50%);
 }
+
 /* 关节名称 */
 .div-joint-name {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
+
 /* 关节类型 */
 label.joint_type {
     padding: 0 5px;
@@ -200,13 +205,16 @@ label.joint_type {
     border: 1px solid blue;
     border-radius: 5px;
 }
+
 /* 关节位置滑块 */
 .div-slider {
     position: relative;
 }
+
 .slider-joint {
     margin-bottom: 0;
 }
+
 /* 关节位置范围标识 */
 .div-scale {
     margin-top: 0;
@@ -215,6 +223,7 @@ label.joint_type {
     position: relative;
     left: 8px;
 }
+
 .div-scale-item {
     text-align: center;
     color: gray;
@@ -246,7 +255,8 @@ label.joint_type {
     padding: 5px;
     border-radius: 4px;
     transform: translateX(-50%);
-    display: none; /* 初始隐藏 */
+    display: none;
+    /* 初始隐藏 */
 }
 
 .switch-container {
@@ -281,6 +291,7 @@ label.joint_type {
     cursor: pointer;
     margin: 5px 5px;
 }
+
 #reset-joints:hover {
     text-decoration: underline;
 }
@@ -293,14 +304,14 @@ label.joint_type {
     position: absolute;
     top: 20px;
     right: 20px;
-    display: flex;
-    flex-direction: column;
-    overflow-x: visible;
-    overflow-y: hidden;
-    /* width: 200px; */
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    gap: 0px;
     margin: 0;
     padding: 0;
     max-height: calc(100vh - 60px);
+    align-items: start;
 }
 
 /* 测量容器 */
@@ -313,6 +324,14 @@ label.joint_type {
     border: 2px solid #bbb;
     border-radius: 4px;
 }
+
+/* 测量设置容器 */
+#div-measure-settings {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 
 div.div-measure-button {
     display: block;
@@ -335,13 +354,11 @@ button.measure:hover {
 }
 
 button#measure-coordinates {
-    mask: url("../../media/icons/measure-coordinates.svg") no-repeat center /
-        auto 80%;
+    mask: url("../../media/icons/measure-coordinates.svg") no-repeat center / auto 80%;
 }
 
 button#measure-distance {
-    mask: url("../../media/icons/measure-distance.svg") no-repeat center / auto
-        90%;
+    mask: url("../../media/icons/measure-distance.svg") no-repeat center / auto 90%;
 }
 
 button#measure-angle {
@@ -350,6 +367,10 @@ button#measure-angle {
 
 button#measure-area {
     mask: url("../../media/icons/measure-area.svg") no-repeat center / auto 68%;
+}
+
+button#measure-settings {
+    mask: url("../../media/icons/settings.svg") no-repeat center / auto 90%;
 }
 
 button.measure.checked {
@@ -362,6 +383,33 @@ div.div-measure-button:has(> button.measure.checked) {
 
 div.div-measure-button:has(> button.measure.checked):hover {
     border-left-style: dashed;
+}
+
+/* 测量面板 */
+#measure-settings-panel {
+    border: 2px solid #bbb;
+    border-radius: 4px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+    width: 210px;
+    display: grid;
+    grid-template-columns: auto auto auto;
+    gap: 5px;
+}
+
+#measure-settings-panel.hidden {
+    display: none;
+}
+
+#measure-settings-panel label {
+    text-align: right;
+    align-self: center;
+}
+
+#measure-settings-panel div.hint {
+    align-self: center;
 }
 
 /************/
@@ -416,13 +464,11 @@ div.div-measure-button:has(> button.measure.checked):hover {
 }
 
 .notify-item .notify-icon.mouse-left-drag {
-    mask: url("../../media/icons/mouse-left-drag.svg") no-repeat center / auto
-        80%;
+    mask: url("../../media/icons/mouse-left-drag.svg") no-repeat center / auto 80%;
 }
 
 .notify-item .notify-icon.mouse-right-drag {
-    mask: url("../../media/icons/mouse-right-drag.svg") no-repeat center / auto
-        80%;
+    mask: url("../../media/icons/mouse-right-drag.svg") no-repeat center / auto 80%;
 }
 
 .notify-item .notify-icon.mouse-click {
@@ -430,18 +476,15 @@ div.div-measure-button:has(> button.measure.checked):hover {
 }
 
 .notify-item .notify-icon.mouse-dblclick {
-    mask: url("../../media/icons/mouse-dblclick.svg") no-repeat center / auto
-        80%;
+    mask: url("../../media/icons/mouse-dblclick.svg") no-repeat center / auto 80%;
 }
 
 .notify-item .notify-icon.mouse-scroll-down {
-    mask: url("../../media/icons/mouse-scroll-down.svg") no-repeat center / auto
-        80%;
+    mask: url("../../media/icons/mouse-scroll-down.svg") no-repeat center / auto 80%;
 }
 
 .notify-item .notify-icon.mouse-scroll-up {
-    mask: url("../../media/icons/mouse-scroll-up.svg") no-repeat center / auto
-        80%;
+    mask: url("../../media/icons/mouse-scroll-up.svg") no-repeat center / auto 80%;
 }
 
 .notify-item .notify-icon.key-enter {

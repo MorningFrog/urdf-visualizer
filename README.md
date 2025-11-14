@@ -125,7 +125,13 @@ There are three installation methods:
 
 ## Release Notes
 
-### 4.7.0
+### 4.8.0
+
+Added:
+
+- Measurement tool settings panel to configure length and angle units, display precision, use of scientific notation, label font size, line color and thickness, point color and size, etc.
+
+### 4.7.x
 
 Added:
 

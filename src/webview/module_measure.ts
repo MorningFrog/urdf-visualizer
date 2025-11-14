@@ -2,8 +2,10 @@
 
 import * as THREE from "three";
 import { CustomURDFDragControls } from "./CustomURDFDragControls";
+
 // 导入测量模块
 import { Measure, MeasureMode } from "./Measure";
+import { LengthUnit, AngleUnit, measureSettings } from "./measure_settings";
 
 export class ModuleMeasure {
     dragControls: CustomURDFDragControls;
@@ -25,6 +27,40 @@ export class ModuleMeasure {
         "measure-angle"
     ) as HTMLButtonElement;
 
+    measureSettingsButton = document.getElementById(
+        "measure-settings"
+    ) as HTMLButtonElement;
+    measureSettingsPanel = document.getElementById(
+        "measure-settings-panel"
+    ) as HTMLDivElement;
+    measureLengthUnitSelect = document.getElementById(
+        "measure-length-unit"
+    ) as HTMLSelectElement;
+    measureAngleUnitSelect = document.getElementById(
+        "measure-angle-unit"
+    ) as HTMLSelectElement;
+    measurePrecisionInput = document.getElementById(
+        "measure-precision"
+    ) as HTMLInputElement;
+    measureUseSciNotationCheckbox = document.getElementById(
+        "measure-use-sci-notation"
+    ) as HTMLInputElement;
+    measureLabelSizeInput = document.getElementById(
+        "measure-label-size"
+    ) as HTMLInputElement;
+    measureLineColorInput = document.getElementById(
+        "measure-line-color"
+    ) as HTMLInputElement;
+    measureLineThicknessInput = document.getElementById(
+        "measure-line-thickness"
+    ) as HTMLInputElement;
+    measurePointColorInput = document.getElementById(
+        "measure-point-color"
+    ) as HTMLInputElement;
+    measurePointSizeInput = document.getElementById(
+        "measure-point-size"
+    ) as HTMLInputElement;
+
     startMeasureCallback: () => void;
     continueMeasureCallback: () => void;
     completeMeasureCallback: () => void;
@@ -44,16 +80,6 @@ export class ModuleMeasure {
         onHoverCallback = () => {}, // 鼠标悬停在模型上的回调函数
         onUnhoverCallback = () => {} // 鼠标离开模型时的回调函数
     ) {
-        // 确保所有元素都已加载
-        if (
-            !this.measureCoordinatesButton ||
-            !this.measureDistanceButton ||
-            !this.measureAreaButton ||
-            !this.measureAngleButton
-        ) {
-            throw new Error("Element not found");
-        }
-
         this.dragControls = controls;
         this.startMeasureCallback = startMeasureCallback;
         this.continueMeasureCallback = continueMeasureCallback;
@@ -151,6 +177,70 @@ export class ModuleMeasure {
                 this.handleMeasureAngle(true);
             }
         });
+
+        this.measureSettingsButton.addEventListener("click", () => {
+            if (this.measureSettingsButton.classList.contains("checked")) {
+                this.handleMeasureSettings(false);
+            } else {
+                this.handleMeasureSettings(true);
+            }
+        });
+
+        this.measureLengthUnitSelect.addEventListener("change", () => {
+            const lengthUnit = this.measureLengthUnitSelect.value;
+            switch (lengthUnit) {
+                case "meter":
+                    measureSettings.lengthUnit = LengthUnit.Meters;
+                    break;
+                case "centimeter":
+                    measureSettings.lengthUnit = LengthUnit.Centimeters;
+                    break;
+                case "millimeter":
+                    measureSettings.lengthUnit = LengthUnit.Millimeters;
+                    break;
+            }
+        });
+        this.measureAngleUnitSelect.addEventListener("change", () => {
+            const angleUnit = this.measureAngleUnitSelect.value;
+            switch (angleUnit) {
+                case "degree":
+                    measureSettings.angleUnit = AngleUnit.Degrees;
+                    break;
+                case "radian":
+                    measureSettings.angleUnit = AngleUnit.Radians;
+                    break;
+            }
+        });
+        this.measurePrecisionInput.addEventListener("change", () => {
+            measureSettings.precision = parseInt(
+                this.measurePrecisionInput.value
+            );
+        });
+        this.measureUseSciNotationCheckbox.addEventListener("change", () => {
+            measureSettings.useSciNotation =
+                this.measureUseSciNotationCheckbox.checked;
+        });
+        this.measureLabelSizeInput.addEventListener("change", () => {
+            measureSettings.labelSize = parseInt(
+                this.measureLabelSizeInput.value
+            );
+        });
+        this.measureLineColorInput.addEventListener("change", () => {
+            measureSettings.lineColor = this.measureLineColorInput.value;
+        });
+        this.measureLineThicknessInput.addEventListener("change", () => {
+            measureSettings.lineThickness = parseInt(
+                this.measureLineThicknessInput.value
+            );
+        });
+        this.measurePointColorInput.addEventListener("change", () => {
+            measureSettings.pointColor = this.measurePointColorInput.value;
+        });
+        this.measurePointSizeInput.addEventListener("change", () => {
+            measureSettings.pointSize = parseInt(
+                this.measurePointSizeInput.value
+            );
+        });
     }
 
     // 清除测量
@@ -179,6 +269,10 @@ export class ModuleMeasure {
             if (this.measureAngleButton.classList.contains("checked")) {
                 this.measureAngleButton.classList.remove("checked");
                 this.measureAngleTool.close();
+            }
+            if (this.measureSettingsButton.classList.contains("checked")) {
+                this.measureSettingsButton.classList.remove("checked");
+                this.measureSettingsPanel.classList.add("hidden");
             }
             this.measureCoordinatesTool.open();
             this.dragControls.set_enable(false);
@@ -211,6 +305,10 @@ export class ModuleMeasure {
                 this.measureAngleButton.classList.remove("checked");
                 this.measureAngleTool.close();
             }
+            if (this.measureSettingsButton.classList.contains("checked")) {
+                this.measureSettingsButton.classList.remove("checked");
+                this.measureSettingsPanel.classList.add("hidden");
+            }
             this.measureDistanceTool.open();
             this.dragControls.set_enable(false);
         } else {
@@ -240,6 +338,10 @@ export class ModuleMeasure {
             if (this.measureAngleButton.classList.contains("checked")) {
                 this.measureAngleButton.classList.remove("checked");
                 this.measureAngleTool.close();
+            }
+            if (this.measureSettingsButton.classList.contains("checked")) {
+                this.measureSettingsButton.classList.remove("checked");
+                this.measureSettingsPanel.classList.add("hidden");
             }
             this.measureAreaTool.open();
             this.dragControls.set_enable(false);
@@ -271,6 +373,10 @@ export class ModuleMeasure {
                 this.measureAreaButton.classList.remove("checked");
                 this.measureAreaTool.close();
             }
+            if (this.measureSettingsButton.classList.contains("checked")) {
+                this.measureSettingsButton.classList.remove("checked");
+                this.measureSettingsPanel.classList.add("hidden");
+            }
             this.measureAngleTool.open();
             this.dragControls.set_enable(false);
         } else {
@@ -280,6 +386,38 @@ export class ModuleMeasure {
             this.measureAngleButton.classList.remove("checked");
             this.measureAngleTool.close();
             this.dragControls.set_enable(true);
+        }
+    };
+
+    handleMeasureSettings = (isOpen: boolean) => {
+        if (isOpen) {
+            if (this.measureSettingsButton.classList.contains("checked")) {
+                return;
+            }
+            this.measureSettingsButton.classList.add("checked");
+            this.measureSettingsPanel.classList.remove("hidden");
+            if (this.measureCoordinatesButton.classList.contains("checked")) {
+                this.measureCoordinatesButton.classList.remove("checked");
+                this.measureCoordinatesTool.close();
+            }
+            if (this.measureDistanceButton.classList.contains("checked")) {
+                this.measureDistanceButton.classList.remove("checked");
+                this.measureDistanceTool.close();
+            }
+            if (this.measureAreaButton.classList.contains("checked")) {
+                this.measureAreaButton.classList.remove("checked");
+                this.measureAreaTool.close();
+            }
+            if (this.measureAngleButton.classList.contains("checked")) {
+                this.measureAngleButton.classList.remove("checked");
+                this.measureAngleTool.close();
+            }
+        } else {
+            if (!this.measureSettingsButton.classList.contains("checked")) {
+                return;
+            }
+            this.measureSettingsButton.classList.remove("checked");
+            this.measureSettingsPanel.classList.add("hidden");
         }
     };
 }

@@ -10,7 +10,10 @@ import {
     calculateArea,
     calculateAngle,
     createCurve,
+    getLengthUnitMultiplier,
 } from "./threejs_tools";
+
+import { LengthUnit, AngleUnit, measureSettings } from "./measure_settings";
 
 // 测量模式枚举
 export enum MeasureMode {
@@ -21,33 +24,6 @@ export enum MeasureMode {
 }
 
 export class Measure {
-    readonly LINE_MATERIAL = new THREE.LineBasicMaterial({
-        color: 0xff0000,
-        linewidth: 1,
-        opacity: 0.8,
-        transparent: true,
-        side: THREE.DoubleSide,
-        depthWrite: false, // 禁用深度写入, 以便在测量时不受其他物体的影响
-        depthTest: false, // 禁用深度测试, 确保线条始终可见
-    });
-    readonly POINT_MATERIAL = new THREE.PointsMaterial({
-        color: 0xff5000,
-        size: 10,
-        opacity: 0.6,
-        transparent: true,
-        depthWrite: false,
-        depthTest: false,
-        sizeAttenuation: false, // 禁用随距离缩放
-    });
-    readonly MESH_MATERIAL = new THREE.MeshBasicMaterial({
-        color: 0x87cefa,
-        transparent: true,
-        opacity: 0.8,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-        depthTest: false,
-    });
-
     // 配置参数
     readonly MAX_POINTS = 50; // 最大支持测量点数 TODO: better to remove this limitation
     readonly MAX_DISTANCE = 500; // 最大有效拾取距离
@@ -227,7 +203,7 @@ export class Measure {
         const pos = new Float32Array(this.MAX_POINTS * 3);
         geom.setAttribute("position", new THREE.BufferAttribute(pos, 3));
         geom.setDrawRange(0, 0); // 初始不绘制任何点
-        const obj = new THREE.Points(geom, this.POINT_MATERIAL);
+        const obj = new THREE.Points(geom, measureSettings.pointMaterial);
         obj.name = this.OBJ_NAME; // 设置标识名称
         return obj;
     }
@@ -241,7 +217,7 @@ export class Measure {
         const geom = new THREE.BufferGeometry();
         const pos = new Float32Array(pointCount * 3);
         geom.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-        const obj = new THREE.Line(geom, this.LINE_MATERIAL);
+        const obj = new THREE.Line(geom, measureSettings.lineMaterial);
         obj.name = this.OBJ_NAME;
         return obj;
     }
@@ -252,7 +228,7 @@ export class Measure {
      */
     private createFaces() {
         const geom = new THREE.BufferGeometry(); // 空几何体
-        const obj = new THREE.Mesh(geom, this.MESH_MATERIAL);
+        const obj = new THREE.Mesh(geom, measureSettings.meshMaterial);
         obj.name = this.OBJ_NAME;
         return obj;
     }
@@ -344,7 +320,7 @@ export class Measure {
                     dir2,
                     p1,
                     distance * 0.2,
-                    this.LINE_MATERIAL
+                    measureSettings.lineMaterial
                 );
                 this.EnsuredCurve.name = this.OBJ_NAME; // 设置标识名称
                 this.scene.add(this.EnsuredCurve);
@@ -453,10 +429,11 @@ export class Measure {
 
         if (this.mode === MeasureMode.Coordinates) {
             // 坐标测量模式, 在临时点上添加标签
-
-            const label = `${numberToString(point.x)}, ${numberToString(
-                point.y
-            )}, ${numberToString(point.z)} ${this.getUnitString()}`;
+            const multiplier = getLengthUnitMultiplier();
+            const label = `${numberToString(
+                point.x * multiplier
+            )}, ${numberToString(point.y * multiplier)}, 
+            ${numberToString(point.z * multiplier)} ${this.getUnitString()}`;
             const position = new THREE.Vector3(point.x, point.y, point.z);
             this.addOrUpdateLabel(points, label, position);
         } else if (this.pointArray.length > 0) {
@@ -494,7 +471,10 @@ export class Measure {
             // 距离测量预览:添加距离标签
             if (this.mode === MeasureMode.Distance) {
                 const dist = p0.distanceTo(point);
-                const label = `${numberToString(dist)} ${this.getUnitString()}`;
+                const multiplier = getLengthUnitMultiplier();
+                const label = `${numberToString(
+                    dist * multiplier
+                )} ${this.getUnitString()}`;
                 const position = new THREE.Vector3(
                     (point.x + p0.x) / 2,
                     (point.y + p0.y) / 2,
@@ -711,7 +691,11 @@ export class Measure {
         }
 
         // 创建新标签
-        this.tempLabel = createLabel(label, position);
+        this.tempLabel = createLabel(
+            label,
+            position,
+            measureSettings.labelSize
+        );
         this.tempLabel.name = this.LABEL_NAME; // 设置标签名称
         obj.add(this.tempLabel);
     }
@@ -723,13 +707,37 @@ export class Measure {
     getUnitString() {
         switch (this.mode) {
             case MeasureMode.Coordinates:
-                return "m";
             case MeasureMode.Distance:
-                return "m";
+                switch (measureSettings.lengthUnit) {
+                    case LengthUnit.Meters:
+                        return "m";
+                    case LengthUnit.Centimeters:
+                        return "cm";
+                    case LengthUnit.Millimeters:
+                        return "mm";
+                    default:
+                        return "";
+                }
             case MeasureMode.Area:
-                return "m²";
+                switch (measureSettings.lengthUnit) {
+                    case LengthUnit.Meters:
+                        return "m²";
+                    case LengthUnit.Centimeters:
+                        return "cm²";
+                    case LengthUnit.Millimeters:
+                        return "mm²";
+                    default:
+                        return "";
+                }
             case MeasureMode.Angle:
-                return "°";
+                switch (measureSettings.angleUnit) {
+                    case AngleUnit.Degrees:
+                        return "°";
+                    case AngleUnit.Radians:
+                        return "rad";
+                    default:
+                        return "";
+                }
             default:
                 return "";
         }

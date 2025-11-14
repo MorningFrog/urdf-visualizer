@@ -184,6 +184,7 @@
 
     <!-- 右侧菜单 -->
     <div id="operation">
+        <div></div>
         <div id="div-measure">
             <div class="div-measure-button">
                 <button id="measure-coordinates" class="measure" title="%webview.measureCoordinates%"></button>
@@ -196,6 +197,70 @@
             </div>
             <div class="div-measure-button">
                 <button id="measure-area" class="measure" title="%webview.measureArea%"></button>
+            </div>
+        </div>
+        <div>
+            <div id="measure-settings-panel" class="hidden">
+                <label for="measure-length-unit">%webview.measureLengthUnit%</label>
+                <select name="measure-length-unit" id="measure-length-unit" style="width: 90px;">
+                    <option value="meter">%webview.measureLengthUnit.meter%</option>
+                    <option value="centimeter">%webview.measureLengthUnit.centimeter%</option>
+                    <option value="millimeter">%webview.measureLengthUnit.millimeter%</option>
+                </select>
+                <div></div>
+
+                <label for="measure-angle-unit">%webview.measureAngleUnit%</label>
+                <select name="measure-angle-unit" id="measure-angle-unit" style="width: 90px;">
+                    <option value="degree">%webview.measureAngleUnit.degree%</option>
+                    <option value="radian">%webview.measureAngleUnit.radian%</option>
+                </select>
+                <div></div>
+
+                <label for="measure-precision">%webview.measurePrecision%</label>
+                <input type="number" name="measure-precision" id="measure-precision" value="2" min="1" step="1"
+                    style="width: 82px;" />
+                <div class="hint" title="%webview.measurePrecisionHint%"></div>
+
+                <label for="measure-use-sci-notation">%webview.measureUseSciNotation%</label>
+                <input type="checkbox" name="measure-use-sci-notation" id="measure-use-sci-notation"
+                    style="width: 15px;" />
+                <div class="hint" title="%webview.measureUseSciNotationHint%"></div>
+
+                <label for="measure-label-size">%webview.measureLabelSize%</label>
+                <input type="number" name="measure-label-size" id="measure-label-size" value="8" min="1" step="1"
+                    style="width: 82px;" />
+                <div class="hint" title="%webview.measureLabelSizeHint%"></div>
+
+                <label for="measure-line-color">%webview.measureLineColor%</label>
+                <input type="color" name="measure-line-color" id="measure-line-color" value="#ff0000"
+                    style="width: 90px;" />
+                <div class="hint" title="%webview.measureLineColorHint%"></div>
+
+                <label for="measure-line-thickness">%webview.measureLineThickness%</label>
+                <input type="number" name="measure-line-thickness" id="measure-line-thickness" value="1" min="1"
+                    step="1" style="width: 82px;" />
+                <div class="hint" title="%webview.measureLineThicknessHint%"></div>
+
+                <label for="measure-point-color">%webview.measurePointColor%</label>
+                <input type="color" name="measure-point-color" id="measure-point-color" value="#ff5000"
+                    style="width: 90px;" />
+                <div class="hint" title="%webview.measurePointColorHint%"></div>
+
+                <label for="measure-point-size">%webview.measurePointSize%</label>
+                <input type="number" name="measure-point-size" id="measure-point-size" value="10" min="1" step="1"
+                    style="width: 82px;" />
+                <div class="hint" title="%webview.measurePointSizeHint%"></div>
+
+                <label for="measure-mesh-color">%webview.measureMeshColor%</label>
+                <input type="color" name="measure-mesh-color" id="measure-mesh-color" value="#87cefa"
+                    style="width: 90px;" />
+                <div class="hint" title="%webview.measureMeshColorHint%"></div>
+
+            </div>
+        </div>
+        <div id="div-measure-settings">
+            <div class="div-measure-button">
+                <button id="measure-settings" class="measure" title="%webview.measureSettings%"></button>
             </div>
         </div>
     </div>

@@ -1,5 +1,15 @@
 # Change Log
 
+## [4.8.0]
+
+增加:
+
+Added:
+
+- 测量工具设置面板, 可设置长度和角度测量单位、是否显示精度、是否使用科学计数法显示、标签字体大小、线条颜色和粗细、点颜色和大小等.
+
+  Measurement tool settings panel to configure length and angle units, display precision, use of scientific notation, label font size, line color and thickness, point color and size, etc.
+
 ## [4.7.0]
 
 增加:
