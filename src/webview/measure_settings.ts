@@ -38,6 +38,9 @@ class MeasureSettings {
         this._pointColor = "#ff5000";
         this._pointSize = 10;
         this._meshColor = "#87cefa";
+        this._lineMaterial = new THREE.LineBasicMaterial();
+        this._pointMaterial = new THREE.PointsMaterial();
+        this._meshMaterial = new THREE.MeshBasicMaterial();
         this.updateLineMaterial();
         this.updatePointMaterial();
         this.updateMeshMaterial();
