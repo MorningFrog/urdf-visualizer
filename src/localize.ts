@@ -3,7 +3,7 @@ import { resolve } from "path";
 import { extensions } from "vscode";
 
 export class Localize {
-    private bundle = this.resolveLanguagePack();
+    public bundle = this.resolveLanguagePack();
     // @ts-ignore
     private options: { locale: string };
 
@@ -89,4 +89,6 @@ export class Localize {
     }
 }
 
-export default Localize.prototype.localize.bind(new Localize());
+export const localizeInstance = new Localize();
+export const localize = localizeInstance.localize.bind(localizeInstance);
+export default localize;

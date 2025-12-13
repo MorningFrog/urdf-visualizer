@@ -8,9 +8,10 @@ import {
     getWebviewContent,
     isUrdfOrXacroFile,
     isXacroFile,
-} from "./extension_utils";
+} from "./extension-utils";
 const { XMLSerializer, XMLDocument } = require("xmldom");
-import { xacroParser } from "./xacro_parser_instance";
+import { xacroParser } from "./xacro-parser-instance";
+import { localizeInstance } from "./localize";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -134,32 +135,37 @@ export function activate(context: vscode.ExtensionContext) {
                         vscode.Uri.file(path.dirname(editor.document.fileName))
                     ).authority;
 
-                    // 让 Webview 初始化页面并发送 URDF
-                    sendURDFContent(
-                        editor.document,
-                        {
-                            reset_camera: true,
-                            uriPrefix: uriPrefix,
-                            cacheMesh: config.get<boolean>("cacheMesh", true),
-                            backgroundColor:
-                                config.get<string>("backgroundColor"),
-                            showTips: config.get<boolean>("showTips"),
-                            highlightJointWhenHover: config.get<boolean>(
-                                "highlightJointWhenHover"
-                            ),
-                            highlightLinkWhenHover: config.get<boolean>(
-                                "highlightLinkWhenHover"
-                            ),
-                        },
-                        "init"
-                    );
-
                     // 更新 previousDocument
                     previousDocument = editor.document;
 
                     // 监听 Webview 发送的消息
                     activePanel.webview.onDidReceiveMessage((message) => {
-                        if (message.type === "getNewURDF") {
+                        if (message.type === "webviewReady") {
+                            // Webview 已准备好, 发送初始化信息
+                            sendURDFContent(
+                                editor.document,
+                                {
+                                    i18n: localizeInstance.bundle,
+                                    reset_camera: true,
+                                    uriPrefix: uriPrefix,
+                                    cacheMesh: config.get<boolean>(
+                                        "cacheMesh",
+                                        true
+                                    ),
+                                    backgroundColor:
+                                        config.get<string>("backgroundColor"),
+                                    showTips: config.get<boolean>("showTips"),
+                                    highlightJointWhenHover:
+                                        config.get<boolean>(
+                                            "highlightJointWhenHover"
+                                        ),
+                                    highlightLinkWhenHover: config.get<boolean>(
+                                        "highlightLinkWhenHover"
+                                    ),
+                                },
+                                "init"
+                            );
+                        } else if (message.type === "getNewURDF") {
                             // 获取新的 URDF 文件内容
                             const editor = vscode.window.activeTextEditor;
                             let document = previousDocument;

@@ -22,6 +22,7 @@
 		"dist",
 		"release",
 		"build",
-		".vscode-test"
+		".vscode-test",
+		"webview"
 	]
 }

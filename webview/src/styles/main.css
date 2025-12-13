@@ -1,0 +1,32 @@
+@import './base.css';
+@import "tailwindcss";
+
+@plugin "daisyui" {
+  prefix: "du-";
+  /* 关键:给所有 daisyUI 组件类加前缀 */
+}
+
+#app {
+  padding: 0;
+  margin: 0;
+  font-weight: normal;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+a,
+.green {
+  text-decoration: none;
+  color: hsla(160, 100%, 37%, 1);
+  transition: 0.4s;
+  padding: 3px;
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: hsla(160, 100%, 37%, 0.2);
+  }
+}

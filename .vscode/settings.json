@@ -12,5 +12,20 @@
 	"typescript.tsc.autoDetect": "off",
 	"[markdown]": {
 		"editor.formatOnSave": false
-	}
+	},
+	"spellright.language": [
+		"en-US-10-1."
+	],
+	"spellright.documentTypes": [
+		"markdown",
+		"latex",
+		"plaintext"
+	],
+	"python-envs.pythonProjects": [
+		{
+			"path": "",
+			"envManager": "ms-python.python:conda",
+			"packageManager": "ms-python.python:conda"
+		}
+	]
 }

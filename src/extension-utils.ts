@@ -69,15 +69,17 @@ export function resolveVariablesInObject(
     return pathStrs;
 }
 
-// 将 Webview 的内容替换为绝对路径
+// 将 Webview 的内容替换为绝对路径并返回完整的 html
 export function getWebviewContent(
     context: vscode.ExtensionContext,
     activePanel: vscode.WebviewPanel | undefined
 ): string | undefined {
     const extensionPath = context.extensionPath;
     // 找到你的 index.html 所在文件夹的绝对路径
-    const htmlRoot = path.join(extensionPath, "src", "webview");
-    const htmlIndexPath = path.join(htmlRoot, "preview.html");
+    // const htmlRoot = path.join(extensionPath, "src", "webview");
+    // const htmlIndexPath = path.join(htmlRoot, "preview.html");
+    const htmlRoot = path.join(extensionPath, "webview", "dist");
+    const htmlIndexPath = path.join(htmlRoot, "index.html");
     const html = fs
         .readFileSync(htmlIndexPath, "utf-8")
         ?.replace(
@@ -91,6 +93,10 @@ export function getWebviewContent(
             // 替换所有的相对路径为绝对路径
             /(<link.+?href="|<script.+?src="|<img.+?src=")(.+?)"/g,
             (m: string, $1: string, $2: string) => {
+                if ($2.startsWith("/")) {
+                    // 绝对路径是相对于 htmlRoot 的
+                    $2 = $2.slice(1);
+                }
                 const absLocalPath = path.resolve(htmlRoot, $2);
                 const webviewUri = activePanel?.webview.asWebviewUri(
                     vscode.Uri.file(absLocalPath)

@@ -88,17 +88,23 @@
         }
     },
     "scripts": {
-        "vscode:prepublish": "npm run package",
-        "compile": "webpack",
-        "watch": "webpack --watch",
+        "webview:install": "npm install --prefix webview",
+        "webview:build": "npm run build --prefix webview",
+        "webview:watch": "npm run build:watch --prefix webview",
+        "webview:dev": "npm run dev --prefix webview",
+        "compile": "npm run webview:build && webpack",
+        "ext:watch": "webpack --watch",
+        "watch": "npm-run-all --parallel webview:watch ext:watch",
         "package": "webpack --mode production --devtool hidden-source-map",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
-        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "pretest": "npm run webview:build && npm run compile-tests && npm run compile && npm run lint",
         "lint": "eslint src",
         "test": "vscode-test",
+        "vscode:prepublish": "npm run webview:build && npm run package",
         "vscode:package": "npx @vscode/vsce package --no-dependencies",
-        "vscode:publish": "npx @vscode/vsce publish --no-dependencies"
+        "vscode:publish": "npx @vscode/vsce publish --no-dependencies",
+        "postinstall": "npm run webview:install"
     },
     "devDependencies": {
         "@eslint-community/eslint-utils": "^4.4.0",
@@ -126,6 +132,7 @@
         "eslint": "^9.9.1",
         "eslint-scope": "^8.0.2",
         "eslint-visitor-keys": "^4.0.0",
+        "npm-run-all": "^4.1.5",
         "ts-loader": "^9.5.1",
         "typescript": "^5.5.4",
         "webpack": "^5.94.0",
