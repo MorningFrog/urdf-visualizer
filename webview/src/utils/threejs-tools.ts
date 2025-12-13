@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { isFrameHelper } from "./custom-axes";
 
 function createTextTexture(
     text: string,
@@ -162,4 +163,25 @@ export function createCurve(
     geometry.setFromPoints(points3D);
     const obj = new THREE.Line(geometry, material);
     return obj;
+}
+
+/**
+ * 计算机器人模型的三维包围盒, 忽略辅助对象(添加了 __isFrameHelper 标记的对象)
+ * @param root - 机器人根对象
+ * @returns 计算得到的包围盒
+ */
+export function computeRobotBounds(root: THREE.Object3D): THREE.Box3 {
+    const box = new THREE.Box3();
+    root.updateMatrixWorld(true);
+
+    root.traverse((o: any) => {
+        if (isFrameHelper(o)) return; // ✅ 跳过 helper 子树
+
+        // 建议只统计 mesh（避免 line / helper / gizmo 干扰）
+        if (!o.isMesh) return;
+
+        box.expandByObject(o, true);
+    });
+
+    return box;
 }

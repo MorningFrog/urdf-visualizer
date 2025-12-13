@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, ref, watch, watchEffect, markRaw } from 'vue';
+import { inject, ref, watch, watchEffect, markRaw, toRaw, nextTick } from 'vue';
 
 import * as THREE from 'three';
 import { LoadingManager } from "three";
@@ -16,6 +16,7 @@ import type {
     URDFCollider,
 } from "urdf-loader";
 import { LinkAxesHelper, JointAxesHelper } from '@/utils/custom-axes';
+import { computeRobotBounds } from '@/utils/threejs-tools';
 
 import { sceneKey, cameraKey, rendererKey, controlsKey, dragControlsKey } from '@/injects/main-view-injects';
 import { vscodeSettings } from '@/stores/vscode-settings';
@@ -30,10 +31,13 @@ const dragControls = inject(dragControlsKey)!;
 
 /** 全局尺寸, 用于缩放坐标系 */
 const globalScale = ref(1.0);
-/** 正在加载的 mesh 数量, 加载机器人时需要等待 mesh 加载完毕 */
-let numMeshLoading = 0;
-/** 等待 mesh 加载完毕的间隔 */
-const waitMeshLoadingInterval = 5;
+
+/** 正在进行的 mesh 加载进程 id */
+let activeLoadId = 0;
+/** 正在加载的 mesh 数量 */
+let pendingMeshes = 0;
+/**  */
+let resolvePending: (() => void) | null = null;
 
 // 记录当前 load robot 时初始的相机位姿
 const initialTarget = new THREE.Vector3();
@@ -145,9 +149,16 @@ const { collisionMaterial,
             }
             // @ts-ignore: 符合URDFLoader的回调签名
             onComplete(mesh, err);
-            numMeshLoading -= 1;
+
+            // 只影响“当前这次 load”
+            if (loadId !== activeLoadId) return;
+
+            pendingMeshes--;
+            if (pendingMeshes === 0) resolvePending?.();
         };
 
+        const loadId = activeLoadId;
+        pendingMeshes++;
         switch (ext) {
             case "gltf":
             case "glb":
@@ -393,8 +404,7 @@ const resetCameraView = () => {
     currentCameraFile = vscodeSettings.filename;
 
     // 计算物体的包围盒
-    // @ts-ignore
-    const box = new THREE.Box3().setFromObject(urdfStore.robot!);
+    const box = computeRobotBounds(urdfStore.robot!);
 
     // 看是否存在相机姿态缓存
     const cameraPose = cameraPoses.get(currentCameraWorkingPath)?.get(currentCameraFile)
@@ -415,7 +425,7 @@ const resetCameraView = () => {
         const maxSize = Math.max(size.x, size.y, size.z);
         const distance =
             maxSize / (2 * Math.tan((camera.fov * Math.PI) / 360)); // 摄像机距离
-        const offset = 0; // 添加偏移量,确保物体完全在视野内
+        const offset = 0.05; // 添加偏移量,确保物体完全在视野内
 
         // 设置相机位置和朝向
         camera.position.set(
@@ -472,18 +482,13 @@ const showVisualCollison = () => {
 }
 
 /** 等待所有 mesh 加载完成 */
-const waitMeshLoadingComplete = (max_wait_time = 5000): Promise<void> => {
-    return new Promise((resolve) => {
-        let waited_time = 0;
-        const interval = setInterval(() => {
-            if (numMeshLoading <= 0 || waited_time >= max_wait_time) {
-                clearInterval(interval);
-                resolve(null);
-            }
-            waited_time += waitMeshLoadingInterval;
-        }, waitMeshLoadingInterval);
+const waitPendingMeshes = (loadId: number) =>
+    new Promise<void>((resolve) => {
+        if (pendingMeshes <= 0) return resolve();
+        resolvePending = () => {
+            if (loadId === activeLoadId) resolve();
+        };
     });
-};
 
 /** 删除机器人 */
 const removeRobot = () => {
@@ -496,6 +501,11 @@ const removeRobot = () => {
 }
 
 const loadURDF = async () => {
+    // 设置新的 mesh 加载进程 id
+    const loadId = ++activeLoadId;
+    pendingMeshes = 0;
+    resolvePending = null;
+
     // 删除已有机器人
     removeRobot();
     // 解析 URDF
@@ -505,23 +515,25 @@ const loadURDF = async () => {
     scene.add(markRaw(robot));
 
     // 等待 mesh 加载完成
-    await waitMeshLoadingComplete();
-    numMeshLoading = 0;
+    await waitPendingMeshes(loadId);
+    if (loadId !== activeLoadId) return; // 已被新加载替代
 
     // 为 collider 设置默认材质
-    robot.traverse((obj) => {
+    robot.traverse(
         // @ts-ignore
         (child: URDFLink | URDFCollider | URDFVisual | THREE.Mesh) => {
             // @ts-ignore
             if (child.isURDFCollider) {
                 // @ts-ignore
                 child.traverse((c: THREE.Mesh) => {
-                    c.material = this.collisionMaterial;
+                    c.material = collisionMaterial;
                     c.castShadow = false;
+                    c.receiveShadow = false;
                 });
             }
         }
-    });
+    );
+
     // 处理 Visual 和 Collision 的显示
     showVisualCollison();
 
