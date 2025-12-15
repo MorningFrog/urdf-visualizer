@@ -15,13 +15,14 @@ import type {
     URDFLink,
     URDFCollider,
 } from "urdf-loader";
-import { LinkAxesHelper, JointAxesHelper } from '@/utils/custom-axes';
+import { LinkAxesHelper, JointAxesHelper, BaseAxesHelper } from '@/utils/custom-axes';
 import { computeRobotBounds } from '@/utils/threejs-tools';
 
 import { sceneKey, cameraKey, rendererKey, controlsKey, dragControlsKey } from '@/injects/main-view-injects';
 import { vscodeSettings } from '@/stores/vscode-settings';
 import { visualSettings } from '@/stores/visual-settings';
 import { urdfStore } from '@/stores/urdf-store';
+import { vscode } from '@/utils/vscode-api';
 
 const scene = inject(sceneKey)!;
 const camera = inject(cameraKey)!;
@@ -279,20 +280,19 @@ const { collisionMaterial,
             axes.setSize(size);
         });
     });
-    const modifyFramesVisibilityAndHighlight = ([showFrames, highlightEnabled, hoveredName], [oldShowFrames, oldHighlightEnabled, oldHoveredName]) => {
+    const modifyFramesVisibilityAndHighlight = ([showFrames, highlightEnabled, hoveredName], [oldShowFrames, oldHighlightEnabled, oldHoveredName], axesMap: Map<string, BaseAxesHelper>) => {
         // 处理显示切换
         if (showFrames) {
-            if (oldShowFrames) // 已经显示则不处理
-                return;
-
-            // 没有显示则显示所有 joint 坐标系
-            jointAxes.forEach((axes) => {
-                axes.visible = true;
-            });
+            if (!oldShowFrames) {
+                // 没有显示则显示所有 joint 坐标系
+                axesMap.forEach((axes) => {
+                    axes.visible = true;
+                });
+            }
         } else {
             if (oldShowFrames) {
                 // 之前显示, 现在隐藏
-                jointAxes.forEach((axes, jointName) => {
+                axesMap.forEach((axes, jointName) => {
                     if (highlightEnabled && jointName === hoveredName) {
                         // 高亮的 joint 坐标系保持显示
                         return;
@@ -300,21 +300,22 @@ const { collisionMaterial,
                     axes.visible = false;
                 });
             } else {
-                // 之前没有显示
+                // 之前没有显示, 现在也没有显示
                 if (oldHoveredName === hoveredName) {
-                    const jointAxesHelper = jointAxes.get(hoveredName);
-                    if (jointAxesHelper) {
-                        jointAxesHelper.visible = highlightEnabled;
+                    // 悬停对象没有变化
+                    const axesHelper = axesMap.get(hoveredName);
+                    if (axesHelper) {
+                        axesHelper.visible = highlightEnabled;
                     }
                 } else {
                     // 悬停对象变化
-                    const oldJointAxes = jointAxes.get(oldHoveredName);
-                    if (oldJointAxes) {
-                        oldJointAxes.visible = false;
+                    const oldAxes = axesMap.get(oldHoveredName);
+                    if (oldAxes) {
+                        oldAxes.visible = false;
                     }
-                    const jointAxesHelper = jointAxes.get(hoveredName);
-                    if (jointAxesHelper) {
-                        jointAxesHelper.visible = highlightEnabled;
+                    const axesHelper = axesMap.get(hoveredName);
+                    if (axesHelper) {
+                        axesHelper.visible = highlightEnabled;
                     }
                 }
             }
@@ -328,35 +329,37 @@ const { collisionMaterial,
         }
         if (oldHoveredName === hoveredName) {
             // 悬停对象没有变化, 是否高亮完全由 enable 控制
-            const jointAxesHelper = jointAxes.get(hoveredName);
-            if (jointAxesHelper) {
-                jointAxesHelper.setHovered(true, highlightEnabled);
+            const axesHelper = axesMap.get(hoveredName);
+            if (axesHelper) {
+                axesHelper.setHovered(true, highlightEnabled);
             }
         } else {
             // 悬停对象变化, 先取消上一个对象的高亮, 再设置当前对象的高亮
-            const oldJointAxes = jointAxes.get(oldHoveredName);
-            if (oldJointAxes) {
-                oldJointAxes.setHovered(false);
+            const oldAxes = axesMap.get(oldHoveredName);
+            if (oldAxes) {
+                oldAxes.setHovered(false);
             }
-            const jointAxesHelper = jointAxes.get(hoveredName);
-            if (jointAxesHelper) {
-                jointAxesHelper.setHovered(true, highlightEnabled);
+            const axesHelper = axesMap.get(hoveredName);
+            if (axesHelper) {
+                axesHelper.setHovered(true, highlightEnabled);
             }
         }
 
     }
     watch(() => [visualSettings.showJointFrames, vscodeSettings.highlightJointWhenHover, urdfStore.hoveredJointName],
-        ([showJointFrames, highlightEnabled, hoveredJointName], [oldShowJointFrames, oldHighlightEnabled, oldHoveredJointName]) => {
+        ([showFrames, highlightEnabled, hoveredName], [oldShowFrames, oldHighlightEnabled, oldHoveredName]) => {
             modifyFramesVisibilityAndHighlight(
-                [showJointFrames, highlightEnabled, hoveredJointName],
-                [oldShowJointFrames, oldHighlightEnabled, oldHoveredJointName]
+                [showFrames, highlightEnabled, hoveredName],
+                [oldShowFrames, oldHighlightEnabled, oldHoveredName],
+                jointAxes
             );
         });
-    watch(() => [vscodeSettings.highlightLinkWhenHover, urdfStore.hoveredLinkName],
-        ([highlightEnabled, hoveredLinkName], [oldHighlightEnabled, oldHoveredLinkName]) => {
+    watch(() => [visualSettings.showLinkFrames, vscodeSettings.highlightLinkWhenHover, urdfStore.hoveredLinkName],
+        ([showFrames, highlightEnabled, hoveredName], [oldShowFrames, oldHighlightEnabled, oldHoveredName]) => {
             modifyFramesVisibilityAndHighlight(
-                [visualSettings.showJointFrames, highlightEnabled, hoveredLinkName],
-                [visualSettings.showJointFrames, oldHighlightEnabled, oldHoveredLinkName]
+                [showFrames, highlightEnabled, hoveredName],
+                [oldShowFrames, oldHighlightEnabled, oldHoveredName],
+                linkAxes
             );
         });
 
@@ -382,7 +385,12 @@ const resetCameraView = () => {
     if (!vscodeSettings.requireResetCamera) return;
     if (!urdfStore.robot) return;
     // 保存相机位姿
-    if (currentCameraWorkingPath && currentCameraFile) {
+    if (currentCameraWorkingPath && currentCameraFile
+        && (
+            currentCameraWorkingPath !== vscodeSettings.workingPath ||
+            currentCameraFile !== vscodeSettings.filename
+        )
+    ) {
         if (
             !camera.position.equals(initialPosition) ||
             !controls.target.equals(initialTarget) ||
@@ -495,6 +503,10 @@ const removeRobot = () => {
     if (!urdfStore.robot) return;
     scene.remove(markRaw(urdfStore.robot));
     urdfStore.robot = null;
+    urdfStore.hoveredJointName = null;
+    urdfStore.hoveredLinkName = null;
+    urdfStore.isHoveredLinkVisual = false;
+    urdfStore.jointValues.clear();
     // 删除 joint 和 link 坐标系
     jointAxes.clear();
     linkAxes.clear();
@@ -513,6 +525,19 @@ const loadURDF = async () => {
     urdfStore.robot = robot;
     // 添加到场景中
     scene.add(markRaw(robot));
+    // 构造初始关节值
+    Object.entries<URDFJoint>(robot.joints).forEach(
+        ([joint_name, joint]) => {
+            switch (joint.jointType) {
+                case 'revolute':
+                case 'continuous':
+                case 'prismatic':
+                    urdfStore.jointValues.set(joint_name, 0.0);
+                    break;
+                default:
+            }
+        }
+    );
 
     // 等待 mesh 加载完成
     await waitPendingMeshes(loadId);
@@ -557,6 +582,31 @@ watch(() => [visualSettings.showVisual, visualSettings.showCollision], () => {
     showVisualCollison();
 });
 
+watch(
+    () => urdfStore.requireReload,
+    (requireReload) => {
+        if (requireReload) {
+            // 清除 camera 缓存
+            if (
+                currentCameraWorkingPath &&
+                currentCameraFile &&
+                cameraPoses.has(currentCameraWorkingPath)
+            ) {
+                const filePoses = cameraPoses.get(currentCameraWorkingPath)!;
+                filePoses.delete(currentCameraFile);
+            }
+            // 清空 mesh 缓存
+            meshCache.clear();
+            // 重置标志
+            urdfStore.requireReload = false;
+            // 清空机器人
+            vscodeSettings.urdfText = "";
+
+            // 请求新 URDF 内容
+            vscode.postMessage({ type: "getNewURDF" });
+        }
+    }
+);
 
 </script>
 <template>

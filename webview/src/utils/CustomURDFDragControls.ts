@@ -97,7 +97,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         urdfStore.hoveredLinkName = currHoveredLink
             ? currHoveredLink.name
             : null;
-        urdfStore.isHoveredVisual = currIsHoveredVisual;
+        urdfStore.isHoveredLinkVisual = currIsHoveredVisual;
     }
 
     setGrabbed(grabbed) {
@@ -154,7 +154,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         // 取消悬停状态
         urdfStore.hoveredJointName = null;
         urdfStore.hoveredLinkName = null;
-        urdfStore.isHoveredVisual = false;
+        urdfStore.isHoveredLinkVisual = false;
     }
 
     // 清理事件监听器

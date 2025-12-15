@@ -129,7 +129,7 @@ function createXYZAxes(
     return { x, y, z };
 }
 
-abstract class BaseAxesHelper extends THREE.Group {
+export abstract class BaseAxesHelper extends THREE.Group {
     /** 全局尺寸缩放 */
     public globalScale: number;
     /** 本地尺寸值 */

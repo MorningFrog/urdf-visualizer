@@ -19,6 +19,8 @@ export interface URDFStoreState {
     hoveredJointName: string | null;
     /** 各关节的名称-值对象 */
     jointValues: Map<string, number>;
+    /** 是否需要重新加载 URDF */
+    requireReload: boolean;
 }
 
 export const urdfStore = reactive<URDFStoreState>({
@@ -27,4 +29,5 @@ export const urdfStore = reactive<URDFStoreState>({
     isHoveredLinkVisual: false,
     hoveredJointName: null,
     jointValues: new Map<string, number>(),
+    requireReload: false,
 });

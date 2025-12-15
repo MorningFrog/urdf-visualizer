@@ -5,6 +5,13 @@ import ExpandIcon from '/public/icons/expand.svg';
 import HintIcon from '/public/icons/hint.svg';
 import i18n from '@/stores/i18n';
 import { visualSettings } from '@/stores/visual-settings';
+import { urdfStore } from '@/stores/urdf-store';
+
+/** 重新加载 URDF */
+const onReloadClick = () => {
+    // 设置需要重新加载标志, module-urdf 会监听该标志并执行重新加载
+    urdfStore.requireReload = true;
+};
 
 const open = ref(false)         // 是否勾选(展开)
 const fullyOpen = ref(false)    // 是否"动画已结束的展开态"
@@ -42,19 +49,19 @@ const onTransitionEnd = (e: TransitionEvent) => {
                     <!-- 显示Visual复选框 -->
                     <label class="du-list-row my-list-row">
                         <input type="checkbox" v-model="visualSettings.showVisual"
-                            class="du-checkbox du-checkbox-primary my-checkbox" />
+                            class="du-checkbox du-checkbox-primary my-front-input" />
                         <span>{{ i18n('webview.showVisual') }}</span>
                     </label>
                     <!-- 显示Collision复选框 -->
                     <label class="du-list-row my-list-row">
                         <input type="checkbox" v-model="visualSettings.showCollision"
-                            class="du-checkbox du-checkbox-primary my-checkbox" />
+                            class="du-checkbox du-checkbox-primary my-front-input" />
                         <span>{{ i18n('webview.showCollision') }}</span>
                     </label>
                     <!-- 显示世界坐标系复选框 -->
                     <label class="du-list-row my-list-row">
                         <input type="checkbox" v-model="visualSettings.showWorldFrame"
-                            class="du-checkbox du-checkbox-primary my-checkbox" />
+                            class="du-checkbox du-checkbox-primary my-front-input" />
                         <span>{{ i18n('webview.showWorldFrame') }}</span>
                         <div class="du-tooltip du-tooltip-top">
                             <div class="du-tooltip-content">
@@ -63,11 +70,55 @@ const onTransitionEnd = (e: TransitionEvent) => {
                             <HintIcon class="my-hint-icon" />
                         </div>
                     </label>
+                    <!-- 显示 Joint 坐标系复选框 -->
+                    <label class="du-list-row my-list-row">
+                        <input type="checkbox" v-model="visualSettings.showJointFrames"
+                            class="du-checkbox du-checkbox-primary my-front-input" />
+                        <span>{{ i18n('webview.showJointFrames') }}</span>
+                        <div class="du-tooltip du-tooltip-top">
+                            <div class="du-tooltip-content">
+                                {{ i18n('webview.showJointFramesHint') }}
+                            </div>
+                            <HintIcon class="my-hint-icon" />
+                        </div>
+                    </label>
+                    <!-- Joint 坐标系尺寸调节 -->
+                    <label class="du-list-row my-list-row h-10!">
+                        <div class="my-front-input"></div>
+                        <div>
+                            <div>{{ i18n('webview.jointFrameSize') }}</div>
+                            <input type="range" min="0.01" max="1.0" step="0.01"
+                                v-model="visualSettings.jointFrameSize" />
+                        </div>
+                    </label>
+                    <!-- 显示 Link 坐标系复选框 -->
+                    <label class="du-list-row my-list-row">
+                        <input type="checkbox" v-model="visualSettings.showLinkFrames"
+                            class="du-checkbox du-checkbox-primary my-front-input" />
+                        <span>{{ i18n('webview.showLinkFrames') }}</span>
+                        <div class="du-tooltip du-tooltip-top">
+                            <div class="du-tooltip-content">
+                                {{ i18n('webview.showLinkFramesHint') }}
+                            </div>
+                            <HintIcon class="my-hint-icon" />
+                        </div>
+                    </label>
+                    <!-- Link 坐标系尺寸调节 -->
+                    <label class="du-list-row my-list-row h-10!">
+                        <div class="my-front-input"></div>
+                        <div>
+                            <div>{{ i18n('webview.linkFrameSize') }}</div>
+                            <input type="range" min="0.01" max="1.0" step="0.01"
+                                v-model="visualSettings.linkFrameSize" />
+                        </div>
+                    </label>
                 </ul>
+                <!-- Joint列表 -->
+                <h1>{{ i18n('base.joint') }}</h1>
             </div>
         </div>
         <div class="du-tooltip du-tooltip-bottom" :data-tip="i18n('webview.reload.hint')">
-            <button class="du-btn du-btn-outline du-btn-primary h-10">
+            <button class="du-btn du-btn-outline du-btn-primary h-10" @click="onReloadClick">
                 <ReloadIcon class="w-5 h-5 mr-2" />
                 {{ i18n('webview.reload') }}
             </button>
@@ -82,7 +133,7 @@ const onTransitionEnd = (e: TransitionEvent) => {
     @apply hover:underline h-5 leading-5 mb-2;
 }
 
-.my-checkbox {
+.my-front-input {
     @apply h-4 w-4;
 }
 
