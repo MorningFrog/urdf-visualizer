@@ -30,7 +30,10 @@ function forEachLineMaterial(
 function setLineMaterialProps(
     line: THREE.Line,
     props: Partial<
-        Pick<LineMaterialLike, "linewidth" | "depthTest" | "needsUpdate">
+        Pick<
+            LineMaterialLike,
+            "linewidth" | "depthTest" | "needsUpdate" | "depthWrite"
+        >
     >
 ): void {
     forEachLineMaterial(line, (m) => Object.assign(m, props));
@@ -218,12 +221,20 @@ export abstract class BaseAxesHelper extends THREE.Group {
         this._isForceTop = forceTop;
 
         const linewidth = hovered ? this.hoveredLinewidth : this.linewidth;
-        const depthTest = !(hovered && forceTop);
+        const forceOnTop = hovered && forceTop;
+
+        const ro = forceOnTop ? 10_000 : 0;
+        this.renderOrder = ro;
+        this.traverse((o) => (o.renderOrder = ro));
+
+        const depthTest = !forceOnTop;
+        const depthWrite = !forceOnTop;
 
         this.lines.forEach((l) => {
             setLineMaterialProps(l, {
                 linewidth,
                 depthTest,
+                depthWrite,
                 needsUpdate: true,
             });
         });
