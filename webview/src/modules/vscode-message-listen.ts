@@ -1,8 +1,10 @@
 import { createApp, type App as VueApp } from "vue";
+import FloatingVue from "floating-vue";
 import { vscodeSettings } from "@/stores/vscode-settings";
 import { vscode } from "@/utils/vscode-api";
 import { i18nMessages } from "@/stores/i18n";
 import App from "@/App.vue";
+import { vClampCenterX } from "@/directives/clampCenterX";
 
 let app: VueApp<Element> | null = null;
 
@@ -79,6 +81,7 @@ window.addEventListener("message", (event) => {
     if (message.type === "init") {
         if (app) return; // 避免重复初始化
         app = createApp(App);
+        app.use(FloatingVue).directive("clamp-center-x", vClampCenterX);
         app.mount("#app");
     }
 });

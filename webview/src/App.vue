@@ -3,7 +3,8 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { mouseState } from '@/stores/mouse-state';
 import MainView from '@/views/MainView.vue';
 import ModelInfoPanel from '@/views/ModelInfoPanel.vue';
-import SettingsPanel from '@/views/SettingsPanel.vue';
+import ControlPanel from '@/views/ControlPanel/ControlPanel.vue';
+import MeasurePanel from '@/views/MeasurePanel.vue';
 
 // 监听鼠标状态变化
 onMounted(() => {
@@ -28,8 +29,9 @@ onMounted(() => {
 <template>
   <main class="w-screen h-screen overflow-hidden relative">
     <main-view class="w-full h-full overflow-hidden" />
+    <ControlPanel class="absolute top-5 left-5" />
+    <measure-panel class="absolute top-5 right-5" />
     <model-info-panel />
-    <settings-panel class="absolute top-5 left-5" />
   </main>
 </template>
 

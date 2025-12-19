@@ -7,6 +7,7 @@ Related Tools:
 -   [TypeScript](https://www.typescriptlang.org/)
 -   [Tailwind CSS](https://tailwindcss.com/)
 -   [daisyUI](https://daisyui.com/)
+-   [Floating Vue](https://floating-vue.starpad.dev/)
 
 ## Recommended IDE Setup
 

@@ -21,7 +21,8 @@ import { computeRobotBounds } from '@/utils/threejs-tools';
 import { sceneKey, cameraKey, rendererKey, controlsKey, dragControlsKey } from '@/injects/main-view-injects';
 import { vscodeSettings } from '@/stores/vscode-settings';
 import { visualSettings } from '@/stores/visual-settings';
-import { urdfStore } from '@/stores/urdf-store';
+import { urdfStore, type LinkTreeNode } from '@/stores/urdf-store';
+import { JointType, isFixedJoint, isDraggableJoint, isAngularJoint, isLinearJoint } from '@/utils/joint-type';
 import { vscode } from '@/utils/vscode-api';
 
 const scene = inject(sceneKey)!;
@@ -489,6 +490,93 @@ const showVisualCollison = () => {
     });
 }
 
+/**
+ * 构造关节值和关节类型等信息
+ */
+const constructJointStructure = () => {
+    if (!urdfStore.robot) {
+        urdfStore.jointValues = {} as Record<string, number>;
+        urdfStore.jointLimitMin = {} as Record<string, number>;
+        urdfStore.jointLimitMax = {} as Record<string, number>;
+        urdfStore.jointTypes = {} as Record<string, JointType>;
+        return;
+    };
+    const jointValues = {} as Record<string, number>;
+    const jointLimitMin = {} as Record<string, number>;
+    const jointLimitMax = {} as Record<string, number>;
+    const jointTypes = {} as Record<string, JointType>;
+    Object.entries<URDFJoint>(urdfStore.robot.joints).forEach(
+        ([joint_name, joint]) => {
+            if (isFixedJoint(joint.jointType)) {
+                return;
+            }
+            jointTypes[joint_name] = joint.jointType as JointType;
+
+            if (!isDraggableJoint(joint.jointType)) {
+                return;
+            }
+            jointValues[joint_name] = 0.0;
+
+            if (joint.jointType === JointType.CONTINUOUS) {
+                jointLimitMin[joint_name] = -Math.PI * 2;
+                jointLimitMax[joint_name] = Math.PI * 2;
+                return;
+            }
+            jointLimitMin[joint_name] = joint.limit.lower;
+            jointLimitMax[joint_name] = joint.limit.upper;
+        }
+    );
+    urdfStore.jointValues = jointValues;
+    urdfStore.jointLimitMax = jointLimitMax;
+    urdfStore.jointLimitMin = jointLimitMin;
+    urdfStore.jointTypes = jointTypes;
+}
+
+/**
+ * 构造 link 名称-显示等信息
+ */
+const constructLinkStructure = () => {
+    if (!urdfStore.robot) {
+        urdfStore.linkTree = null;
+        urdfStore.linkVisibility = {} as Record<string, boolean>;
+        return;
+    };
+    const linkVisibility = {} as Record<string, boolean>;
+    Object.entries<URDFLink>(urdfStore.robot.links).forEach(
+        ([link_name, link]) => {
+            linkVisibility[link_name] = true;
+        }
+    );
+
+    function buildTree(_node:
+        URDFRobot | URDFJoint | URDFLink
+    ): LinkTreeNode | null {
+        if (_node.isURDFJoint) {
+            for (const childLink of _node.children) {
+                if (childLink.isURDFLink) return buildTree(childLink);
+            }
+            return null;
+        }
+        if (_node.isURDFLink) {
+            const treeNode: LinkTreeNode = {
+                name: _node.name,
+                children: [],
+            };
+            for (const childJoint of _node.children) {
+                const childTree = buildTree(childJoint);
+                if (childTree) {
+                    treeNode.children.push(childTree);
+                }
+            }
+            return treeNode;
+        }
+
+        return null;
+    }
+    urdfStore.linkTree = buildTree(urdfStore.robot);
+    urdfStore.linkVisibility = linkVisibility;
+}
+
 /** 等待所有 mesh 加载完成 */
 const waitPendingMeshes = (loadId: number) =>
     new Promise<void>((resolve) => {
@@ -502,11 +590,12 @@ const waitPendingMeshes = (loadId: number) =>
 const removeRobot = () => {
     if (!urdfStore.robot) return;
     scene.remove(markRaw(urdfStore.robot));
+
+    // 重置 urdfStore 内容
     urdfStore.robot = null;
-    urdfStore.hoveredJointName = null;
-    urdfStore.hoveredLinkName = null;
-    urdfStore.isHoveredLinkVisual = false;
-    urdfStore.jointValues.clear();
+    constructJointStructure();
+    constructLinkStructure();
+
     // 删除 joint 和 link 坐标系
     jointAxes.clear();
     linkAxes.clear();
@@ -525,19 +614,8 @@ const loadURDF = async () => {
     urdfStore.robot = robot;
     // 添加到场景中
     scene.add(markRaw(robot));
-    // 构造初始关节值
-    Object.entries<URDFJoint>(robot.joints).forEach(
-        ([joint_name, joint]) => {
-            switch (joint.jointType) {
-                case 'revolute':
-                case 'continuous':
-                case 'prismatic':
-                    urdfStore.jointValues.set(joint_name, 0.0);
-                    break;
-                default:
-            }
-        }
-    );
+    // 构造初始关节值和值上下限
+    constructJointStructure();
 
     // 等待 mesh 加载完成
     await waitPendingMeshes(loadId);
@@ -562,8 +640,13 @@ const loadURDF = async () => {
     // 处理 Visual 和 Collision 的显示
     showVisualCollison();
 
+    // 构造 link 名称-显示 映射
+    constructLinkStructure();
+
     // 设置视野
     resetCameraView();
+
+    console.log("URDF loaded:", urdfStore.robot);
 }
 
 watch(

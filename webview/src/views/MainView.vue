@@ -82,6 +82,9 @@ const render = () => {
 onMounted(() => {
     if (!urdfViewerRef.value) return;
     urdfViewerRef.value.appendChild(renderer.domElement);
+    urdfViewerRef.value.addEventListener('pointerleave', () => {
+        dragControls.onMouseLeaveCallback();
+    });
 
     onResize();
     window.addEventListener('resize', onResize);

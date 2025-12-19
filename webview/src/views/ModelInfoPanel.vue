@@ -4,9 +4,10 @@ import { formatJointValueWithUnit } from '@/utils/math-tools';
 import { urdfStore } from '@/stores/urdf-store';
 import { mouseState } from '@/stores/mouse-state';
 import i18n from '@/stores/i18n';
+import { jointType, isDraggableJoint, isAngularJoint } from "@/utils/joint-type";
 
 const showModelInfo = computed(() => {
-    return urdfStore.hoveredJointName !== null || urdfStore.hoveredLinkName !== null;
+    return (urdfStore.hoveredJointName !== null || urdfStore.hoveredLinkName !== null) && urdfStore.isHoveredOnModel;
 });
 
 const modelInfoStyle = computed(() => ({
@@ -16,33 +17,26 @@ const modelInfoStyle = computed(() => ({
 
 const jointTypeStr = ref('');
 const jointValueStr = ref('');
-watch(() => [urdfStore.robot, urdfStore.hoveredJointName, urdfStore.jointValues.get(urdfStore.hoveredJointName)],
+watch(() => [urdfStore.robot, urdfStore.hoveredJointName, urdfStore.jointValues[urdfStore.hoveredJointName]],
     ([robot, hoveredJointName, jointValue]) => {
         if (hoveredJointName === null) {
             jointTypeStr.value = '';
             jointValueStr.value = '';
             return;
         }
-        const joint: URDFJoint | null = robot?.joints[hoveredJointName] || null;
-        if (!joint) {
+        const _jointType = urdfStore.jointTypes[hoveredJointName];
+        if (!_jointType) {
             jointTypeStr.value = '';
             jointValueStr.value = '';
             return;
         }
-        switch (joint.jointType) {
-            case 'revolute':
-            case 'continuous':
-                jointTypeStr.value = joint.jointType;
-                jointValueStr.value = formatJointValueWithUnit(jointValue, true);
-                break;
-            case 'prismatic':
-                jointTypeStr.value = joint.jointType;
-                jointValueStr.value = formatJointValueWithUnit(jointValue, false);
-                break;
-            default:
-                jointTypeStr.value = joint.jointType;
-                jointValueStr.value = '';
+        jointTypeStr.value = _jointType as string;
+
+        if (!isDraggableJoint(_jointType)) {
+            jointValueStr.value = '';
+            return;
         }
+        jointValueStr.value = formatJointValueWithUnit(jointValue, isAngularJoint(_jointType));
     }, { immediate: true });
 
 </script>
@@ -60,7 +54,7 @@ watch(() => [urdfStore.robot, urdfStore.hoveredJointName, urdfStore.jointValues.
             <p><strong>{{ i18n('base.name') }}:</strong> {{ urdfStore.hoveredJointName }}</p>
             <p><strong>{{ i18n('base.type') }}:</strong> {{ jointTypeStr }}</p>
             <p :class="{ 'hidden': jointValueStr === '' }"><strong>{{ i18n('base.value') }}:</strong> {{ jointValueStr
-                }}</p>
+            }}</p>
         </div>
     </div>
 </template>

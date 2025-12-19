@@ -137,16 +137,16 @@ export function jointValueToString(value: number, isAngle: boolean): string {
             case AngleUnit.Degrees:
                 // 弧度转角度
                 value = (value * 180) / Math.PI;
-                break;
+                return value.toFixed(0);
             case AngleUnit.Radians:
                 // 保持弧度制
-                break;
+                return value.toFixed(2);
         }
     } else {
         const multiplier = getVisualLengthUnitMultiplier();
         value = value * multiplier;
+        return value.toFixed(2);
     }
-    return value.toFixed(2);
 }
 
 export function formatJointValueWithUnit(

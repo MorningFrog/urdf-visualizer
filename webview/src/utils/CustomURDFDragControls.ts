@@ -98,6 +98,8 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
             ? currHoveredLink.name
             : null;
         urdfStore.isHoveredLinkVisual = currIsHoveredVisual;
+        urdfStore.isHoveredOnModel =
+            currHoveredJoint !== null || currHoveredLink !== null;
     }
 
     setGrabbed(grabbed) {
@@ -144,7 +146,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
             return;
         }
         super.updateJoint(joint, angle);
-        urdfStore.jointValues.set(joint.name, angle);
+        urdfStore.jointValues[joint.name] = angle;
     }
 
     /**
@@ -155,6 +157,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
         urdfStore.hoveredJointName = null;
         urdfStore.hoveredLinkName = null;
         urdfStore.isHoveredLinkVisual = false;
+        urdfStore.isHoveredOnModel = false;
     }
 
     // 清理事件监听器
