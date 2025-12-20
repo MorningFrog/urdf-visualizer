@@ -11,12 +11,48 @@ import type {
 
 import { urdfStore } from "@/stores/urdf-store";
 
-// Find the nearest parent that is a joint
+/** Find the nearest parent that is a joint */
 function isJoint(j: URDFLink | URDFJoint | URDFVisual) {
     // @ts-ignore
     return j.isURDFJoint && j.jointType !== "fixed";
 }
 
+/**
+ * 找到最近的可见 Link 和 Joint,
+ */
+function findVisibleIntersection(intersections: THREE.Intersection[]): {
+    hit: THREE.Intersection | null;
+    link: URDFLink | null;
+    isVisual: boolean;
+    joint: URDFJoint | null;
+} {
+    console.log("intersections:", intersections);
+    for (const hit of intersections) {
+        const { link, isVisual, isVisible } = findNearestLink(hit.object);
+        if (!link || !isVisible) {
+            continue;
+        }
+
+        let tempIsVisible = true;
+        let tempLink = link;
+        while (tempLink) {
+            if (tempIsVisible) {
+                ({ link: tempLink, isVisible: tempIsVisible } = findNearestLink(
+                    tempLink.parent
+                ));
+            } else {
+                break;
+            }
+        }
+        if (tempIsVisible) {
+            const joint = findNearestJoint(hit.object);
+            return { hit, link, isVisual, joint };
+        }
+    }
+    return { hit: null, link: null, isVisual: false, joint: null };
+}
+
+/** 找到最近的 Joint (向上搜索) */
 function findNearestJoint(child: THREE.Mesh): URDFJoint | null {
     let curr: any = child;
     while (curr) {
@@ -29,27 +65,38 @@ function findNearestJoint(child: THREE.Mesh): URDFJoint | null {
 }
 
 /**
- * 寻找最近的 Link 元素
+ * 寻找最近的 Link (向上搜索)
  * @param child
- * @returns 返回最近的 URDFLink 元素和悬浮的是否是 Visual 元素的布尔值
+ * @returns
+ * { link: 找到的 Link, isVisual: 是否为 Visual, isVisible: 是否可视 }
  */
-function findNearestLink(child: THREE.Mesh): [URDFLink, boolean] {
+function findNearestLink(child: any): {
+    link: URDFLink | null;
+    isVisual: boolean;
+    isVisible: boolean;
+} {
     let curr: any = child;
     let isVisual = false;
+    let isVisible = true;
     while (curr) {
         // @ts-ignore
         if (curr.isURDFVisual) {
             isVisual = true;
-            curr = curr.parent;
+        }
+
+        // @ts-ignore
+        if (!curr.visible) {
+            isVisible = false;
         }
 
         // @ts-ignore
         if (curr.isURDFLink) {
-            return [curr, isVisual];
+            return { link: curr, isVisual, isVisible };
         }
+
         curr = curr.parent;
     }
-    return [curr, isVisual];
+    return { link: null, isVisual, isVisible };
 }
 
 export class CustomURDFDragControls extends PointerURDFDragControls {
@@ -76,17 +123,15 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
             return;
         }
 
-        let currHoveredJoint: URDFJoint | null = null;
-        let currHoveredLink: URDFLink | null = null;
-        let currIsHoveredVisual: boolean = false;
         const intersections = raycaster.intersectObject(scene, true);
-        if (intersections.length !== 0) {
-            const hit = intersections[0];
+        const {
+            hit,
+            link: currHoveredLink,
+            isVisual: currIsHoveredVisual,
+            joint: currHoveredJoint,
+        } = findVisibleIntersection(intersections);
+        if (hit) {
             this.hitDistance = hit.distance;
-            [currHoveredLink, currIsHoveredVisual] = findNearestLink(
-                hit.object
-            );
-            currHoveredJoint = findNearestJoint(hit.object);
             this.initialGrabPoint.copy(hit.point);
         }
 

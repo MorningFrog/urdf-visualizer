@@ -76,18 +76,18 @@ const onResetJointsClick = () => {
         <div class="flex justify-between">
           <VTooltip :delay="0" :distance="8">
             <button @click="onRandomizeJointsClick" class="du-btn du-btn-ghost du-btn-sm px-1 py-0.5">
-              {{ i18n("webview.randomizeJoints") }}
+              {{ i18n("webview.control.randomizeJoints") }}
             </button>
             <template #popper>
-              <div class="max-w-50">{{ i18n("webview.randomizeJoints.hint") }}</div>
+              <div class="max-w-50">{{ i18n("webview.control.randomizeJoints.hint") }}</div>
             </template>
           </VTooltip>
           <VTooltip :delay="0" :distance="8">
             <button @click="onResetJointsClick" class="du-btn du-btn-ghost du-btn-sm px-1 py-0.5">
-              {{ i18n("webview.resetJoints") }}
+              {{ i18n("webview.control.resetJoints") }}
             </button>
             <template #popper>
-              <div class="max-w-50">{{ i18n("webview.resetJoints.hint") }}</div>
+              <div class="max-w-50">{{ i18n("webview.control.resetJoints.hint") }}</div>
             </template>
           </VTooltip>
         </div>

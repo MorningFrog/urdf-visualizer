@@ -463,29 +463,15 @@ const resetCameraView = () => {
  * 处理 Visual 和 Collision 的显示切换
  */
 const showVisualCollison = () => {
-    function setLayerRecursive(object: THREE.Object3D, layer: number) {
-        object.layers.set(layer); // 设置当前对象
-        object.traverse((child1) => child1.layers.set(layer)); // 递归子对象
-    }
     // @ts-ignore
     urdfStore.robot.traverse((child: THREE.Object3D) => {
         // @ts-ignore
         if (child.isURDFCollider) {
             child.visible = visualSettings.showCollision;
-            if (!visualSettings.showCollision) {
-                setLayerRecursive(child, 1); // 禁用 Raycaster 检测
-            } else {
-                setLayerRecursive(child, 0); // 恢复 Raycaster 检测
-            }
         }
         // @ts-ignore
         else if (child.isURDFVisual) {
             child.visible = visualSettings.showVisual;
-            if (!visualSettings.showVisual) {
-                setLayerRecursive(child, 1); // 禁用 Raycaster 检测
-            } else {
-                setLayerRecursive(child, 0); // 恢复 Raycaster 检测
-            }
         }
     });
 }
@@ -645,8 +631,6 @@ const loadURDF = async () => {
 
     // 设置视野
     resetCameraView();
-
-    console.log("URDF loaded:", urdfStore.robot);
 }
 
 watch(

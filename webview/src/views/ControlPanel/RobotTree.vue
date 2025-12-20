@@ -51,13 +51,13 @@ const toggleAllLinksVisibility = () => {
     <!-- 标题 -->
     <div class="title-bar z-20 relative pointer-events-none">
       <div></div>
-      <h1 class="pointer-events-auto">{{ i18n("base.link") }}</h1>
+      <h1 class="pointer-events-auto">{{ i18n("webview.control.linkList") }}</h1>
       <div class="justify-self-end pointer-events-auto">
         <VTooltip :delay="0" :distance="8">
           <HintIcon class="my-hint-icon" />
           <template #popper>
             <div class="max-w-50">
-              {{ i18n("webview.linkListHint") }}
+              {{ i18n("webview.control.linkList.hint") }}
             </div>
           </template>
         </VTooltip>
@@ -75,16 +75,16 @@ const toggleAllLinksVisibility = () => {
             <button @click="toggleAllLinksVisibility" class="du-btn du-btn-ghost du-btn-sm px-1 py-0.5">
               {{
                 hasHiddenLinks
-                  ? i18n("webview.showAllLinks")
-                  : i18n("webview.hideAllLinks")
+                  ? i18n("webview.control.showAllLinks")
+                  : i18n("webview.control.hideAllLinks")
               }}
             </button>
             <template #popper>
               <div class="max-w-50">
                 {{
                   hasHiddenLinks
-                    ? i18n("webview.showAllLinks.hint")
-                    : i18n("webview.hideAllLinks.hint")
+                    ? i18n("webview.control.showAllLinks.hint")
+                    : i18n("webview.control.hideAllLinks.hint")
                 }}
               </div>
             </template>

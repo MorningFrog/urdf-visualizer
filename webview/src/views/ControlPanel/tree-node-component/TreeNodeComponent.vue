@@ -20,8 +20,6 @@ const props = defineProps<{
   models: Record<string, computed<boolean>>
 }>();
 
-console.log(props.node, props.models);
-
 const node = computed(() => props.node);
 const models = computed(() => props.models);
 </script>

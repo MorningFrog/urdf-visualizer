@@ -1,5 +1,6 @@
 import { createApp, type App as VueApp } from "vue";
 import FloatingVue from "floating-vue";
+import Vue3ColorPicker from "vue3-colorpicker";
 import { vscodeSettings } from "@/stores/vscode-settings";
 import { vscode } from "@/utils/vscode-api";
 import { i18nMessages } from "@/stores/i18n";
@@ -81,7 +82,9 @@ window.addEventListener("message", (event) => {
     if (message.type === "init") {
         if (app) return; // 避免重复初始化
         app = createApp(App);
-        app.use(FloatingVue).directive("clamp-center-x", vClampCenterX);
+        app.use(FloatingVue)
+            .use(Vue3ColorPicker)
+            .directive("clamp-center-x", vClampCenterX);
         app.mount("#app");
     }
 });

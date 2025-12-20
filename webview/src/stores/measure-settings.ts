@@ -126,4 +126,17 @@ class MeasureSettings {
     }
 }
 
+export interface MeasureSettings {
+    lengthUnit: LengthUnit;
+    angleUnit: AngleUnit;
+    precision: number;
+    useSciNotation: boolean;
+    labelSize: number;
+    lineColor: string;
+    lineThickness: number;
+    pointColor: string;
+    pointSize: number;
+    meshColor: string;
+}
+
 export const measureSettings = new MeasureSettings();
