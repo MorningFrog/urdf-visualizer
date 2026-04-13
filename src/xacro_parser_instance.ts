@@ -11,6 +11,54 @@ export function isNumber(str) {
     return !isNaN(Number(str)) && !isNaN(parseFloat(str));
 }
 import { Parser } from "expr-eval";
+
+function normalizeExponentOperator(expression: string): string {
+    let normalized = "";
+    let quote: string | null = null;
+    let escaped = false;
+
+    for (let i = 0; i < expression.length; i++) {
+        const char = expression[i];
+        const nextChar = expression[i + 1];
+
+        if (quote !== null) {
+            normalized += char;
+
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+
+            if (char === "\\") {
+                escaped = true;
+                continue;
+            }
+
+            if (char === quote) {
+                quote = null;
+            }
+
+            continue;
+        }
+
+        if (char === "'" || char === '"' || char === "`") {
+            quote = char;
+            normalized += char;
+            continue;
+        }
+
+        if (char === "*" && nextChar === "*") {
+            normalized += "^";
+            i++;
+            continue;
+        }
+
+        normalized += char;
+    }
+
+    return normalized;
+}
+
 class ExpressionParser extends Parser {
     constructor(...args) {
         super(...args);
@@ -256,6 +304,11 @@ class ExpressionParser extends Parser {
             nan: NaN,
             tau: Math.PI * 2,
         };
+    }
+
+    evaluate(expr, values) {
+        const normalizedExpr = normalizeExponentOperator(expr);
+        return super.evaluate(normalizedExpr, values);
     }
 }
 
