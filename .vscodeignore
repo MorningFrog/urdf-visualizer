@@ -7,6 +7,8 @@ src/**
 release/**
 media_origin/**
 media/images/**
+webview/**
+!webview/dist/**
 .gitignore
 .yarnrc
 webpack.config.js
