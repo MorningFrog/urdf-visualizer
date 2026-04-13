@@ -1,5 +1,31 @@
 # Change Log
 
+## [5.0.0]
+
+增加:
+
+Added:
+
+- 新的 UI 设计
+
+  New UI design
+
+- 可以切换各 Link 的显示状态
+
+  Toggle display of each Link
+
+- 添加了各设置的默认配置, 可以通过 VSCode 设置进行调整
+
+  Default configurations for each setting, adjustable through VSCode settings
+
+- 在切换文件时保留视角和关节角度状态(可通过 `urdf-visualizer.cacheCameraView` 和  `urdf-visualizer.cacheJointValues` 设置启用/禁用)
+
+  Preserve camera view and joint angle states when switching files (configurable with `urdf-visualizer.cacheCameraView` and `urdf-visualizer.cacheJointValues` settings)
+
+- xacro 解析支持 `**` 运算符(幂运算), 感谢 @IvanFan-Van (#19)
+
+  Support for `**` operator (exponentiation) in xacro parsing, thanks to @IvanFan-Van (#19)
+
 ## [4.8.0]
 
 增加:

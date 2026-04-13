@@ -21,22 +21,21 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ![demonstration](media/images/demonstration.gif)
 
-- URDF 和 Xacro 文件的可视化
-- 切换 visual 和/或 collision 的显示
-- 可视化 joint 和/或 link 坐标系
-- 鼠标悬浮时显示 joint 和 link 的名称
-- 能直接拖动控制关节角度
-- 测量坐标值、距离、角度或面积
-- 多语言支持: 英语, 简体中文
+- 预览与检查: 可视化 URDF 和 Xacro 文件，切换 visual/collision 显示，单独控制各个 Link 的可见性，并查看 joint/link 的名称与坐标系。
+- 交互: 可在视图中直接拖动关节，在切换文件时保留视角，并可选恢复关节状态。
+- 测量: 支持坐标值、距离、角度和面积测量，并可配置默认测量选项。
+- 界面与本地化: 全新的 UI 设计，包含控制面板、Link 列表、Joint 列表和设置面板，并支持英语和简体中文。
   > 如果你需要更多语言支持, 可以在仓库的 Issue 中提出
 
 ## 扩展设置
 
-该扩展包括以下设置:
+这些设置按用途分组如下:
+
+### 包路径解析
 
 - `urdf-visualizer.packages`
   
-  ROS/ROS2 功能包的根目录, 用于定位 URDF/Xacro 文件中的 `package://<package_name>` 路径. 建议在工作空间的 `.vscode/settings.json` 中设置, 为键值对, **key 为功能包名称**, **value 为其路径**, 例:
+  将 ROS/ROS2 功能包名称映射到本地目录, 用于解析 URDF/Xacro 文件中的 `package://<package_name>` 路径. 建议在工作空间的 `.vscode/settings.json` 中配置, 其中 **key 为功能包名称**, **value 为对应路径**, 例如:
   
   ```json
   // settings.json
@@ -59,45 +58,49 @@ A VSCode extension for visualizing URDF files and xacro files.
   }
   ```
 
-  当前支持 `${workspaceFolder}`、`${workspaceFolder:<workspace_name>}` 和 `${env:<environment_variables>}` 作为特殊符号出现在路径中: 
+  支持的特殊路径变量:
   - `${workspaceFolder}` 表示工作空间路径
   - `${workspaceFolder:<workspace_name>}` 表示多根工作区(multi-root workspace)中某个工作空间的路径
   - `${env:<environment_variables>}` 表示环境变量 `<environment_variables>` 的值
   
   > 在 ≥4.4.0 的 URDF Visualizer 中可以直接使用相对路径表示相对于工作空间的路径, 无需 `${workspaceFolder}/` 前缀
 
-- `urdf-visualizer.renderOnSave`
-  
-  是否在文件保存时自动重新渲染.
+### 重渲染与缓存
 
-- `urdf-visualizer.reRenderWhenSwitchFile`
-  
-  是否在激活的文件切换时自动重新渲染.
+- `urdf-visualizer.renderOnSave`: 保存当前文件时重新渲染.
 
-- `urdf-visualizer.cacheMesh`
+- `urdf-visualizer.reRenderWhenSwitchFile`: 切换活动文件时重新渲染.
 
-  是否使用 mesh 缓存.
+- `urdf-visualizer.cacheCameraView`: 为每个文件缓存并恢复相机视角.
 
-- `urdf-visualizer.backgroundColor`
-  
-  设置背景颜色, 需要为 `#` 开头的十六进制颜色代码.
-  
-- `urdf-visualizer.showTips`
-  
-  切换操作提示的显示与否.
+- `urdf-visualizer.cacheJointValues`: 为每个文件缓存并恢复关节值状态.
 
-- `urdf-visualizer.highlightJointWhenHover`
+- `urdf-visualizer.cacheMesh`: 缓存 mesh 资源, 加快重复加载速度.
 
-  切换鼠标悬停时是否强制顶端高亮显示 joint 坐标系.
+### 默认预览状态
 
-- `urdf-visualizer.highlightLinkWhenHover`
+所有 `urdf-visualizer.default.*` 都用于定义新打开预览时的初始状态, 之后仍可在 webview UI 中继续调整.
 
-  切换鼠标悬停时是否强制顶端高亮显示 link 坐标系.
+- 几何体与坐标系: `urdf-visualizer.default.showVisual`, `urdf-visualizer.default.showCollision`, `urdf-visualizer.default.showWorldFrame`, `urdf-visualizer.default.showJointFrames`, `urdf-visualizer.default.jointFrameSize`, `urdf-visualizer.default.showLinkFrames`, `urdf-visualizer.default.linkFrameSize`
+
+- 单位与颜色: `urdf-visualizer.default.lengthUnit`, `urdf-visualizer.default.angleUnit`, `urdf-visualizer.default.collisionColor`
+
+- 测量默认值: `urdf-visualizer.default.measurement.precision`, `urdf-visualizer.default.measurement.useSciNotation`, `urdf-visualizer.default.measurement.labelSize`, `urdf-visualizer.default.measurement.labelColor`, `urdf-visualizer.default.measurement.lineColor`, `urdf-visualizer.default.measurement.lineThickness`, `urdf-visualizer.default.measurement.pointColor`, `urdf-visualizer.default.measurement.pointSize`, `urdf-visualizer.default.measurement.surfaceColor`
+
+### 外观与交互
+
+- `urdf-visualizer.backgroundColor`: 设置 3D 视图背景颜色, 需要是以 `#` 开头的十六进制颜色值.
+
+- `urdf-visualizer.showTips`: 显示或隐藏操作提示.
+
+- `urdf-visualizer.highlightJointWhenHover`: 鼠标悬停时在顶部高亮显示 joint 坐标系.
+
+- `urdf-visualizer.highlightLinkWhenHover`: 鼠标悬停时在顶部高亮显示 link 坐标系.
 
 ## 说明
 
 > [!IMPORTANT]
-> 在文件夹下打开 VSCode, 文件夹下应当包含 URDF/Xacro 文件所需的所有资源文件. 仅用 VSCode 打开单个文件会让其找不到 mesh 文件.
+> 请在包含 URDF/Xacro 所需资源文件的文件夹中打开 VSCode. 如果只单独打开一个 URDF/Xacro 文件, 可能无法正确找到 mesh 资源.
 
 有两种方式开始预览 URDF 或 Xacro 文件:
 - 在 VSCode 中使用 `Ctrl+Shift+P` 打开命令栏, 选择 `URDF Visualizer: Preview URDF/Xacro`
@@ -105,10 +108,9 @@ A VSCode extension for visualizing URDF files and xacro files.
 > 两种操作都要求 URDF/Xacro 文件处于激活状态
 
 操作:
-- 转动视角: 在空白处按住鼠标左键并拖动
-- 移动视角: 按住鼠标右键拖动
-- 转动/移动关节: 在关节直接连接的link上按住鼠标左键并拖动 
-- 测量坐标值/距离/角度/面积: 鼠标左键单击右上方四个按钮中的一个开始测量
+- 视角控制: 在空白处按住鼠标左键拖动可旋转视角, 按住鼠标右键拖动可平移视角.
+- 关节控制: 在与关节直接连接的 link 上按住鼠标左键并拖动.
+- 测量: 单击右上角四个按钮中的一个, 开始测量坐标值、距离、角度或面积.
 
 ![measure](media/images/measure.gif)
 
@@ -117,7 +119,7 @@ A VSCode extension for visualizing URDF files and xacro files.
 有三种安装方式:
 - 在 VSCode 的扩展中搜索 URDF Visualizer 并安装.
 - 在 VSCode 中使用 `Ctrl+Shift+P` 打开命令栏, 输入 `ext install morningfrog.urdf-visualizer`.
-- 在该仓库的 Release 中下载 `.vsix` 文件, 然后在 VSCode 的扩展右上角选择 "从VISX安装", 选择下载的 `.vsix` 文件进行安装.
+- 在该仓库的 Release 中下载 `.vsix` 文件, 然后在 VSCode 的扩展右上角选择 "从 VSIX 安装", 选择下载的 `.vsix` 文件进行安装.
 
 
 ## 已知问题
@@ -126,76 +128,23 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
-### 4.8.0
+### 5.0.0
 
 增加:
 
-- 测量工具设置面板, 可设置长度和角度测量单位、是否显示精度、是否使用科学计数法显示、标签字体大小、线条颜色和粗细、点颜色和大小等.
+- 全新的 UI 设计
+- 可以单独切换各个 Link 的显示状态
+- 为预览和测量相关设置提供默认配置, 可通过 VSCode 设置调整
+- 在切换文件时保留视角和关节角度状态(可通过 `urdf-visualizer.cacheCameraView` 和 `urdf-visualizer.cacheJointValues` 设置启用/禁用)
+- xacro 解析支持 `**` 运算符(幂运算), 感谢 @IvanFan-Van (#19)
 
-### 4.7.x
+### 4.x
 
-增加:
-
-- 相机视角缓存. 使得在不同 URDF/Xacro 文件中切换时恢复之前的相机位置.
-
-### 4.6.x
-
-增加:
-
-- 支持 mesh 缓存, 加速同一资源文件的加载
-
-- `urdf-visualizer.cacheMesh` 设置: 是否使用 mesh 缓存
-
-### 4.5.x
-
-增加:
-
-- 支持更多数学表达式
-
-优化:
-
-- 找不到包时的提示更友好
-
-### 4.4.x
-
-增加:
-
-- 鼠标悬停时强制顶端高亮显示 joint 坐标系或/和 link 坐标系(默认显示 joint 坐标系)
-- `urdf-visualizer.highlightJointWhenHover` 和 `urdf-visualizer.highlightLinkWhenHover` 可用于设置鼠标悬停时强制顶端高亮显示 joint 坐标系或/和 link 坐标系
-
-优化:
-
-- `urdf-visualizer.packages` 可以直接使用相对路径，不再需要添加 `${workspaceFolder}`
-- 优化坐标系的显示，使其根据模型尺度自动调整尺寸
-- 优化关节的显示和调节
-
-### 4.3.x
-
-增加:
-
-- 部分选项的提示
-- Joint 的轴显示
-- 坐标值的测量
-
-优化: 
-
-- Joint 和 Link 坐标系分别采用实线和虚线以加以区分
-- 鼠标悬停在模型上时高亮对应的 Joint 和 Link 坐标系
-
-### 4.2.x
-
-- 在鼠标悬停时增加了 Link 名称的显示
-
-### 4.1.x
-
-- 侧边栏的 Joint 右侧增加类型提示.
-- continuous 关节角度可以在 $-2\pi$-$2\pi$ 之间调节.
-- 增加了世界坐标系的显示和隐藏的切换.
-
-### 4.0.x
-
-- 添加了多语言支持(i18n), 根据 VSCode 语言自动选择扩展语言.
-- 优化了操作提示, 添加了切换操作提示显示与否的设置.
+- 增加了多语言支持、操作提示显示开关、世界坐标系显示切换，以及侧边栏中更丰富的关节信息。
+- 增强了模型检查能力，包括鼠标悬停名称显示、joint/link 坐标系显示与高亮、Joint 轴显示，以及坐标值测量。
+- 扩展了测量功能，支持配置单位、精度、科学计数法以及标签和线条等样式设置。
+- 优化了兼容性和易用性，包括支持相对包路径、更多数学表达式，以及更友好的包缺失提示。
+- 增加了 mesh 缓存和相机视角缓存，改善模型加载速度和文件切换体验。
 
 ### 3.x
 
