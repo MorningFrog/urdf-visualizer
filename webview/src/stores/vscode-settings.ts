@@ -21,6 +21,10 @@ export interface VscodeSettings {
     highlightJointWhenHover: boolean;
     /** 鼠标悬停时是否高亮连杆 */
     highlightLinkWhenHover: boolean;
+    /** 切换文件时是否缓存并恢复相机视角 */
+    cacheCameraView: boolean;
+    /** 切换文件时是否缓存并恢复关节值 */
+    cacheJointValues: boolean;
 }
 
 export const vscodeSettings = reactive<VscodeSettings>({
@@ -30,10 +34,10 @@ export const vscodeSettings = reactive<VscodeSettings>({
     filename: "",
     requireResetCamera: false,
     urdfText: "",
-    renderOnSave: true,
-    reRenderWhenSwitchFile: true,
     cacheMesh: true,
     showTips: true,
     highlightJointWhenHover: true,
     highlightLinkWhenHover: true,
+    cacheCameraView: true,
+    cacheJointValues: false,
 });

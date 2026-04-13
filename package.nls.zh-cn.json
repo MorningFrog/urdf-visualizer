@@ -12,6 +12,8 @@
     "extension.configuration.packages.description": "ROS/ROS2 功能包的路径, 用于解析 URDF 文件中的 `package://<package_name>`. 例如: `{\"fake_robot\": \"src/fake_robot\"}` 表示功能包 `fake_robot` 的根目录为工作空间内的 `src/fake_robot`. 可以配置多个功能包路径, 如 `{\"fake_robot\": \"src/fake_robot\", \"another_robot\": \"robots/another_robot\"}`.",
     "extension.configuration.renderOnSave.description": "保存文件时重新渲染 URDF/Xacro 预览.",
     "extension.configuration.reRenderWhenSwitchFile.description": "切换活动文件时重新渲染 URDF/Xacro 预览.",
+    "extension.configuration.cacheCameraView.description": "切换活动文件时缓存并恢复相机视角.",
+    "extension.configuration.cacheJointValues.description": "切换活动文件时缓存并恢复关节值状态.",
     "extension.configuration.cacheMesh.description": "缓存 mesh 文件以加速加载.",
     "extension.configuration.showVisual.description": "设置预览打开时是否默认显示 visual.",
     "extension.configuration.showCollision.description": "设置预览打开时是否默认显示 collision.",

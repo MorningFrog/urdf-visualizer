@@ -18,6 +18,8 @@ interface WebviewVscodeSettingsPayload {
     showTips?: boolean;
     highlightJointWhenHover?: boolean;
     highlightLinkWhenHover?: boolean;
+    cacheCameraView?: boolean;
+    cacheJointValues?: boolean;
 }
 
 interface WebviewVisualSettingsPayload {
@@ -57,6 +59,8 @@ const webviewSettingSections = [
     "showTips",
     "highlightJointWhenHover",
     "highlightLinkWhenHover",
+    "cacheCameraView",
+    "cacheJointValues",
     "default.showVisual",
     "default.showCollision",
     "default.showWorldFrame",
@@ -91,6 +95,12 @@ function getWebviewSettingsPayload(
             ),
             highlightLinkWhenHover: config.get<boolean>(
                 "highlightLinkWhenHover"
+            ),
+            cacheCameraView: config.get<boolean>(
+                "cacheCameraView"
+            ),
+            cacheJointValues: config.get<boolean>(
+                "cacheJointValues"
             ),
         },
         visualSettings: {

@@ -12,6 +12,8 @@
     "extension.configuration.packages.description": "The path of ROS/ROS2 packages, it is used for parse `package://<package_name>` in URDF files. For example: `{\"fake_robot\": \"src/fake_robot\"}` means the root directory of package `fake_robot` is `src/fake_robot` in the workspace. You can configure multiple package paths, e.g. `{\"fake_robot\": \"src/fake_robot\", \"another_robot\": \"robots/another_robot\"}`.",
     "extension.configuration.renderOnSave.description": "Render the URDF/Xacro file when saving.",
     "extension.configuration.reRenderWhenSwitchFile.description": "Re render the URDF/Xacro file when switching active file.",
+    "extension.configuration.cacheCameraView.description": "Cache and restore the camera view when switching active files.",
+    "extension.configuration.cacheJointValues.description": "Cache and restore joint values when switching active files.",
     "extension.configuration.cacheMesh.description": "Cache the mesh files to speed up loading.",
     "extension.configuration.showVisual.description": "Show visual geometry by default when opening the preview.",
     "extension.configuration.showCollision.description": "Show collision geometry by default when opening the preview.",

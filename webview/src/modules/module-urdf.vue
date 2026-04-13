@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, ref, watch, watchEffect, markRaw, toRaw, nextTick } from 'vue';
+import { ref, watch, markRaw } from 'vue';
 
 import * as THREE from 'three';
 import { LoadingManager } from "three";
@@ -20,7 +20,7 @@ import { computeRobotBounds } from '@/utils/threejs-tools';
 
 import { vscodeSettings } from '@/stores/vscode-settings';
 import { visualSettings } from '@/stores/visual-settings';
-import { urdfStore, type LinkTreeNode } from '@/stores/urdf-store';
+import { urdfStore, setJointValue, type LinkTreeNode } from '@/stores/urdf-store';
 import { scene, camera, renderer, controls, dragControls } from '@/stores/scene-store';
 import { JointType, isFixedJoint, isDraggableJoint, isAngularJoint, isLinearJoint } from '@/utils/joint-type';
 import { extractAlphaFromRgbString } from '@/utils/threejs-tools';
@@ -43,12 +43,29 @@ let initialZoom = 1.0;
 // 当前相机位姿对应的文件和工作目录
 let currentCameraFile = "";
 let currentCameraWorkingPath = "";
+// 当前关节状态对应的文件和工作目录
+let currentJointFile = "";
+let currentJointWorkingPath = "";
 /** 记录各个文件的相机位姿, 格式: { workingPath: { filename: { position, target, zoom } } } */
 const cameraPoses: Map<string, Map<string, {
     position: THREE.Vector3,
     target: THREE.Vector3,
     zoom: number
 }>> = new Map();
+/** 记录各个文件的关节值, 格式: { workingPath: { filename: { jointName: value } } } */
+const jointValuePoses: Map<string, Map<string, Record<string, number>>> = new Map();
+
+watch(() => vscodeSettings.cacheCameraView, (enable) => {
+    if (!enable) {
+        cameraPoses.clear();
+    }
+}, { immediate: true });
+
+watch(() => vscodeSettings.cacheJointValues, (enable) => {
+    if (!enable) {
+        jointValuePoses.clear();
+    }
+}, { immediate: true });
 
 const { collisionMaterial,
     manager, loaderURDF, loaderSTL, loaderGLTF, loaderCollada, loaderOBJ,
@@ -379,6 +396,56 @@ const { collisionMaterial,
     };
 })();
 
+const isDifferentIncomingFile = (workingPath: string, fileName: string) => {
+    return !!(
+        workingPath &&
+        fileName &&
+        (
+            workingPath !== vscodeSettings.workingPath ||
+            fileName !== vscodeSettings.filename
+        )
+    );
+};
+
+const saveCurrentJointValuesForSwitch = () => {
+    if (!vscodeSettings.cacheJointValues) return;
+    if (!urdfStore.robot) return;
+    if (!isDifferentIncomingFile(currentJointWorkingPath, currentJointFile)) {
+        return;
+    }
+
+    if (!jointValuePoses.has(currentJointWorkingPath)) {
+        jointValuePoses.set(currentJointWorkingPath, new Map());
+    }
+
+    jointValuePoses.get(currentJointWorkingPath)!.set(currentJointFile, {
+        ...urdfStore.jointValues,
+    });
+};
+
+const applyJointValues = (jointValues?: Record<string, number>) => {
+    if (!jointValues) return;
+
+    Object.entries(jointValues).forEach(([jointName, value]) => {
+        if (!(jointName in urdfStore.jointValues)) {
+            return;
+        }
+
+        let nextValue = value;
+        const min = urdfStore.jointLimitMin[jointName];
+        const max = urdfStore.jointLimitMax[jointName];
+
+        if (min !== undefined) {
+            nextValue = Math.max(min, nextValue);
+        }
+        if (max !== undefined) {
+            nextValue = Math.min(max, nextValue);
+        }
+
+        setJointValue(jointName, nextValue);
+    });
+};
+
 /**
  * 处理重置视野
  */
@@ -386,7 +453,8 @@ const resetCameraView = () => {
     if (!vscodeSettings.requireResetCamera) return;
     if (!urdfStore.robot) return;
     // 保存相机位姿
-    if (currentCameraWorkingPath && currentCameraFile
+    if (vscodeSettings.cacheCameraView
+        && currentCameraWorkingPath && currentCameraFile
         && (
             currentCameraWorkingPath !== vscodeSettings.workingPath ||
             currentCameraFile !== vscodeSettings.filename
@@ -416,7 +484,9 @@ const resetCameraView = () => {
     const box = computeRobotBounds(urdfStore.robot!);
 
     // 看是否存在相机姿态缓存
-    const cameraPose = cameraPoses.get(currentCameraWorkingPath)?.get(currentCameraFile)
+    const cameraPose = vscodeSettings.cacheCameraView
+        ? cameraPoses.get(currentCameraWorkingPath)?.get(currentCameraFile)
+        : undefined;
     if (cameraPose) {
         // 存在则直接应用
         camera.position.copy(cameraPose.position);
@@ -592,6 +662,14 @@ const loadURDF = async () => {
     const loadId = ++activeLoadId;
     pendingMeshes = 0;
     resolvePending = null;
+    const jointValuesForCurrentFile = (
+        currentJointWorkingPath === vscodeSettings.workingPath &&
+        currentJointFile === vscodeSettings.filename
+    )
+        ? { ...urdfStore.jointValues }
+        : undefined;
+
+    saveCurrentJointValuesForSwitch();
 
     // 删除已有机器人
     removeRobot();
@@ -602,6 +680,16 @@ const loadURDF = async () => {
     scene.add(markRaw(robot));
     // 构造初始关节值和值上下限
     constructJointStructure();
+    applyJointValues(
+        jointValuesForCurrentFile ??
+        (
+            vscodeSettings.cacheJointValues
+                ? jointValuePoses.get(vscodeSettings.workingPath)?.get(vscodeSettings.filename)
+                : undefined
+        )
+    );
+    currentJointWorkingPath = vscodeSettings.workingPath;
+    currentJointFile = vscodeSettings.filename;
 
     // 等待 mesh 加载完成
     await waitPendingMeshes(loadId);
@@ -661,6 +749,15 @@ watch(
             ) {
                 const filePoses = cameraPoses.get(currentCameraWorkingPath)!;
                 filePoses.delete(currentCameraFile);
+            }
+            // 清除 joint 缓存
+            if (
+                currentJointWorkingPath &&
+                currentJointFile &&
+                jointValuePoses.has(currentJointWorkingPath)
+            ) {
+                const fileJointValues = jointValuePoses.get(currentJointWorkingPath)!;
+                fileJointValues.delete(currentJointFile);
             }
             // 清空 mesh 缓存
             meshCache.clear();

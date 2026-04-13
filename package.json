@@ -57,6 +57,16 @@
                     "default": true,
                     "description": "%extension.configuration.reRenderWhenSwitchFile.description%"
                 },
+                "urdf-visualizer.cacheCameraView": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%extension.configuration.cacheCameraView.description%"
+                },
+                "urdf-visualizer.cacheJointValues": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%extension.configuration.cacheJointValues.description%"
+                },
                 "urdf-visualizer.cacheMesh": {
                     "type": "boolean",
                     "default": true,
