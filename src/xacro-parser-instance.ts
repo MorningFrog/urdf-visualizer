@@ -1,9 +1,99 @@
 import * as fs from "fs";
 
 import { XacroParser } from "xacro-parser";
-const { JSDOM } = require("jsdom");
+const { DOMParser: XmldomDOMParser } = require("xmldom");
 
-global.DOMParser = new JSDOM().window.DOMParser;
+type CompatNodeList<T> = {
+    length: number;
+    [index: number]: T;
+    [Symbol.iterator]?: () => Iterator<T>;
+};
+
+type CompatNode = {
+    childNodes: CompatNodeList<CompatNode> | null;
+    children?: CompatNode[];
+    nodeType: number;
+    ELEMENT_NODE: number;
+    documentElement?: CompatNode;
+};
+
+function collectionToArray<T>(collection: { length: number; [index: number]: T }) {
+    const items: T[] = [];
+    for (let i = 0; i < collection.length; i++) {
+        items.push(collection[i]);
+    }
+    return items;
+}
+
+function createEmptyNodeList(
+    nodeListPrototype: object | null
+): CompatNodeList<CompatNode> {
+    const emptyNodeList = Object.create(nodeListPrototype ?? Object.prototype);
+    emptyNodeList.length = 0;
+    return emptyNodeList;
+}
+
+function installXmldomCompatibility(documentNode: CompatNode) {
+    const nodeListProto = documentNode.childNodes
+        ? Object.getPrototypeOf(documentNode.childNodes)
+        : Object.prototype;
+    if (nodeListProto && !nodeListProto[Symbol.iterator]) {
+        Object.defineProperty(nodeListProto, Symbol.iterator, {
+            value: function* <T>(this: CompatNodeList<T>) {
+                for (let i = 0; i < this.length; i++) {
+                    yield this[i];
+                }
+            },
+            configurable: true,
+        });
+    }
+
+    const normalizeNode = (node: CompatNode) => {
+        if (!node.childNodes) {
+            node.childNodes = createEmptyNodeList(nodeListProto);
+            return;
+        }
+
+        const children = collectionToArray(node.childNodes);
+        for (const child of children) {
+            normalizeNode(child);
+        }
+    };
+
+    const defineChildrenGetter = (target: object | null) => {
+        if (!target || Object.getOwnPropertyDescriptor(target, "children")) {
+            return;
+        }
+
+        Object.defineProperty(target, "children", {
+            get(this: CompatNode) {
+                return collectionToArray(this.childNodes ?? createEmptyNodeList(nodeListProto)).filter(
+                    (child) => child.nodeType === this.ELEMENT_NODE
+                );
+            },
+            configurable: true,
+        });
+    };
+
+    normalizeNode(documentNode);
+    defineChildrenGetter(Object.getPrototypeOf(documentNode));
+    defineChildrenGetter(Object.getPrototypeOf(documentNode.documentElement));
+}
+
+class CompatibleDOMParser {
+    private readonly parser = new XmldomDOMParser();
+
+    parseFromString(source: string, mimeType: string) {
+        const documentNode = this.parser.parseFromString(
+            source,
+            mimeType
+        ) as CompatNode;
+        installXmldomCompatibility(documentNode);
+        return documentNode;
+    }
+}
+
+(globalThis as any).DOMParser = CompatibleDOMParser;
 
 // 创建自定义表达式解析器
 // https://stackoverflow.com/a/175787
