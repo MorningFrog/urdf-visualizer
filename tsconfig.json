@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"module": "ES2020",
 		"moduleResolution": "Node",
-		"ignoreDeprecations": "5.0",
+		"ignoreDeprecations": "6.0",
 		"target": "ES6",
 		"lib": [
 			"ES6",
@@ -10,7 +10,13 @@
 		],
 		"sourceMap": true,
 		"rootDir": ".",
+		"types": [
+			"node",
+			"vscode",
+			"mocha"
+		],
 		"strict": true,
+		"forceConsistentCasingInFileNames": true,
 		"noImplicitAny": false /* enable all strict type-checking options */
 		/* Additional Checks */
 		// "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
