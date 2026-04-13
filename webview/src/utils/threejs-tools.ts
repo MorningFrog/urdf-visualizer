@@ -3,7 +3,8 @@ import { isFrameHelper } from "./custom-axes";
 
 function createTextTexture(
     text: string,
-    scale: number
+    scale: number,
+    color: string = "#000000"
 ): { texture: THREE.Texture; width: number; height: number } {
     const padding = 20 * scale; // 边距
     const fontSize = 50 * scale;
@@ -38,7 +39,7 @@ function createTextTexture(
     context.font = `${fontSize}px Arial`;
 
     // 文本样式
-    context.fillStyle = "#000000"; // 黑色文本
+    context.fillStyle = color;
     context.textAlign = "center";
     context.textBaseline = "bottom"; // 基线在底部
 
@@ -59,20 +60,21 @@ function createTextTexture(
     };
 }
 
-export function createLabel(
+export function createLabelMaterial(
     label: string,
-    position: THREE.Vector3,
-    labelSize: number = 8
-) {
+    labelSize: number = 8,
+    color: string = "#000000"
+): THREE.Sprite {
     const resolution_scale = 0.5; // 提高基础清晰度
     const obj_scale = (0.3 * labelSize) / 8; // 调整整体缩放
 
     const { texture, width, height } = createTextTexture(
         label,
-        resolution_scale
+        resolution_scale,
+        color
     );
 
-    const spriteMaterial = new THREE.SpriteMaterial({
+    const material = new THREE.SpriteMaterial({
         map: texture,
         transparent: true,
         sizeAttenuation: false,
@@ -80,7 +82,21 @@ export function createLabel(
         depthWrite: false,
     });
 
-    const obj = new THREE.Sprite(spriteMaterial);
+    return { material, obj_scale, width, height };
+}
+
+export function createLabel(
+    label: string,
+    position: THREE.Vector3,
+    labelSize: number = 8,
+    color: string = "#000000"
+) {
+    const { material, obj_scale, width, height } = createLabelMaterial(
+        label,
+        labelSize,
+        color
+    );
+    const obj = new THREE.Sprite(material);
     obj.raycast = () => {}; // 禁用射线检测
 
     // 关键:保持纹理原始宽高比
@@ -184,4 +200,78 @@ export function computeRobotBounds(root: THREE.Object3D): THREE.Box3 {
     });
 
     return box;
+}
+
+/**
+ * 从字符串 `"rgba(r, g, b, a)"` 或 `"rgb(r, g, b)"` 中提取 alpha 值.
+ * 兼容 `rgb(r g b / a)` 这种现代语法. 遇到 `#` 开头的颜色字符串会返回 1.
+ */
+export function extractAlphaFromRgbString(input: string): number | null {
+    const s = input.trim();
+    if (s.startsWith("#")) {
+        return 1; // 十六进制颜色没有 alpha 信息
+    }
+
+    // 兼容: rgb(1 2 3 / 0.5) 这种现代语法也顺便支持一下(可选)
+    // 这里允许逗号或空格分隔; alpha 允许小数; 允许百分比(如 50%)
+    const re =
+        /^rgba?\(\s*([0-9.]+%?)\s*(?:,|\s)\s*([0-9.]+%?)\s*(?:,|\s)\s*([0-9.]+%?)\s*(?:(?:,|\s*\/\s*)\s*([0-9.]+%?)\s*)?\)$/i;
+
+    const m = s.match(re);
+    if (!m) return null;
+
+    const alphaRaw = m[4];
+    if (!alphaRaw) return 1;
+
+    // 处理百分比 alpha: 如 50% => 0.5
+    if (alphaRaw.endsWith("%")) {
+        const pct = Number(alphaRaw.slice(0, -1));
+        if (Number.isNaN(pct)) return null;
+        return clamp01(pct / 100);
+    }
+
+    const a = Number(alphaRaw);
+    if (Number.isNaN(a)) return null;
+    return clamp01(a);
+}
+
+function clamp01(x: number) {
+    return Math.min(1, Math.max(0, x));
+}
+
+export function setPointPosition(
+    obj: THREE.Points,
+    index: number,
+    position: THREE.Vector3
+) {
+    const geom = obj.geometry as THREE.BufferGeometry;
+    const posAttr = geom.getAttribute("position") as THREE.BufferAttribute;
+    posAttr.setXYZ(index, position.x, position.y, position.z);
+    posAttr.needsUpdate = true;
+}
+export function setLinePositions(
+    obj: THREE.Line,
+    index: number,
+    start: THREE.Vector3,
+    end: THREE.Vector3
+) {
+    const geom = obj.geometry as THREE.BufferGeometry;
+    const posAttr = geom.getAttribute("position") as THREE.BufferAttribute;
+    posAttr.setXYZ(index * 2, start.x, start.y, start.z);
+    posAttr.setXYZ(index * 2 + 1, end.x, end.y, end.z);
+    posAttr.needsUpdate = true;
+}
+export function setSurfacePositions(
+    obj: THREE.Mesh,
+    index: number,
+    v1: THREE.Vector3,
+    v2: THREE.Vector3,
+    v3: THREE.Vector3
+) {
+    const geom = obj.geometry as THREE.BufferGeometry;
+    const posAttr = geom.getAttribute("position") as THREE.BufferAttribute;
+    posAttr.setXYZ(index * 3, v1.x, v1.y, v1.z);
+    posAttr.setXYZ(index * 3 + 1, v2.x, v2.y, v2.z);
+    posAttr.setXYZ(index * 3 + 2, v3.x, v3.y, v3.z);
+    posAttr.needsUpdate = true;
 }

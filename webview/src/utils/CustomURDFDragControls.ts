@@ -26,7 +26,6 @@ function findVisibleIntersection(intersections: THREE.Intersection[]): {
     isVisual: boolean;
     joint: URDFJoint | null;
 } {
-    console.log("intersections:", intersections);
     for (const hit of intersections) {
         const { link, isVisual, isVisible } = findNearestLink(hit.object);
         if (!link || !isVisible) {

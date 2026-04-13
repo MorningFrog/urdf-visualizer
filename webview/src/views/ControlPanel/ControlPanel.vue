@@ -10,6 +10,7 @@ import { urdfStore } from "@/stores/urdf-store";
 
 import JointList from "./JointList.vue";
 import RobotTree from "./RobotTree.vue";
+import SettingsPanel from "./SettingsPanel.vue";
 
 /** 重新加载 URDF */
 const onReloadClick = () => {
@@ -19,8 +20,10 @@ const onReloadClick = () => {
 </script>
 <template>
   <div class="flex items-start gap-2 pointer-events-none">
-    <div
-      class="du-collapse du-collapse-arrow bg-base-100/50 border border-base-300 text-base-content transition-[width] duration-300 w-35 has-[>_input:checked]:w-55 overflow-hidden pointer-events-auto">
+    <div class="du-collapse du-collapse-arrow 
+      bg-base-100/50 border border-base-300 text-base-content 
+      transition-[width] duration-300 w-32 has-[>_input:checked]:w-55
+      overflow-hidden pointer-events-auto">
       <input type="checkbox" class="peer" />
       <div
         class="du-collapse-title font-semibold after:start-5 after:end-auto pe-4 ps-12 py-0 flex items-center h-10 text-base">
@@ -96,25 +99,6 @@ const onReloadClick = () => {
             </div>
           </label>
         </ul>
-        <ul class="du-list p-0">
-          <!-- 角度单位选择框 -->
-          <label class="du-list-row my-list-row h-10!">
-            <div class="du-list-col-grow">{{ i18n("webview.angleUnit") }}</div>
-            <select v-model="visualSettings.angleUnit" class="du-select w-28 h-8 ml-auto border-box pl-1">
-              <option value="radian">{{ i18n("webview.angleUnit.radian") }}</option>
-              <option value="degree">{{ i18n("webview.angleUnit.degree") }}</option>
-            </select>
-          </label>
-          <!-- 长度单位选择框 -->
-          <label class="du-list-row my-list-row h-10!">
-            <div class="du-list-col-grow">{{ i18n("webview.lengthUnit") }}</div>
-            <select v-model="visualSettings.lengthUnit" class="du-select w-28 h-8 ml-auto border-box pl-1">
-              <option value="meter">{{ i18n("webview.lengthUnit.meter") }}</option>
-              <option value="centimeter">{{ i18n("webview.lengthUnit.centimeter") }}</option>
-              <option value="millimeter">{{ i18n("webview.lengthUnit.millimeter") }}</option>
-            </select>
-          </label>
-        </ul>
 
         <!-- 机器人树形结构-------------------------- -->
         <RobotTree />
@@ -122,6 +106,9 @@ const onReloadClick = () => {
         <JointList class="mt-2!" />
       </div>
     </div>
+    <!-- 设置面板 -->
+    <SettingsPanel class="pointer-events-auto" />
+
     <!-- 重置按钮 -->
     <VTooltip class="pointer-events-auto" :delay="0" :distance="8">
       <button class="du-btn du-btn-outline du-btn-primary h-10" @click="onReloadClick">
@@ -159,7 +146,7 @@ const onReloadClick = () => {
   @apply text-center text-base justify-self-center;
 }
 
-.my-collapse-content {
+:deep(.my-collapse-content) {
   scrollbar-width: thin;
 }
 </style>

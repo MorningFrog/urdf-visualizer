@@ -18,18 +18,13 @@ import type {
 import { LinkAxesHelper, JointAxesHelper, BaseAxesHelper } from '@/utils/custom-axes';
 import { computeRobotBounds } from '@/utils/threejs-tools';
 
-import { sceneKey, cameraKey, rendererKey, controlsKey, dragControlsKey } from '@/injects/main-view-injects';
 import { vscodeSettings } from '@/stores/vscode-settings';
 import { visualSettings } from '@/stores/visual-settings';
 import { urdfStore, type LinkTreeNode } from '@/stores/urdf-store';
+import { scene, camera, renderer, controls, dragControls } from '@/stores/scene-store';
 import { JointType, isFixedJoint, isDraggableJoint, isAngularJoint, isLinearJoint } from '@/utils/joint-type';
+import { extractAlphaFromRgbString } from '@/utils/threejs-tools';
 import { vscode } from '@/utils/vscode-api';
-
-const scene = inject(sceneKey)!;
-const camera = inject(cameraKey)!;
-const renderer = inject(rendererKey)!;
-const controls = inject(controlsKey)!;
-const dragControls = inject(dragControlsKey)!;
 
 /** 全局尺寸, 用于缩放坐标系 */
 const globalScale = ref(1.0);
@@ -63,13 +58,18 @@ const { collisionMaterial,
     // 碰撞体材质
     const collisionMaterial = new THREE.MeshPhongMaterial({
         transparent: true,
-        opacity: 0.35,
+        opacity: extractAlphaFromRgbString(visualSettings.collisionColor) ?? 0.35,
         shininess: 2.5,
         premultipliedAlpha: true,
-        color: 0xffbe38,
+        color: visualSettings.collisionColor,
         polygonOffset: true,
         polygonOffsetFactor: -1,
         polygonOffsetUnits: -1,
+    });
+    watch(() => visualSettings.collisionColor, (newColor) => {
+        collisionMaterial.color = new THREE.Color(newColor);
+        collisionMaterial.opacity = extractAlphaFromRgbString(newColor) ?? 0.35;
+        collisionMaterial.needsUpdate = true;
     });
 
     // 创建模型加载器

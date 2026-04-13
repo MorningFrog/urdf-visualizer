@@ -3,26 +3,9 @@ import { measureSettings } from "@/stores/measure-settings";
 import { visualSettings } from "@/stores/visual-settings";
 
 /**
- * 获取测量长度单位转换倍率
- * @returns
+ * 获取长度单位转换倍率
  */
-export function getMeasureLengthUnitMultiplier() {
-    switch (measureSettings.lengthUnit) {
-        case LengthUnit.Millimeters:
-            return 1000;
-        case LengthUnit.Centimeters:
-            return 100;
-        case LengthUnit.Meters:
-            return 1;
-        default:
-            return 1;
-    }
-}
-
-/**
- * 获取视觉长度单位转换倍率
- */
-export function getVisualLengthUnitMultiplier() {
+export function getLengthUnitMultiplier() {
     switch (visualSettings.lengthUnit) {
         case LengthUnit.Millimeters:
             return 1000;
@@ -44,7 +27,7 @@ export function getVisualLengthUnitMultiplier() {
 export function calculateAngle(dir0: THREE.Vector3, dir2: THREE.Vector3) {
     // 计算夹角(弧度)
     const angleRad = dir0.angleTo(dir2);
-    if (measureSettings.angleUnit === AngleUnit.Radians) {
+    if (visualSettings.angleUnit === AngleUnit.Radians) {
         return angleRad;
     }
     // 转换为角度制
@@ -90,7 +73,7 @@ export function calculateArea(points: THREE.Vector3[]) {
         area += Math.sqrt(p * (p - a) * (p - b) * (p - c));
     }
     // 单位转换
-    const multiplier = getMeasureLengthUnitMultiplier();
+    const multiplier = getLengthUnitMultiplier();
     return area * multiplier * multiplier;
 }
 
@@ -143,7 +126,7 @@ export function jointValueToString(value: number, isAngle: boolean): string {
                 return value.toFixed(2);
         }
     } else {
-        const multiplier = getVisualLengthUnitMultiplier();
+        const multiplier = getLengthUnitMultiplier();
         value = value * multiplier;
         return value.toFixed(2);
     }
