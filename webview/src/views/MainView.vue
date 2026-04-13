@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, watch, ref, provide } from 'vue'
-import * as THREE from 'three'
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { vscodeSettings } from '@/stores/vscode-settings';
-import { visualSettings } from '@/stores/visual-settings';
-import { scene, camera, renderer } from '@/stores/scene-store';
+import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { scene, camera, renderer, dragControls } from '@/stores/scene-store';
 import ModuleUrdf from '@/modules/module-urdf.vue';
 
 const urdfViewerRef = ref<HTMLElement | null>(null);

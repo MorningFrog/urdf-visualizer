@@ -1,7 +1,4 @@
-import { reactive, watch } from "vue";
-import * as THREE from "three";
-import { measureSettings } from "./measure-settings";
-import { extractAlphaFromRgbString } from "@/utils/threejs-tools";
+import { reactive } from "vue";
 
 export enum MeasureMode {
     None = "none",

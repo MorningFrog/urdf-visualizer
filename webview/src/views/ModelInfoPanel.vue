@@ -3,10 +3,14 @@ import { computed, ref, watch } from 'vue';
 import { formatJointValueWithUnit } from '@/utils/math-tools';
 import { urdfStore } from '@/stores/urdf-store';
 import { mouseState } from '@/stores/mouse-state';
+import { measureStore, MeasureMode } from '@/stores/measure-store';
 import i18n from '@/stores/i18n';
-import { jointType, isDraggableJoint, isAngularJoint } from "@/utils/joint-type";
+import { isDraggableJoint, isAngularJoint } from "@/utils/joint-type";
 
 const showModelInfo = computed(() => {
+    if (measureStore.mode !== MeasureMode.None) {
+        return false;
+    }
     return (urdfStore.hoveredJointName !== null || urdfStore.hoveredLinkName !== null) && urdfStore.isHoveredOnModel;
 });
 
@@ -18,7 +22,7 @@ const modelInfoStyle = computed(() => ({
 const jointTypeStr = ref('');
 const jointValueStr = ref('');
 watch(() => [urdfStore.robot, urdfStore.hoveredJointName, urdfStore.jointValues[urdfStore.hoveredJointName]],
-    ([robot, hoveredJointName, jointValue]) => {
+    ([, hoveredJointName, jointValue]) => {
         if (hoveredJointName === null) {
             jointTypeStr.value = '';
             jointValueStr.value = '';

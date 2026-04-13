@@ -60,13 +60,20 @@ function createTextTexture(
     };
 }
 
+export interface LabelMaterialResult {
+    material: THREE.SpriteMaterial;
+    objScale: number;
+    width: number;
+    height: number;
+}
+
 export function createLabelMaterial(
     label: string,
     labelSize: number = 8,
     color: string = "#000000"
-): THREE.Sprite {
+): LabelMaterialResult {
     const resolution_scale = 0.5; // 提高基础清晰度
-    const obj_scale = (0.3 * labelSize) / 8; // 调整整体缩放
+    const objScale = (0.3 * labelSize) / 8; // 调整整体缩放
 
     const { texture, width, height } = createTextTexture(
         label,
@@ -82,7 +89,7 @@ export function createLabelMaterial(
         depthWrite: false,
     });
 
-    return { material, obj_scale, width, height };
+    return { material, objScale, width, height };
 }
 
 export function createLabel(
@@ -91,20 +98,18 @@ export function createLabel(
     labelSize: number = 8,
     color: string = "#000000"
 ) {
-    const { material, obj_scale, width, height } = createLabelMaterial(
+    const { material, objScale, width, height } = createLabelMaterial(
         label,
         labelSize,
         color
     );
     const obj = new THREE.Sprite(material);
-    obj.raycast = () => {}; // 禁用射线检测
-
     // 关键:保持纹理原始宽高比
     const aspectRatio = width / height;
     const baseHeight = 0.15; // 场景中的基本高度
     const baseWidth = baseHeight * aspectRatio;
 
-    obj.scale.set(baseWidth * obj_scale, baseHeight * obj_scale, 1);
+    obj.scale.set(baseWidth * objScale, baseHeight * objScale, 1);
     obj.position.copy(position);
     obj.renderOrder = 999; // 确保始终显示在前面
 

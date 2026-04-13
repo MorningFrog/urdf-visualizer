@@ -10,6 +10,9 @@ import type {
 } from "urdf-loader";
 
 import { urdfStore } from "@/stores/urdf-store";
+import { isFrameHelper } from "@/utils/custom-axes";
+
+const MEASURE_OVERLAY_FLAG = "__isMeasureOverlay";
 
 /** Find the nearest parent that is a joint */
 function isJoint(j: URDFLink | URDFJoint | URDFVisual) {
@@ -27,6 +30,12 @@ function findVisibleIntersection(intersections: THREE.Intersection[]): {
     joint: URDFJoint | null;
 } {
     for (const hit of intersections) {
+        if (
+            isFrameHelper(hit.object) ||
+            hit.object.userData[MEASURE_OVERLAY_FLAG]
+        ) {
+            continue;
+        }
         const { link, isVisual, isVisible } = findNearestLink(hit.object);
         if (!link || !isVisible) {
             continue;
@@ -101,6 +110,7 @@ function findNearestLink(child: any): {
 export class CustomURDFDragControls extends PointerURDFDragControls {
     private label: HTMLDivElement;
     private controls: OrbitControls;
+    private camera: THREE.Camera;
     public enabled: boolean = true; // 控制是否启用拖拽
 
     constructor(
@@ -111,18 +121,28 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
     ) {
         super(scene, camera, rendererDom);
 
+        this.camera = camera;
         this.controls = controls;
         this.enabled = true; // 默认启用
     }
 
     update() {
-        const { raycaster, manipulating, scene } = this;
+        const { raycaster, manipulating } = this;
 
         if (manipulating) {
             return;
         }
 
-        const intersections = raycaster.intersectObject(scene, true);
+        if (!this.enabled || !urdfStore.robot) {
+            this.clearHoverState();
+            return;
+        }
+
+        // `PointerURDFDragControls` 只会复制 ray, 不会同步 camera。
+        // 当场景里存在 Sprite 时, 若 camera 为空会在 Sprite.raycast 中报错。
+        raycaster.camera = this.camera;
+
+        const intersections = raycaster.intersectObject(urdfStore.robot, true);
         const {
             hit,
             link: currHoveredLink,
@@ -197,11 +217,7 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
      * 鼠标移出画布回调
      */
     public onMouseLeaveCallback() {
-        // 取消悬停状态
-        urdfStore.hoveredJointName = null;
-        urdfStore.hoveredLinkName = null;
-        urdfStore.isHoveredLinkVisual = false;
-        urdfStore.isHoveredOnModel = false;
+        this.clearHoverState();
     }
 
     // 清理事件监听器
@@ -213,8 +229,17 @@ export class CustomURDFDragControls extends PointerURDFDragControls {
     set_enable(enabled: boolean) {
         this.enabled = enabled;
         if (!enabled) {
+            this.manipulating = null;
+            this.clearHoverState();
             // 开启视角运动
             this.controls.enabled = true;
         }
+    }
+
+    private clearHoverState() {
+        urdfStore.hoveredJointName = null;
+        urdfStore.hoveredLinkName = null;
+        urdfStore.isHoveredLinkVisual = false;
+        urdfStore.isHoveredOnModel = false;
     }
 }
