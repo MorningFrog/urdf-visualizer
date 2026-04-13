@@ -107,6 +107,7 @@
     "webview.clickRestartMeasure": "鼠标左键单击以重新开始测量",
     "webview.scrollZoom": "滚动鼠标滚轮以缩放",
     "webview.doubleClickCompleteMeasure": "鼠标左键双击或按 Enter 键完成测量",
+    "webview.doubleClickRestartMeasure": "鼠标左键双击以重新开始测量",
     "webview.escCancleMeasure": "按 Esc 键取消测量",
     "webview.measure.cancel.hint": "取消并清除当前测量（Esc）",
     "webview.measure.coordinates.hint": "测量坐标",

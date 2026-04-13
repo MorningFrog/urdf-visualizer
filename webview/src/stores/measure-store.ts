@@ -18,9 +18,11 @@ export enum MeasureStatus {
 export interface MeasureStoreState {
     mode: MeasureMode;
     status: MeasureStatus;
+    isHoveringTarget: boolean;
 }
 
 export const measureStore = reactive<MeasureStoreState>({
     mode: MeasureMode.None,
     status: MeasureStatus.Prepare,
+    isHoveringTarget: false,
 });

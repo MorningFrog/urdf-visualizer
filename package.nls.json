@@ -111,6 +111,7 @@
     "webview.clickRestartMeasure": "Click to restart the measurement",
     "webview.scrollZoom": "Scroll to zoom",
     "webview.doubleClickCompleteMeasure": "Double click or press Enter to complete the measurement",
+    "webview.doubleClickRestartMeasure": "Double click to restart the measurement",
     "webview.escCancleMeasure": "Press Esc to cancel the measurement",
     "webview.measure.cancel.hint": "Cancel and clear the current measurement (Esc)",
     "webview.measure.coordinates.hint": "Measure Coordinates",

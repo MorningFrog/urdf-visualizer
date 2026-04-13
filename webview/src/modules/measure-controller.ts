@@ -306,6 +306,7 @@ export class MeasureController {
         this.lastClickTime = undefined;
         this.pointArray = [];
         this.hoverPoint = null;
+        measureStore.isHoveringTarget = false;
         this.clearHoveredModelInfo();
 
         this.ensureMeasurementObjects();
@@ -333,6 +334,7 @@ export class MeasureController {
         this.lastClickTime = undefined;
         this.pointArray = [];
         this.hoverPoint = null;
+        measureStore.isHoveringTarget = false;
 
         this.dragControls.set_enable(true);
         this.orbitControls.enabled = true;
@@ -372,6 +374,7 @@ export class MeasureController {
         this.canvas.addEventListener("mousedown", this.handleMouseDown);
         this.canvas.addEventListener("mousemove", this.handleMouseMove);
         this.canvas.addEventListener("mouseup", this.handleMouseUp);
+        this.canvas.addEventListener("mouseleave", this.handleMouseLeave);
         this.canvas.addEventListener("dblclick", this.handleDoubleClick);
         window.addEventListener("keydown", this.handleKeyDown);
     }
@@ -381,6 +384,7 @@ export class MeasureController {
         this.canvas.removeEventListener("mousedown", this.handleMouseDown);
         this.canvas.removeEventListener("mousemove", this.handleMouseMove);
         this.canvas.removeEventListener("mouseup", this.handleMouseUp);
+        this.canvas.removeEventListener("mouseleave", this.handleMouseLeave);
         this.canvas.removeEventListener("dblclick", this.handleDoubleClick);
         window.removeEventListener("keydown", this.handleKeyDown);
     }
@@ -403,6 +407,7 @@ export class MeasureController {
 
         const point = this.getClosestIntersection(event);
         this.hoverPoint = point?.clone() ?? null;
+        measureStore.isHoveringTarget = this.hoverPoint !== null;
 
         if (!this.hoverPoint) {
             this.clearPreviewObjects();
@@ -460,6 +465,14 @@ export class MeasureController {
         if (!this.mouseMoved) {
             this.handleCanvasClick(event);
         }
+    };
+
+    private handleMouseLeave = () => {
+        if (this.currentMode === MeasureMode.None || this.isCompleted) {
+            return;
+        }
+
+        this.clearPreviewObjects();
     };
 
     /** 双击用于结束当前测量。 */
@@ -870,6 +883,7 @@ export class MeasureController {
         this.clearTempLine();
         this.clearTempPoint();
         this.hoverPoint = null;
+        measureStore.isHoveringTarget = false;
     }
 
     private clearTempPoint() {

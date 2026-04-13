@@ -5,6 +5,7 @@ import MainView from '@/views/MainView.vue';
 import ModelInfoPanel from '@/views/ModelInfoPanel.vue';
 import ControlPanel from '@/views/ControlPanel/ControlPanel.vue';
 import MeasurePanel from '@/views/MeasurePanel.vue';
+import TipsPanel from '@/views/TipsPanel.vue';
 
 // 监听鼠标状态变化
 onMounted(() => {
@@ -31,6 +32,7 @@ onMounted(() => {
     <main-view class="w-full h-full overflow-hidden" />
     <ControlPanel class="absolute top-5 left-5" />
     <measure-panel class="absolute top-5 right-5" />
+    <tips-panel />
     <model-info-panel />
   </main>
 </template>
