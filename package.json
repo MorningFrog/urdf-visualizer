@@ -62,6 +62,69 @@
                     "default": true,
                     "description": "%extension.configuration.cacheMesh.description%"
                 },
+                "urdf-visualizer.default.showVisual": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%extension.configuration.showVisual.description%"
+                },
+                "urdf-visualizer.default.showCollision": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%extension.configuration.showCollision.description%"
+                },
+                "urdf-visualizer.default.showWorldFrame": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%extension.configuration.showWorldFrame.description%"
+                },
+                "urdf-visualizer.default.showJointFrames": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%extension.configuration.showJointFrames.description%"
+                },
+                "urdf-visualizer.default.jointFrameSize": {
+                    "type": "number",
+                    "default": 0.25,
+                    "minimum": 0.01,
+                    "maximum": 1,
+                    "description": "%extension.configuration.jointFrameSize.description%"
+                },
+                "urdf-visualizer.default.showLinkFrames": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%extension.configuration.showLinkFrames.description%"
+                },
+                "urdf-visualizer.default.linkFrameSize": {
+                    "type": "number",
+                    "default": 0.25,
+                    "minimum": 0.01,
+                    "maximum": 1,
+                    "description": "%extension.configuration.linkFrameSize.description%"
+                },
+                "urdf-visualizer.default.lengthUnit": {
+                    "type": "string",
+                    "default": "meter",
+                    "enum": [
+                        "meter",
+                        "centimeter",
+                        "millimeter"
+                    ],
+                    "description": "%extension.configuration.lengthUnit.description%"
+                },
+                "urdf-visualizer.default.angleUnit": {
+                    "type": "string",
+                    "default": "degree",
+                    "enum": [
+                        "degree",
+                        "radian"
+                    ],
+                    "description": "%extension.configuration.angleUnit.description%"
+                },
+                "urdf-visualizer.default.collisionColor": {
+                    "type": "string",
+                    "default": "rgba(255, 190, 56, 0.35)",
+                    "description": "%extension.configuration.collisionColor.description%"
+                },
                 "urdf-visualizer.backgroundColor": {
                     "type": "string",
                     "default": "#cccccc",
@@ -83,6 +146,59 @@
                     "type": "boolean",
                     "default": false,
                     "description": "%extension.configuration.highlightLinkWhenHover.description%"
+                },
+                "urdf-visualizer.default.measurement.precision": {
+                    "type": "integer",
+                    "default": 2,
+                    "minimum": 1,
+                    "maximum": 5,
+                    "description": "%extension.configuration.measurement.precision.description%"
+                },
+                "urdf-visualizer.default.measurement.useSciNotation": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%extension.configuration.measurement.useSciNotation.description%"
+                },
+                "urdf-visualizer.default.measurement.labelSize": {
+                    "type": "integer",
+                    "default": 8,
+                    "minimum": 1,
+                    "maximum": 30,
+                    "description": "%extension.configuration.measurement.labelSize.description%"
+                },
+                "urdf-visualizer.default.measurement.labelColor": {
+                    "type": "string",
+                    "default": "#000000",
+                    "description": "%extension.configuration.measurement.labelColor.description%"
+                },
+                "urdf-visualizer.default.measurement.lineColor": {
+                    "type": "string",
+                    "default": "rgba(255, 0, 0, 0.8)",
+                    "description": "%extension.configuration.measurement.lineColor.description%"
+                },
+                "urdf-visualizer.default.measurement.lineThickness": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 1,
+                    "maximum": 10,
+                    "description": "%extension.configuration.measurement.lineThickness.description%"
+                },
+                "urdf-visualizer.default.measurement.pointColor": {
+                    "type": "string",
+                    "default": "rgba(255, 80, 0, 0.6)",
+                    "description": "%extension.configuration.measurement.pointColor.description%"
+                },
+                "urdf-visualizer.default.measurement.pointSize": {
+                    "type": "integer",
+                    "default": 10,
+                    "minimum": 1,
+                    "maximum": 30,
+                    "description": "%extension.configuration.measurement.pointSize.description%"
+                },
+                "urdf-visualizer.default.measurement.surfaceColor": {
+                    "type": "string",
+                    "default": "rgba(135, 206, 250, 0.3)",
+                    "description": "%extension.configuration.measurement.surfaceColor.description%"
                 }
             }
         }

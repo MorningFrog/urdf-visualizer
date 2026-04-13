@@ -13,6 +13,117 @@ const { XMLSerializer, XMLDocument } = require("xmldom");
 import { xacroParser } from "./xacro-parser-instance";
 import { localizeInstance } from "./localize";
 
+interface WebviewVscodeSettingsPayload {
+    cacheMesh?: boolean;
+    showTips?: boolean;
+    highlightJointWhenHover?: boolean;
+    highlightLinkWhenHover?: boolean;
+}
+
+interface WebviewVisualSettingsPayload {
+    showVisual?: boolean;
+    showCollision?: boolean;
+    showWorldFrame?: boolean;
+    showJointFrames?: boolean;
+    showLinkFrames?: boolean;
+    jointFrameSize?: number;
+    linkFrameSize?: number;
+    lengthUnit?: string;
+    angleUnit?: string;
+    collisionColor?: string;
+    backgroundColor?: string;
+}
+
+interface WebviewMeasureSettingsPayload {
+    precision?: number;
+    useSciNotation?: boolean;
+    labelSize?: number;
+    lineColor?: string;
+    lineThickness?: number;
+    pointColor?: string;
+    pointSize?: number;
+    surfaceColor?: string;
+    labelColor?: string;
+}
+
+interface WebviewSettingsPayload {
+    vscodeSettings: WebviewVscodeSettingsPayload;
+    visualSettings: WebviewVisualSettingsPayload;
+    measureSettings: WebviewMeasureSettingsPayload;
+}
+
+const webviewSettingSections = [
+    "cacheMesh",
+    "showTips",
+    "highlightJointWhenHover",
+    "highlightLinkWhenHover",
+    "default.showVisual",
+    "default.showCollision",
+    "default.showWorldFrame",
+    "default.showJointFrames",
+    "default.showLinkFrames",
+    "default.jointFrameSize",
+    "default.linkFrameSize",
+    "default.lengthUnit",
+    "default.angleUnit",
+    "default.collisionColor",
+    "backgroundColor",
+    "default.measurement.precision",
+    "default.measurement.useSciNotation",
+    "default.measurement.labelSize",
+    "default.measurement.labelColor",
+    "default.measurement.lineColor",
+    "default.measurement.lineThickness",
+    "default.measurement.pointColor",
+    "default.measurement.pointSize",
+    "default.measurement.surfaceColor",
+] as const;
+
+function getWebviewSettingsPayload(
+    config: vscode.WorkspaceConfiguration
+): WebviewSettingsPayload {
+    return {
+        vscodeSettings: {
+            cacheMesh: config.get<boolean>("cacheMesh"),
+            showTips: config.get<boolean>("showTips"),
+            highlightJointWhenHover: config.get<boolean>(
+                "highlightJointWhenHover"
+            ),
+            highlightLinkWhenHover: config.get<boolean>(
+                "highlightLinkWhenHover"
+            ),
+        },
+        visualSettings: {
+            showVisual: config.get<boolean>("default.showVisual"),
+            showCollision: config.get<boolean>("default.showCollision"),
+            showWorldFrame: config.get<boolean>("default.showWorldFrame"),
+            showJointFrames: config.get<boolean>("default.showJointFrames"),
+            showLinkFrames: config.get<boolean>("default.showLinkFrames"),
+            jointFrameSize: config.get<number>("default.jointFrameSize"),
+            linkFrameSize: config.get<number>("default.linkFrameSize"),
+            lengthUnit: config.get<string>("default.lengthUnit"),
+            angleUnit: config.get<string>("default.angleUnit"),
+            collisionColor: config.get<string>("default.collisionColor"),
+            backgroundColor: config.get<string>("backgroundColor"),
+        },
+        measureSettings: {
+            precision: config.get<number>("default.measurement.precision"),
+            useSciNotation: config.get<boolean>(
+                "default.measurement.useSciNotation"
+            ),
+            labelSize: config.get<number>("default.measurement.labelSize"),
+            labelColor: config.get<string>("default.measurement.labelColor"),
+            lineColor: config.get<string>("default.measurement.lineColor"),
+            lineThickness: config.get<number>(
+                "default.measurement.lineThickness"
+            ),
+            pointColor: config.get<string>("default.measurement.pointColor"),
+            pointSize: config.get<number>("default.measurement.pointSize"),
+            surfaceColor: config.get<string>("default.measurement.surfaceColor"),
+        },
+    };
+}
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -148,20 +259,7 @@ export function activate(context: vscode.ExtensionContext) {
                                     i18n: localizeInstance.bundle,
                                     reset_camera: true,
                                     uriPrefix: uriPrefix,
-                                    cacheMesh: config.get<boolean>(
-                                        "cacheMesh",
-                                        true
-                                    ),
-                                    backgroundColor:
-                                        config.get<string>("backgroundColor"),
-                                    showTips: config.get<boolean>("showTips"),
-                                    highlightJointWhenHover:
-                                        config.get<boolean>(
-                                            "highlightJointWhenHover"
-                                        ),
-                                    highlightLinkWhenHover: config.get<boolean>(
-                                        "highlightLinkWhenHover"
-                                    ),
+                                    ...getWebviewSettingsPayload(config),
                                 },
                                 "init"
                             );
@@ -244,56 +342,18 @@ export function activate(context: vscode.ExtensionContext) {
                     });
                 }
             }
-            if (event.affectsConfiguration("urdf-visualizer.cacheMesh")) {
-                if (activePanel) {
-                    activePanel.webview.postMessage({
-                        type: "settings",
-                        cacheMesh: config.get<boolean>("cacheMesh", true),
-                    });
-                }
-            }
 
-            if (event.affectsConfiguration("urdf-visualizer.backgroundColor")) {
+            const affectsWebviewSettings = webviewSettingSections.some(
+                (settingKey) =>
+                    event.affectsConfiguration(
+                        `urdf-visualizer.${settingKey}`
+                    )
+            );
+            if (affectsWebviewSettings) {
                 if (activePanel) {
                     activePanel.webview.postMessage({
                         type: "settings",
-                        backgroundColor: config.get<string>("backgroundColor"),
-                    });
-                }
-            }
-            if (event.affectsConfiguration("urdf-visualizer.showTips")) {
-                if (activePanel) {
-                    activePanel.webview.postMessage({
-                        type: "settings",
-                        showTips: config.get<boolean>("showTips"),
-                    });
-                }
-            }
-            if (
-                event.affectsConfiguration(
-                    "urdf-visualizer.highlightJointWhenHover"
-                )
-            ) {
-                if (activePanel) {
-                    activePanel.webview.postMessage({
-                        type: "settings",
-                        highlightJointWhenHover: config.get<boolean>(
-                            "highlightJointWhenHover"
-                        ),
-                    });
-                }
-            }
-            if (
-                event.affectsConfiguration(
-                    "urdf-visualizer.highlightLinkWhenHover"
-                )
-            ) {
-                if (activePanel) {
-                    activePanel.webview.postMessage({
-                        type: "settings",
-                        highlightLinkWhenHover: config.get<boolean>(
-                            "highlightLinkWhenHover"
-                        ),
+                        ...getWebviewSettingsPayload(config),
                     });
                 }
             }

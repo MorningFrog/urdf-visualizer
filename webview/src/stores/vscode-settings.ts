@@ -15,8 +15,6 @@ export interface VscodeSettings {
     urdfText: string;
     /** 是否缓存 mesh 素材 */
     cacheMesh: boolean;
-    /** 背景颜色 */
-    backgroundColor: string;
     /** 是否显示提示信息 */
     showTips: boolean;
     /** 鼠标悬停时是否高亮关节 */
@@ -35,7 +33,6 @@ export const vscodeSettings = reactive<VscodeSettings>({
     renderOnSave: true,
     reRenderWhenSwitchFile: true,
     cacheMesh: true,
-    backgroundColor: "#cccccc",
     showTips: true,
     highlightJointWhenHover: true,
     highlightLinkWhenHover: true,

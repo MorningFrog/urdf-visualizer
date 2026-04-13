@@ -2,12 +2,29 @@ import { createApp, type App as VueApp } from "vue";
 import FloatingVue from "floating-vue";
 import Vue3ColorPicker from "vue3-colorpicker";
 import { vscodeSettings } from "@/stores/vscode-settings";
+import { visualSettings } from "@/stores/visual-settings";
+import { measureSettings } from "@/stores/measure-settings";
 import { vscode } from "@/utils/vscode-api";
 import { i18nMessages } from "@/stores/i18n";
 import App from "@/App.vue";
 import { vClampCenterX } from "@/directives/clampCenterX";
 
 let app: VueApp<Element> | null = null;
+
+function assignDefined<T extends object>(
+    target: T,
+    source: Partial<T> | undefined
+) {
+    if (!source) {
+        return;
+    }
+
+    Object.entries(source).forEach(([key, value]) => {
+        if (value !== undefined) {
+            (target as Record<string, unknown>)[key] = value;
+        }
+    });
+}
 
 // 重写 console.error
 // 保存原始的 console.error
@@ -30,23 +47,21 @@ window.addEventListener("message", (event) => {
             // 翻译信息
             Object.assign(i18nMessages, message.i18n);
         }
-        if (message.cacheMesh !== undefined) {
-            vscodeSettings.cacheMesh = message.cacheMesh;
-        }
-        if (message.backgroundColor) {
-            vscodeSettings.backgroundColor = message.backgroundColor;
-        }
-        if (message.showTips !== undefined) {
-            vscodeSettings.showTips = message.showTips;
-        }
-        if (message.highlightJointWhenHover !== undefined) {
-            vscodeSettings.highlightJointWhenHover =
-                message.highlightJointWhenHover;
-        }
-        if (message.highlightLinkWhenHover !== undefined) {
-            vscodeSettings.highlightLinkWhenHover =
-                message.highlightLinkWhenHover;
-        }
+
+        assignDefined(vscodeSettings, message.vscodeSettings);
+        assignDefined(visualSettings, message.visualSettings);
+        assignDefined(measureSettings, message.measureSettings);
+
+        // 兼容旧版消息格式
+        assignDefined(vscodeSettings, {
+            cacheMesh: message.cacheMesh,
+            showTips: message.showTips,
+            highlightJointWhenHover: message.highlightJointWhenHover,
+            highlightLinkWhenHover: message.highlightLinkWhenHover,
+        });
+        assignDefined(visualSettings, {
+            backgroundColor: message.backgroundColor,
+        });
     }
     if (message.type === "urdf" || message.type === "init") {
         if (message.uriPrefix) {
