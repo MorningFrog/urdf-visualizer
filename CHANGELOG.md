@@ -1,5 +1,15 @@
 # Change Log
 
+## [5.0.2]
+
+修复:
+
+Fixed:
+
+- 控制界面异常换行问题
+
+  Issue with abnormal line breaks in the control panel
+
 ## [5.0.1]
 
 修复:

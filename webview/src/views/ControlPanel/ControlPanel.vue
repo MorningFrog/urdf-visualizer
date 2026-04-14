@@ -22,14 +22,14 @@ const onReloadClick = () => {
   <div class="flex items-start gap-2 pointer-events-none">
     <div class="du-collapse du-collapse-arrow 
       bg-base-100/50 border border-base-300 text-base-content 
-      transition-[width] duration-300 w-32 has-[>_input:checked]:w-55
+      transition-[width] duration-300 w-32 has-[>_input:checked]:w-58
       overflow-hidden pointer-events-auto">
       <input type="checkbox" class="peer" />
       <div
         class="du-collapse-title font-semibold after:start-5 after:end-auto pe-4 ps-12 py-0 flex items-center h-10 text-base">
         <span>{{ i18n("webview.control.title") }}</span>
       </div>
-      <div class="my-collapse-content du-collapse-content w-55 overflow-y-scroll pr-1 min-h-0"
+      <div class="my-collapse-content du-collapse-content w-58 overflow-y-scroll pr-1 min-h-0"
         style="max-height: calc(100vh - 5rem)">
         <ul class="du-list p-0">
           <!-- 显示Visual复选框 -->
