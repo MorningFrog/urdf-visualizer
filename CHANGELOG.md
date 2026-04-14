@@ -1,5 +1,16 @@
 # Change Log
 
+## [5.0.1]
+
+修复:
+
+Fixed:
+
+- 角度显示单位从角度切换为弧度时的报错(#20)
+
+  Error when switching angle display unit from degree to radian (#20)
+
+
 ## [5.0.0]
 
 增加:

@@ -127,7 +127,7 @@ There are three installation methods:
 
 ## Release Notes
 
-### 5.0.0
+### 5.0
 
 Added:
 

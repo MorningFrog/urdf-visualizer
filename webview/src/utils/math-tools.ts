@@ -109,34 +109,61 @@ export function measureNumberToString(num: number): string {
     return num.toString();
 }
 
+function toFiniteNumber(value: number | string | null | undefined): number | null {
+    if (typeof value === "number") {
+        return Number.isFinite(value) ? value : null;
+    }
+    if (typeof value === "string") {
+        const trimmedValue = value.trim();
+        if (trimmedValue === "") {
+            return null;
+        }
+        const numericValue = Number(trimmedValue);
+        return Number.isFinite(numericValue) ? numericValue : null;
+    }
+    return null;
+}
+
 /**
  * 关节值格式化, 比 measureNumberToString 更简洁, 只需要保留 2 位小数
  * @param value
  * @param isAngle
  */
-export function jointValueToString(value: number, isAngle: boolean): string {
+export function jointValueToString(
+    value: number | string | null | undefined,
+    isAngle: boolean
+): string {
+    const numericValue = toFiniteNumber(value);
+    if (numericValue === null) {
+        return "";
+    }
+
     if (isAngle) {
+        let displayValue = numericValue;
         switch (visualSettings.angleUnit) {
             case AngleUnit.Degrees:
                 // 弧度转角度
-                value = (value * 180) / Math.PI;
-                return value.toFixed(0);
+                displayValue = (displayValue * 180) / Math.PI;
+                return displayValue.toFixed(0);
             case AngleUnit.Radians:
                 // 保持弧度制
-                return value.toFixed(2);
+                return displayValue.toFixed(2);
         }
     } else {
         const multiplier = getLengthUnitMultiplier();
-        value = value * multiplier;
-        return value.toFixed(2);
+        const displayValue = numericValue * multiplier;
+        return displayValue.toFixed(2);
     }
 }
 
 export function formatJointValueWithUnit(
-    value: number,
+    value: number | string | null | undefined,
     isAngle: boolean
 ): string {
     let valueStr = jointValueToString(value, isAngle);
+    if (valueStr === "") {
+        return "";
+    }
     if (isAngle) {
         switch (visualSettings.angleUnit) {
             case AngleUnit.Degrees:

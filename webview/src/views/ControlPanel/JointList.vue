@@ -105,7 +105,7 @@ const onResetJointsClick = () => {
             <div v-if="isDraggableJoint(joint_type)" class="w-full -mt-1!">
               <!-- 滑块 -->
               <input type="range" :min="urdfStore.jointLimitMin[joint_name]!"
-                :max="urdfStore.jointLimitMax[joint_name]!" step="0.001" v-model="jointValueModels[joint_name]"
+                :max="urdfStore.jointLimitMax[joint_name]!" step="0.001" v-model.number="jointValueModels[joint_name]"
                 @dblclick="jointValueModels[joint_name] = 0.0"
                 class="du-range du-range-xs du-range-primary [--du-range-fill:0]"
                 @mouseenter="urdfStore.hoveredJointName = joint_name" @mouseleave="urdfStore.hoveredJointName = null"

@@ -57,13 +57,23 @@ export const urdfStore = reactive<URDFStoreState>({
     requireReload: false,
 });
 
-export const setJointValue = (joint_name: string, value: number) => {
+const toFiniteJointValue = (value: number | string): number | null => {
+    const numericValue =
+        typeof value === "number" ? value : Number(value);
+    return Number.isFinite(numericValue) ? numericValue : null;
+};
+
+export const setJointValue = (joint_name: string, value: number | string) => {
     const joint = urdfStore.robot?.joints[joint_name];
     if (!joint) {
         return;
     }
-    joint.setJointValue(value);
-    urdfStore.jointValues[joint_name] = value;
+    const numericValue = toFiniteJointValue(value);
+    if (numericValue === null) {
+        return;
+    }
+    joint.setJointValue(numericValue);
+    urdfStore.jointValues[joint_name] = numericValue;
 };
 
 export const setLinkVisibility = (link_name: string, visible: boolean) => {
