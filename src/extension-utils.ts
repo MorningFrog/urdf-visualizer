@@ -145,3 +145,58 @@ export function isXacroFile(document: vscode.TextDocument): boolean {
     }
     return ext === "xacro";
 }
+
+/**
+ * 提取 URDF 文本中所有 package://<package_name> 引用的包名
+ * @param urdfText URDF 文本
+ * @returns 按出现顺序去重后的包名列表
+ */
+export function extractPackageNamesFromUrdf(urdfText: string): string[] {
+    const packageNames = new Set<string>();
+    const packageUriRegex = /package:\/\/([^\/\s"'<>]+)/g;
+
+    for (const match of urdfText.matchAll(packageUriRegex)) {
+        const packageName = match[1]?.trim();
+        if (packageName) {
+            packageNames.add(packageName);
+        }
+    }
+
+    return Array.from(packageNames);
+}
+
+/**
+ * 查找 URDF 中未配置路径的 package
+ * @param urdfText URDF 文本
+ * @param packages 已配置的 package 路径映射
+ * @returns 未配置的 package 名称列表
+ */
+export function findMissingPackagesInUrdf(
+    urdfText: string,
+    packages: Record<string, string> | undefined
+): string[] {
+    const configuredPackages = packages ?? {};
+
+    return extractPackageNamesFromUrdf(urdfText).filter(
+        (packageName) =>
+            !Object.prototype.hasOwnProperty.call(
+                configuredPackages,
+                packageName
+            )
+    );
+}
+
+/**
+ * 从 URDFLoader 的缺包报错中提取包名
+ * @param message 报错文本
+ * @returns 缺失的 package 名称, 未匹配时返回 null
+ */
+export function extractMissingPackageFromErrorMessage(
+    message: string
+): string | null {
+    const match = message.match(
+        /URDFLoader\s*:\s*([^\s]+)\s+not found in provided package list\./
+    );
+
+    return match?.[1] ?? null;
+}

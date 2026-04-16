@@ -8,6 +8,11 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { XMLSerializer } from "xmldom";
 import { xacroParser } from "../xacro-parser-instance";
+import {
+    extractPackageNamesFromUrdf,
+    findMissingPackagesInUrdf,
+    extractMissingPackageFromErrorMessage,
+} from "../extension-utils";
 // import * as myExtension from '../../extension';
 
 suite("Extension Test Suite", () => {
@@ -97,5 +102,85 @@ suite("Extension Test Suite", () => {
         } finally {
             fs.rmSync(tempDir, { recursive: true, force: true });
         }
+    });
+
+    test("serializes computed macro text nodes", async () => {
+        const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="joint_value" params="q1">
+    <link name="computed">\${q1 + 1}</link>
+  </xacro:macro>
+  <xacro:joint_value q1="0" />
+</robot>`);
+
+        const serialized = new XMLSerializer().serializeToString(result);
+
+        assert.match(serialized, /<link name="computed">1<\/link>/);
+    });
+
+    test("extracts package names from urdf text", () => {
+        const urdfText = `<?xml version="1.0"?>
+<robot name="test_robot">
+  <link name="base">
+    <visual>
+      <geometry>
+        <mesh filename="package://ur_robot/meshes/base.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://ur_robot/meshes/base_collision.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="tool">
+    <visual>
+      <geometry>
+        <mesh filename="package://gripper_pkg/meshes/tool.stl" />
+      </geometry>
+    </visual>
+  </link>
+</robot>`;
+
+        assert.deepStrictEqual(extractPackageNamesFromUrdf(urdfText), [
+            "ur_robot",
+            "gripper_pkg",
+        ]);
+    });
+
+    test("finds missing packages referenced by urdf text", () => {
+        const urdfText = `<?xml version="1.0"?>
+<robot name="test_robot">
+  <link name="base">
+    <visual>
+      <geometry>
+        <mesh filename="package://ur_robot/meshes/base.stl" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="tool">
+    <visual>
+      <geometry>
+        <mesh filename="package://gripper_pkg/meshes/tool.stl" />
+      </geometry>
+    </visual>
+  </link>
+</robot>`;
+
+        assert.deepStrictEqual(
+            findMissingPackagesInUrdf(urdfText, {
+                ur_robot: "/workspace/src/ur_robot",
+            }),
+            ["gripper_pkg"]
+        );
+    });
+
+    test("extracts missing package name from URDFLoader error message", () => {
+        assert.strictEqual(
+            extractMissingPackageFromErrorMessage(
+                "URDFLoader : ur_robot not found in provided package list."
+            ),
+            "ur_robot"
+        );
     });
 });

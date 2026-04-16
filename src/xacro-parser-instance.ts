@@ -15,6 +15,7 @@ type CompatNode = {
     nodeType: number;
     ELEMENT_NODE: number;
     documentElement?: CompatNode;
+    createTextNode?: (data: string) => CompatNode;
 };
 
 function collectionToArray<T>(collection: { length: number; [index: number]: T }) {
@@ -37,6 +38,43 @@ function installXmldomCompatibility(documentNode: CompatNode) {
     const nodeListProto = documentNode.childNodes
         ? Object.getPrototypeOf(documentNode.childNodes)
         : Object.prototype;
+
+    const installTextContentStringCoercion = () => {
+        if (!documentNode.createTextNode) {
+            return;
+        }
+
+        const textPrototype = Object.getPrototypeOf(documentNode.createTextNode(""));
+        if (!textPrototype || Object.getOwnPropertyDescriptor(textPrototype, "textContent")) {
+            return;
+        }
+
+        Object.defineProperty(textPrototype, "textContent", {
+            get(this: { data?: unknown }) {
+                return this.data ?? "";
+            },
+            set(
+                this: {
+                    data?: unknown;
+                    value?: unknown;
+                    nodeValue?: unknown;
+                    length?: number;
+                },
+                data: unknown
+            ) {
+                const normalized =
+                    data === null || data === undefined ? "" : String(data);
+                this.data = normalized;
+                this.value = normalized;
+                this.nodeValue = normalized;
+                this.length = normalized.length;
+            },
+            configurable: true,
+        });
+    };
+
+    installTextContentStringCoercion();
+
     if (nodeListProto && !nodeListProto[Symbol.iterator]) {
         Object.defineProperty(nodeListProto, Symbol.iterator, {
             value: function* <T>(this: CompatNodeList<T>) {

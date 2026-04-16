@@ -1,5 +1,19 @@
 # Change Log
 
+## [5.0.4]
+
+修复:
+
+Fixed:
+
+- xacro 宏的空参数值解析问题
+
+  Issue with parsing empty parameter values in xacro macros
+
+- package 未找到时提示不弹出的问题
+
+  Issue with missing prompt when package is not found
+
 ## [5.0.3]
 
 修复:

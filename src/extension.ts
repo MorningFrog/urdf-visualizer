@@ -8,10 +8,12 @@ import {
     getWebviewContent,
     isUrdfOrXacroFile,
     isXacroFile,
+    findMissingPackagesInUrdf,
+    extractMissingPackageFromErrorMessage,
 } from "./extension-utils";
 const { XMLSerializer, XMLDocument } = require("xmldom");
 import { xacroParser } from "./xacro-parser-instance";
-import { localizeInstance } from "./localize";
+import localize, { localizeInstance } from "./localize";
 
 interface WebviewVscodeSettingsPayload {
     cacheMesh?: boolean;
@@ -151,6 +153,51 @@ export function activate(context: vscode.ExtensionContext) {
     let uriPrefix: string | null = null; // 保存当前文件的 URI 前缀
 
     const serializer = new XMLSerializer(); // XML 序列化器
+    const promptedMissingPackages = new Set<string>();
+
+    function formatMissingPackageNames(packageNames: string[]) {
+        return packageNames.map((packageName) => `"${packageName}"`).join(", ");
+    }
+
+    async function promptMissingPackages(packageNames: string[]) {
+        const newMissingPackages = packageNames.filter(
+            (packageName) => !promptedMissingPackages.has(packageName)
+        );
+
+        if (newMissingPackages.length === 0) {
+            return;
+        }
+
+        newMissingPackages.forEach((packageName) =>
+            promptedMissingPackages.add(packageName)
+        );
+
+        const openSettingsLabel = localize(
+            "extension.message.packageMissing.openSettings"
+        );
+        const message =
+            newMissingPackages.length === 1
+                ? localize(
+                      "extension.message.packageMissing.single",
+                      `"${newMissingPackages[0]}"`
+                  )
+                : localize(
+                      "extension.message.packageMissing.multiple",
+                      formatMissingPackageNames(newMissingPackages)
+                  );
+
+        const selected = await vscode.window.showErrorMessage(
+            message,
+            openSettingsLabel
+        );
+
+        if (selected === openSettingsLabel) {
+            await vscode.commands.executeCommand(
+                "workbench.action.openSettings",
+                "@id:urdf-visualizer.packages"
+            );
+        }
+    }
 
     // 设置 ROS 功能包路径
     xacroParser.rospackCommands = {
@@ -196,6 +243,12 @@ export function activate(context: vscode.ExtensionContext) {
         }
         // 发送 URDF 文件内容
         function sendURDF(urdfText: string) {
+            const missingPackages = findMissingPackagesInUrdf(
+                urdfText,
+                packagesResolved as Record<string, string> | undefined
+            );
+            void promptMissingPackages(missingPackages);
+
             activePanel?.webview.postMessage({
                 type: message_type,
                 urdfText: urdfText,
@@ -289,7 +342,16 @@ export function activate(context: vscode.ExtensionContext) {
                             }
                         } else if (message.type === "error") {
                             // 报错
-                            vscode.window.showErrorMessage(message.message);
+                            const missingPackage =
+                                extractMissingPackageFromErrorMessage(
+                                    message.message
+                                );
+
+                            if (missingPackage) {
+                                void promptMissingPackages([missingPackage]);
+                            } else {
+                                vscode.window.showErrorMessage(message.message);
+                            }
                         }
                     });
                 }
@@ -345,6 +407,7 @@ export function activate(context: vscode.ExtensionContext) {
                     config.get<object>("packages"),
                     vscode.workspace.workspaceFolders?.[0]
                 );
+                promptedMissingPackages.clear();
                 if (activePanel) {
                     activePanel.webview.postMessage({
                         type: "urdf",
