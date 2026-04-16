@@ -10,10 +10,10 @@ A VSCode extension for visualizing URDF files and xacro files.
 用于可视化 URDF 和 xacro 文件的 VSCode 扩展.
 
 ![License](https://img.shields.io/github/license/MorningFrog/urdf-visualizer?color=blue)
-![Installs](https://img.shields.io/visual-studio-marketplace/i/morningfrog.urdf-visualizer?color=blue)
-![Downloads](https://img.shields.io/visual-studio-marketplace/d/morningfrog.urdf-visualizer?color=blue)
-![Rating](https://img.shields.io/visual-studio-marketplace/r/morningfrog.urdf-visualizer?color=blue)
-![Version](https://img.shields.io/github/package-json/v/MorningFrog/urdf-visualizer?color=blue)
+[![Version](https://vsmarketplacebadges.dev/version/MorningFrog.urdf-visualizer.svg?color=blue)](https://marketplace.visualstudio.com/items?itemName=MorningFrog.urdf-visualizer)
+[![Installs](https://vsmarketplacebadges.dev/installs/MorningFrog.urdf-visualizer.svg?color=blue)](https://marketplace.visualstudio.com/items?itemName=MorningFrog.urdf-visualizer)
+[![Downloads](https://vsmarketplacebadges.dev/downloads/MorningFrog.urdf-visualizer.svg?color=blue)](https://marketplace.visualstudio.com/items?itemName=MorningFrog.urdf-visualizer)
+[![Rating](https://vsmarketplacebadges.dev/rating/MorningFrog.urdf-visualizer.svg?color=blue)](https://marketplace.visualstudio.com/items?itemName=MorningFrog.urdf-visualizer)
 ![Stars](https://img.shields.io/github/stars/MorningFrog/urdf-visualizer?style=social)
 </div>
 
