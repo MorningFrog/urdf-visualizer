@@ -6,7 +6,7 @@
         "type": "git",
         "url": "https://github.com/MorningFrog/urdf-visualizer"
     },
-    "version": "5.0.2",
+    "version": "5.0.3",
     "publisher": "morningfrog",
     "engines": {
         "vscode": "^1.70.0"

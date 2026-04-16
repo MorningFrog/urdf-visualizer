@@ -117,21 +117,28 @@ const { collisionMaterial,
 
     // 设置资源处理函数
     manager.setURLModifier((url: string): string => {
-        // 删除其中的 `file://`
-        url = url.replace("file://", "");
-        // 替换其中的 `\` 为 `/`
-        url = url.replace(/\\/g, "/");
-        // 对于 Windows 系统, 添加 `/` 前缀
-        if (!url.startsWith("/")) {
-            url = "/" + url;
+        // 保留浏览器/WebView 已可访问的 URL, 否则会破坏 GLTFLoader
+        // 为嵌入纹理创建的 blob: URL 以及 data:/https: 资源.
+        if (/^(?:blob:|data:|https?:|vscode-webview:|vscode-file:|vscode-resource:)/i.test(url)) {
+            return url;
         }
-        // 如果出现两个 `//` 忽略第一个 `/` 前的所有内容
-        const doubleSlashIndex = url.indexOf("//");
-        if (doubleSlashIndex !== -1) {
-            url = url.slice(doubleSlashIndex + 1);
+
+        let localPath = url.replace(/\\/g, "/");
+
+        if (localPath.startsWith("file://")) {
+            try {
+                localPath = decodeURI(new URL(localPath).pathname);
+            } catch {
+                localPath = localPath.replace(/^file:\/\//i, "");
+            }
         }
-        // console.log("url", url);
-        return vscodeSettings.uriPrefix + url;
+
+        // 对于 Windows 系统, 需要补齐 `/` 前缀, 以匹配 webview 资源路径格式.
+        if (!localPath.startsWith("/")) {
+            localPath = "/" + localPath;
+        }
+
+        return vscodeSettings.uriPrefix + localPath;
     });
 
     // 设置 loaderURDF 的 workingPath

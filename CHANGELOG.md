@@ -1,5 +1,15 @@
 # Change Log
 
+## [5.0.3]
+
+修复:
+
+Fixed:
+
+- Mesh 文件中的纹理路径解析问题
+
+  Issue with texture path parsing in mesh files
+
 ## [5.0.2]
 
 修复:
