@@ -21,7 +21,7 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ![demonstration](media/images/demonstration.gif)
 
-- 预览与检查: 可视化 URDF 和 Xacro 文件，切换 visual/collision 显示，单独控制各个 Link 的可见性，并查看 joint/link 的名称与坐标系。
+- 预览与检查: 可视化 URDF 和 Xacro 文件，切换 visual/collision/inertia 显示，单独控制各个 Link 的可见性，并查看 joint/link 的名称与坐标系。
 - 交互: 可在视图中直接拖动关节，在切换文件时保留视角，并可选恢复关节状态。
 - 测量: 支持坐标值、距离、角度和面积测量，并可配置默认测量选项。
 - 界面与本地化: 全新的 UI 设计，包含控制面板、Link 列表、Joint 列表和设置面板，并支持英语和简体中文。
@@ -81,9 +81,9 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 所有 `urdf-visualizer.default.*` 都用于定义新打开预览时的初始状态, 之后仍可在 webview UI 中继续调整.
 
-- 几何体与坐标系: `urdf-visualizer.default.showVisual`, `urdf-visualizer.default.showCollision`, `urdf-visualizer.default.showWorldFrame`, `urdf-visualizer.default.showJointFrames`, `urdf-visualizer.default.jointFrameSize`, `urdf-visualizer.default.showLinkFrames`, `urdf-visualizer.default.linkFrameSize`
+- 几何体与坐标系: `urdf-visualizer.default.showVisual`, `urdf-visualizer.default.showCollision`, `urdf-visualizer.default.showInertia`, `urdf-visualizer.default.showInertiaWhenHover`, `urdf-visualizer.default.showWorldFrame`, `urdf-visualizer.default.showJointFrames`, `urdf-visualizer.default.jointFrameSize`, `urdf-visualizer.default.showLinkFrames`, `urdf-visualizer.default.linkFrameSize`
 
-- 单位与颜色: `urdf-visualizer.default.lengthUnit`, `urdf-visualizer.default.angleUnit`, `urdf-visualizer.default.collisionColor`
+- 单位与颜色: `urdf-visualizer.default.lengthUnit`, `urdf-visualizer.default.angleUnit`, `urdf-visualizer.default.collisionColor`, `urdf-visualizer.default.inertiaColor`
 
 - 测量默认值: `urdf-visualizer.default.measurement.precision`, `urdf-visualizer.default.measurement.useSciNotation`, `urdf-visualizer.default.measurement.labelSize`, `urdf-visualizer.default.measurement.labelColor`, `urdf-visualizer.default.measurement.lineColor`, `urdf-visualizer.default.measurement.lineThickness`, `urdf-visualizer.default.measurement.pointColor`, `urdf-visualizer.default.measurement.pointSize`, `urdf-visualizer.default.measurement.surfaceColor`
 
@@ -127,6 +127,13 @@ A VSCode extension for visualizing URDF files and xacro files.
 - 面积测量时, 如果出现凹多边形, 面积结果可能错误.
 
 ## Release Notes
+
+### 5.1
+
+增加:
+
+- 惯性可视化支持, 相关设置项为 `urdf-visualizer.default.showInertia` 和 `urdf-visualizer.default.showInertiaWhenHover`.  
+
 
 ### 5.0
 

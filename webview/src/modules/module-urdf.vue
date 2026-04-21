@@ -15,8 +15,14 @@ import type {
     URDFLink,
     URDFCollider,
 } from "urdf-loader";
-import { LinkAxesHelper, JointAxesHelper, BaseAxesHelper } from '@/utils/custom-axes';
+import {
+    LinkAxesHelper,
+    JointAxesHelper,
+    BaseAxesHelper,
+    markAsFrameHelper,
+} from '@/utils/custom-axes';
 import { computeRobotBounds } from '@/utils/threejs-tools';
+import { computeEquivalentInertiaBox } from '@/utils/inertia-tools';
 
 import { vscodeSettings } from '@/stores/vscode-settings';
 import { visualSettings } from '@/stores/visual-settings';
@@ -67,10 +73,118 @@ watch(() => vscodeSettings.cacheJointValues, (enable) => {
     }
 }, { immediate: true });
 
+type InertiaHelperInstance = {
+    root: THREE.Group;
+    surface: THREE.Mesh;
+    edges: THREE.LineSegments;
+    surfaceMaterial: THREE.MeshBasicMaterial;
+    edgeMaterial: THREE.LineBasicMaterial;
+};
+
+const INERTIA_HIGHLIGHT_EDGE_COLOR = new THREE.Color("#2563eb");
+const INERTIA_HIGHLIGHT_SURFACE_OPACITY = 0.38;
+const INERTIA_HIGHLIGHT_EDGE_OPACITY = 1.0;
+
+const applyInertiaHelperAppearance = (
+    helper: InertiaHelperInstance,
+    highlighted: boolean
+) => {
+    const baseColor = new THREE.Color(visualSettings.inertiaColor);
+    const baseOpacity = extractAlphaFromRgbString(visualSettings.inertiaColor) ?? 0.22;
+
+    helper.surfaceMaterial.color.copy(baseColor);
+    helper.surfaceMaterial.opacity = highlighted
+        ? Math.max(baseOpacity, INERTIA_HIGHLIGHT_SURFACE_OPACITY)
+        : baseOpacity;
+    helper.surfaceMaterial.needsUpdate = true;
+
+    helper.edgeMaterial.color.copy(
+        highlighted ? INERTIA_HIGHLIGHT_EDGE_COLOR : baseColor
+    );
+    helper.edgeMaterial.opacity = highlighted
+        ? INERTIA_HIGHLIGHT_EDGE_OPACITY
+        : Math.max(baseOpacity, 0.55);
+    helper.edgeMaterial.needsUpdate = true;
+
+    helper.root.renderOrder = highlighted ? 5_100 : 5_000;
+    helper.surface.renderOrder = highlighted ? 5_100 : 5_000;
+    helper.edges.renderOrder = highlighted ? 5_101 : 5_001;
+};
+
+/**
+ * 创建某个 link 的等效惯量盒辅助对象.
+ * - 外层 group 对齐 inertial origin.
+ * - 内层 group 对齐主惯量方向.
+ */
+const createInertiaHelper = (link: URDFLink): InertiaHelperInstance | null => {
+    const equivalentBox = computeEquivalentInertiaBox(link);
+    if (!equivalentBox) {
+        return null;
+    }
+
+    const helperRoot = new THREE.Group();
+    helperRoot.name = `${link.name}-inertia-helper`;
+    helperRoot.position.copy(equivalentBox.inertialPosition);
+    helperRoot.rotation.copy(equivalentBox.inertialRotation);
+
+    const principalFrame = new THREE.Group();
+    principalFrame.quaternion.copy(equivalentBox.principalRotation);
+
+    const geometry = new THREE.BoxGeometry(
+        equivalentBox.size.x,
+        equivalentBox.size.y,
+        equivalentBox.size.z
+    );
+    const baseColor = new THREE.Color(visualSettings.inertiaColor);
+    const baseOpacity = extractAlphaFromRgbString(visualSettings.inertiaColor) ?? 0.22;
+    const surfaceMaterial = new THREE.MeshBasicMaterial({
+        transparent: true,
+        opacity: baseOpacity,
+        premultipliedAlpha: true,
+        color: baseColor,
+        depthTest: false,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+    });
+    const surface = new THREE.Mesh(geometry, surfaceMaterial);
+    surface.renderOrder = 5_000;
+
+    const edgeMaterial = new THREE.LineBasicMaterial({
+        transparent: true,
+        opacity: Math.max(baseOpacity, 0.55),
+        color: baseColor,
+        depthTest: false,
+        depthWrite: false,
+    });
+    const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(geometry),
+        edgeMaterial
+    );
+    edges.renderOrder = 5_001;
+
+    principalFrame.add(surface, edges);
+    helperRoot.add(principalFrame);
+    helperRoot.traverse((obj) => obj.layers.set(1));
+
+    // inertia box 常常位于 visual mesh 内部, 保持其可见更利于调试.
+    helperRoot.traverse((obj) => {
+        obj.renderOrder = Math.max(obj.renderOrder, 5_000);
+    });
+    markAsFrameHelper(helperRoot);
+
+    return {
+        root: helperRoot,
+        surface,
+        edges,
+        surfaceMaterial,
+        edgeMaterial,
+    };
+};
+
 const { collisionMaterial,
     manager, loaderURDF, loaderSTL, loaderGLTF, loaderCollada, loaderOBJ,
     meshCache,
-    worldAxes, jointAxes, linkAxes,
+    worldAxes, jointAxes, linkAxes, inertiaHelpers,
 } = (() => {
     // 碰撞体材质
     const collisionMaterial = new THREE.MeshPhongMaterial({
@@ -245,9 +359,23 @@ const { collisionMaterial,
     // joint 和 link 的坐标系对象列表
     const jointAxes: Map<string, JointAxesHelper> = new Map();
     const linkAxes: Map<string, LinkAxesHelper> = new Map();
+    const inertiaHelpers: Map<string, InertiaHelperInstance> = new Map();
+    const updateInertiaHelpersVisibilityAndHighlight = () => {
+        const canShowHoverInertia =
+            !visualSettings.showInertia &&
+            visualSettings.showInertiaWhenHover;
+        inertiaHelpers.forEach((helper, linkName) => {
+            const highlighted = linkName === urdfStore.hoveredLinkName;
+            helper.root.visible =
+                visualSettings.showInertia ||
+                (canShowHoverInertia && highlighted);
+            applyInertiaHelperAppearance(helper, highlighted);
+        });
+    };
     watch(() => urdfStore.robot, (robot) => {
         jointAxes.clear();
         linkAxes.clear();
+        inertiaHelpers.clear();
         if (!robot) {
             return;
         }
@@ -278,14 +406,32 @@ const { collisionMaterial,
                 axesHelper.visible = visualSettings.showLinkFrames;
                 link.add(axesHelper);
                 linkAxes.set(link_name, axesHelper);
+
+                const inertiaHelper = createInertiaHelper(link);
+                if (inertiaHelper) {
+                    link.add(inertiaHelper.root);
+                    inertiaHelpers.set(link_name, inertiaHelper);
+                }
             }
         );
+        updateInertiaHelpersVisibilityAndHighlight();
     });
     watch(() => visualSettings.showLinkFrames, (show) => {
         linkAxes.forEach((axes) => {
             axes.visible = show;
         });
     });
+    watch(
+        () => [
+            visualSettings.showInertia,
+            visualSettings.showInertiaWhenHover,
+            visualSettings.inertiaColor,
+            urdfStore.hoveredLinkName,
+        ],
+        () => {
+            updateInertiaHelpersVisibilityAndHighlight();
+        }
+    );
     watch(globalScale, (newScale) => {
         worldAxes.scale.set(newScale * 1.5, newScale * 1.5, newScale * 1.5);
         jointAxes.forEach((axes) => {
@@ -399,7 +545,8 @@ const { collisionMaterial,
         meshCache,
         worldAxes,
         jointAxes,
-        linkAxes
+        linkAxes,
+        inertiaHelpers
     };
 })();
 
@@ -662,6 +809,7 @@ const removeRobot = () => {
     // 删除 joint 和 link 坐标系
     jointAxes.clear();
     linkAxes.clear();
+    inertiaHelpers.clear();
 }
 
 const loadURDF = async () => {

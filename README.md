@@ -21,7 +21,7 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ![demonstration](media/images/demonstration.gif)
 
-- Preview and inspection: visualize URDF and Xacro files, switch visual/collision display, toggle each link, and inspect joint/link names and frames.
+- Preview and inspection: visualize URDF and Xacro files, switch visual/collision/inertia display, toggle each link, and inspect joint/link names and frames.
 - Interaction: drag joints directly in the viewer, keep the camera view between files, and optionally restore joint values.
 - Measurement: measure coordinates, distance, angle, and area, with configurable defaults.
 - Interface and localization: new UI with dedicated Control, Links, Joints, and Settings panels, plus English and Simplified Chinese support.
@@ -81,9 +81,9 @@ This extension contributes the following settings, grouped by purpose:
 
 All `urdf-visualizer.default.*` settings define the initial state of a newly opened preview. They can still be changed later in the webview UI.
 
-- Geometry and frames: `urdf-visualizer.default.showVisual`, `urdf-visualizer.default.showCollision`, `urdf-visualizer.default.showWorldFrame`, `urdf-visualizer.default.showJointFrames`, `urdf-visualizer.default.jointFrameSize`, `urdf-visualizer.default.showLinkFrames`, `urdf-visualizer.default.linkFrameSize`
+- Geometry and frames: `urdf-visualizer.default.showVisual`, `urdf-visualizer.default.showCollision`, `urdf-visualizer.default.showInertia`, `urdf-visualizer.default.showInertiaWhenHover`, `urdf-visualizer.default.showWorldFrame`, `urdf-visualizer.default.showJointFrames`, `urdf-visualizer.default.jointFrameSize`, `urdf-visualizer.default.showLinkFrames`, `urdf-visualizer.default.linkFrameSize`
 
-- Units and colors: `urdf-visualizer.default.lengthUnit`, `urdf-visualizer.default.angleUnit`, `urdf-visualizer.default.collisionColor`
+- Units and colors: `urdf-visualizer.default.lengthUnit`, `urdf-visualizer.default.angleUnit`, `urdf-visualizer.default.collisionColor`, `urdf-visualizer.default.inertiaColor`
 
 - Measurement defaults: `urdf-visualizer.default.measurement.precision`, `urdf-visualizer.default.measurement.useSciNotation`, `urdf-visualizer.default.measurement.labelSize`, `urdf-visualizer.default.measurement.labelColor`, `urdf-visualizer.default.measurement.lineColor`, `urdf-visualizer.default.measurement.lineThickness`, `urdf-visualizer.default.measurement.pointColor`, `urdf-visualizer.default.measurement.pointSize`, `urdf-visualizer.default.measurement.surfaceColor`
 
@@ -126,6 +126,12 @@ There are three installation methods:
 - When measuring area, if concave polygons appear, the area result may be incorrect
 
 ## Release Notes
+
+### 5.1
+
+Added:
+
+- Support interia visualization, with settings `urdf-visualizer.default.showInertia` and `urdf-visualizer.default.showInertiaWhenHover`.
 
 ### 5.0
 

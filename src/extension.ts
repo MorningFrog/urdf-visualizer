@@ -27,6 +27,8 @@ interface WebviewVscodeSettingsPayload {
 interface WebviewVisualSettingsPayload {
     showVisual?: boolean;
     showCollision?: boolean;
+    showInertia?: boolean;
+    showInertiaWhenHover?: boolean;
     showWorldFrame?: boolean;
     showJointFrames?: boolean;
     showLinkFrames?: boolean;
@@ -35,6 +37,7 @@ interface WebviewVisualSettingsPayload {
     lengthUnit?: string;
     angleUnit?: string;
     collisionColor?: string;
+    inertiaColor?: string;
     backgroundColor?: string;
 }
 
@@ -65,6 +68,8 @@ const webviewSettingSections = [
     "cacheJointValues",
     "default.showVisual",
     "default.showCollision",
+    "default.showInertia",
+    "default.showInertiaWhenHover",
     "default.showWorldFrame",
     "default.showJointFrames",
     "default.showLinkFrames",
@@ -73,6 +78,7 @@ const webviewSettingSections = [
     "default.lengthUnit",
     "default.angleUnit",
     "default.collisionColor",
+    "default.inertiaColor",
     "backgroundColor",
     "default.measurement.precision",
     "default.measurement.useSciNotation",
@@ -108,6 +114,10 @@ function getWebviewSettingsPayload(
         visualSettings: {
             showVisual: config.get<boolean>("default.showVisual"),
             showCollision: config.get<boolean>("default.showCollision"),
+            showInertia: config.get<boolean>("default.showInertia"),
+            showInertiaWhenHover: config.get<boolean>(
+                "default.showInertiaWhenHover"
+            ),
             showWorldFrame: config.get<boolean>("default.showWorldFrame"),
             showJointFrames: config.get<boolean>("default.showJointFrames"),
             showLinkFrames: config.get<boolean>("default.showLinkFrames"),
@@ -116,6 +126,7 @@ function getWebviewSettingsPayload(
             lengthUnit: config.get<string>("default.lengthUnit"),
             angleUnit: config.get<string>("default.angleUnit"),
             collisionColor: config.get<string>("default.collisionColor"),
+            inertiaColor: config.get<string>("default.inertiaColor"),
             backgroundColor: config.get<string>("backgroundColor"),
         },
         measureSettings: {

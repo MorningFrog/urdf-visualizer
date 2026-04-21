@@ -1,14 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
-
 import SettingsIcon from "/public/icons/settings.svg";
 import HintIcon from "/public/icons/hint.svg";
 
 import i18n from "@/stores/i18n";
 import { visualSettings } from "@/stores/visual-settings";
 import { measureSettings } from "@/stores/measure-settings";
-
-
 </script>
 <template>
     <div class="du-collapse du-collapse-arrow
@@ -252,6 +248,22 @@ import { measureSettings } from "@/stores/measure-settings";
                         </template>
                     </VTooltip>
                 </label>
+                <!-- inertia 颜色 -->
+                <label class="du-list-row my-list-row h-10!">
+                    <div class="du-list-col-grow mx-0">
+                        {{ i18n("webview.settings.inertiaColor") }}
+                    </div>
+                    <div class="w-10 flex items-center justify-center">
+                        <color-picker v-model:pureColor="visualSettings.inertiaColor" shape="circle" format="rgb"
+                            useType="pure" :roundHistory="true" class="border-gray-700" />
+                    </div>
+                    <VTooltip :delay="0" :distance="8">
+                        <HintIcon class="my-hint-icon" />
+                        <template #popper>
+                            <div class="max-w-50">{{ i18n("webview.settings.inertiaColor.hint") }}</div>
+                        </template>
+                    </VTooltip>
+                </label>
                 <!-- 背景颜色 -->
                 <label class="du-list-row my-list-row h-10!">
                     <div class="du-list-col-grow mx-0">
@@ -273,7 +285,7 @@ import { measureSettings } from "@/stores/measure-settings";
     </div>
 </template>
 <style scoped>
-@reference '@/styles/main.css';
+@reference "tailwindcss";
 
 .my-select {
     @apply w-25 h-8 mx-0 pl-1 pr-1;

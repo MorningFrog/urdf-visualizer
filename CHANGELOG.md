@@ -1,5 +1,15 @@
 # Change Log
 
+## [5.1.0]
+
+增加:
+
+Added:
+
+- Support interia visualization, with settings `urdf-visualizer.default.showInertia` and `urdf-visualizer.default.showInertiaWhenHover`.
+
+  惯性可视化支持, 相关设置项为 `urdf-visualizer.default.showInertia` 和 `urdf-visualizer.default.showInertiaWhenHover`.  
+
 ## [5.0.4]
 
 修复:

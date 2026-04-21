@@ -61,6 +61,7 @@ window.addEventListener("message", (event) => {
         });
         assignDefined(visualSettings, {
             backgroundColor: message.backgroundColor,
+            showInertiaWhenHover: message.showInertiaWhenHover,
         });
     }
     if (message.type === "urdf" || message.type === "init") {

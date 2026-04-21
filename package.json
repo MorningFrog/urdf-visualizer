@@ -6,7 +6,7 @@
         "type": "git",
         "url": "https://github.com/MorningFrog/urdf-visualizer"
     },
-    "version": "5.0.4",
+    "version": "5.1.0",
     "publisher": "morningfrog",
     "engines": {
         "vscode": "^1.70.0"
@@ -82,6 +82,16 @@
                     "default": false,
                     "description": "%extension.configuration.showCollision.description%"
                 },
+                "urdf-visualizer.default.showInertia": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%extension.configuration.showInertia.description%"
+                },
+                "urdf-visualizer.default.showInertiaWhenHover": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%extension.configuration.showInertiaWhenHover.description%"
+                },
                 "urdf-visualizer.default.showWorldFrame": {
                     "type": "boolean",
                     "default": true,
@@ -134,6 +144,11 @@
                     "type": "string",
                     "default": "rgba(255, 190, 56, 0.35)",
                     "description": "%extension.configuration.collisionColor.description%"
+                },
+                "urdf-visualizer.default.inertiaColor": {
+                    "type": "string",
+                    "default": "rgba(34, 197, 94, 0.22)",
+                    "description": "%extension.configuration.inertiaColor.description%"
                 },
                 "urdf-visualizer.backgroundColor": {
                     "type": "string",
@@ -243,16 +258,16 @@
         "@types/fs-extra": "^11.0.4",
         "@types/mocha": "^10.0.7",
         "@types/node": "25.6.0",
-        "@types/three": "^0.183.1",
+        "@types/three": "^0.184.0",
         "@types/vscode": "^1.70.0",
-        "@typescript-eslint/eslint-plugin": "^8.58.2",
-        "@typescript-eslint/parser": "^8.58.2",
-        "@typescript-eslint/scope-manager": "^8.58.2",
-        "@typescript-eslint/type-utils": "^8.58.2",
-        "@typescript-eslint/types": "^8.58.2",
-        "@typescript-eslint/typescript-estree": "^8.58.2",
-        "@typescript-eslint/utils": "^8.58.2",
-        "@typescript-eslint/visitor-keys": "^8.58.2",
+        "@typescript-eslint/eslint-plugin": "^8.59.0",
+        "@typescript-eslint/parser": "^8.59.0",
+        "@typescript-eslint/scope-manager": "^8.59.0",
+        "@typescript-eslint/type-utils": "^8.59.0",
+        "@typescript-eslint/types": "^8.59.0",
+        "@typescript-eslint/typescript-estree": "^8.59.0",
+        "@typescript-eslint/utils": "^8.59.0",
+        "@typescript-eslint/visitor-keys": "^8.59.0",
         "@vscode/test-cli": "^0.0.12",
         "@vscode/test-electron": "^2.4.1",
         "eslint": "^10.2.0",
@@ -261,14 +276,14 @@
         "npm-run-all": "^4.1.5",
         "ts-loader": "^9.5.7",
         "typescript": "^6.0.2",
-        "webpack": "^5.106.1",
+        "webpack": "^5.106.2",
         "webpack-cli": "^7.0.2"
     },
     "dependencies": {
         "expr-eval": "^2.0.2",
         "fs-extra": "^11.3.4",
         "jsdom": "^29.0.2",
-        "three": "^0.183.0",
+        "three": "^0.184.0",
         "urdf-loader": "^0.12.7",
         "xacro-parser": "^0.3.9",
         "xmldom": "^0.6.0"

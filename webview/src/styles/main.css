@@ -1,7 +1,8 @@
 @import './base.css';
 @import "tailwindcss";
 
-@plugin "daisyui" {
+/* 显式指向 JS 插件入口, 避免构建阶段错误解析到 package.json 的 browser CSS 入口. */
+@plugin "../../node_modules/daisyui/index.js" {
   prefix: "du-";
   /* 关键:给所有 daisyUI 组件类加前缀 */
 }

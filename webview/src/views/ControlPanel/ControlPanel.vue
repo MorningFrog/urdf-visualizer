@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
-
 import ReloadIcon from "/public/icons/reload.svg";
 import HintIcon from "/public/icons/hint.svg";
 
@@ -20,51 +18,139 @@ const onReloadClick = () => {
 </script>
 <template>
   <div class="flex items-start gap-2 pointer-events-none">
-    <div class="du-collapse du-collapse-arrow 
-      bg-base-100/50 border border-base-300 text-base-content 
-      transition-[width] duration-300 w-32 has-[>_input:checked]:w-58
-      overflow-hidden pointer-events-auto">
+    <div
+      class="du-collapse du-collapse-arrow bg-base-100/50 border border-base-300 text-base-content transition-[width] duration-300 w-32 has-[>_input:checked]:w-62 overflow-hidden pointer-events-auto"
+    >
       <input type="checkbox" class="peer" />
       <div
-        class="du-collapse-title font-semibold after:start-5 after:end-auto pe-4 ps-12 py-0 flex items-center h-10 text-base">
-        <span>{{ i18n("webview.control.title") }}</span>
+        class="du-collapse-title font-semibold after:inset-s-5 after:inset-e-auto pe-4 ps-12 py-0 flex items-center h-10 text-base min-w-0"
+      >
+        <span class="truncate" :title="i18n('webview.control.title')">
+          {{ i18n("webview.control.title") }}
+        </span>
       </div>
-      <div class="my-collapse-content du-collapse-content w-58 overflow-y-scroll pr-1 min-h-0"
-        style="max-height: calc(100vh - 5rem)">
+      <div
+        class="my-collapse-content du-collapse-content w-62 overflow-y-scroll pr-1 min-h-0"
+        style="max-height: calc(100vh - 5rem)"
+      >
         <ul class="du-list p-0">
           <!-- 显示Visual复选框 -->
           <label class="du-list-row my-list-row">
-            <input type="checkbox" v-model="visualSettings.showVisual"
-              class="du-checkbox du-checkbox-primary my-front-input" />
-            <span>{{ i18n("webview.control.showVisual") }}</span>
+            <input
+              type="checkbox"
+              v-model="visualSettings.showVisual"
+              class="du-checkbox du-checkbox-primary my-front-input"
+            />
+            <span
+              class="my-row-text"
+              :title="i18n('webview.control.showVisual')"
+            >
+              {{ i18n("webview.control.showVisual") }}
+            </span>
           </label>
           <!-- 显示Collision复选框 -->
           <label class="du-list-row my-list-row">
-            <input type="checkbox" v-model="visualSettings.showCollision"
-              class="du-checkbox du-checkbox-primary my-front-input" />
-            <span>{{ i18n("webview.control.showCollision") }}</span>
+            <input
+              type="checkbox"
+              v-model="visualSettings.showCollision"
+              class="du-checkbox du-checkbox-primary my-front-input"
+            />
+            <span
+              class="my-row-text"
+              :title="i18n('webview.control.showCollision')"
+            >
+              {{ i18n("webview.control.showCollision") }}
+            </span>
+          </label>
+          <!-- 显示 Inertia 复选框 -->
+          <label class="du-list-row my-list-row">
+            <input
+              type="checkbox"
+              v-model="visualSettings.showInertia"
+              class="du-checkbox du-checkbox-primary my-front-input"
+            />
+            <span
+              class="my-row-text"
+              :title="i18n('webview.control.showInertia')"
+            >
+              {{ i18n("webview.control.showInertia") }}
+            </span>
+            <VTooltip class="shrink-0" :delay="0" :distance="8">
+              <HintIcon class="my-hint-icon" />
+              <template #popper>
+                <div class="max-w-50">
+                  {{ i18n("webview.control.showInertia.hint") }}
+                </div>
+              </template>
+            </VTooltip>
+          </label>
+          <!-- 悬停时显示 Inertia 复选框 -->
+          <label
+            class="du-list-row my-list-row"
+            :class="{ 'opacity-55': visualSettings.showInertia }"
+          >
+            <input
+              type="checkbox"
+              v-model="visualSettings.showInertiaWhenHover"
+              :disabled="visualSettings.showInertia"
+              class="du-checkbox du-checkbox-primary my-front-input"
+            />
+            <span
+              class="my-row-text"
+              :title="i18n('webview.control.showInertiaWhenHover')"
+            >
+              {{ i18n("webview.control.showInertiaWhenHover") }}
+            </span>
+            <VTooltip class="shrink-0" :delay="0" :distance="8">
+              <HintIcon class="my-hint-icon" />
+              <template #popper>
+                <div class="max-w-50">
+                  {{ i18n("webview.control.showInertiaWhenHover.hint") }}
+                </div>
+              </template>
+            </VTooltip>
           </label>
           <!-- 显示世界坐标系复选框 -->
           <label class="du-list-row my-list-row">
-            <input type="checkbox" v-model="visualSettings.showWorldFrame"
-              class="du-checkbox du-checkbox-primary my-front-input" />
-            <span>{{ i18n("webview.control.showWorldFrame") }}</span>
-            <VTooltip :delay="0" :distance="8">
+            <input
+              type="checkbox"
+              v-model="visualSettings.showWorldFrame"
+              class="du-checkbox du-checkbox-primary my-front-input"
+            />
+            <span
+              class="my-row-text"
+              :title="i18n('webview.control.showWorldFrame')"
+            >
+              {{ i18n("webview.control.showWorldFrame") }}
+            </span>
+            <VTooltip class="shrink-0" :delay="0" :distance="8">
               <HintIcon class="my-hint-icon" />
               <template #popper>
-                <div class="max-w-50">{{ i18n("webview.control.showWorldFrame.hint") }}</div>
+                <div class="max-w-50">
+                  {{ i18n("webview.control.showWorldFrame.hint") }}
+                </div>
               </template>
             </VTooltip>
           </label>
           <!-- 显示 Joint 坐标系复选框 -->
           <label class="du-list-row my-list-row">
-            <input type="checkbox" v-model="visualSettings.showJointFrames"
-              class="du-checkbox du-checkbox-primary my-front-input" />
-            <span>{{ i18n("webview.control.showJointFrames") }}</span>
-            <VTooltip :delay="0" :distance="8">
+            <input
+              type="checkbox"
+              v-model="visualSettings.showJointFrames"
+              class="du-checkbox du-checkbox-primary my-front-input"
+            />
+            <span
+              class="my-row-text"
+              :title="i18n('webview.control.showJointFrames')"
+            >
+              {{ i18n("webview.control.showJointFrames") }}
+            </span>
+            <VTooltip class="shrink-0" :delay="0" :distance="8">
               <HintIcon class="my-hint-icon" />
               <template #popper>
-                <div class="max-w-50">{{ i18n("webview.control.showJointFrames.hint") }}</div>
+                <div class="max-w-50">
+                  {{ i18n("webview.control.showJointFrames.hint") }}
+                </div>
               </template>
             </VTooltip>
           </label>
@@ -73,19 +159,35 @@ const onReloadClick = () => {
             <div class="my-front-input"></div>
             <div>
               <div>{{ i18n("webview.control.jointFrameSize") }}</div>
-              <input type="range" min="0.01" max="1.0" step="0.01" v-model="visualSettings.jointFrameSize"
-                class="du-range du-range-primary du-range-xs [--du-range-fill:0]" />
+              <input
+                type="range"
+                min="0.01"
+                max="1.0"
+                step="0.01"
+                v-model="visualSettings.jointFrameSize"
+                class="du-range du-range-primary du-range-xs [--du-range-fill:0]"
+              />
             </div>
           </label>
           <!-- 显示 Link 坐标系复选框 -->
           <label class="du-list-row my-list-row">
-            <input type="checkbox" v-model="visualSettings.showLinkFrames"
-              class="du-checkbox du-checkbox-primary my-front-input" />
-            <span>{{ i18n("webview.control.showLinkFrames") }}</span>
-            <VTooltip :delay="0" :distance="8">
+            <input
+              type="checkbox"
+              v-model="visualSettings.showLinkFrames"
+              class="du-checkbox du-checkbox-primary my-front-input"
+            />
+            <span
+              class="my-row-text"
+              :title="i18n('webview.control.showLinkFrames')"
+            >
+              {{ i18n("webview.control.showLinkFrames") }}
+            </span>
+            <VTooltip class="shrink-0" :delay="0" :distance="8">
               <HintIcon class="my-hint-icon" />
               <template #popper>
-                <div class="max-w-50">{{ i18n("webview.control.showLinkFrames.hint") }}</div>
+                <div class="max-w-50">
+                  {{ i18n("webview.control.showLinkFrames.hint") }}
+                </div>
               </template>
             </VTooltip>
           </label>
@@ -94,8 +196,14 @@ const onReloadClick = () => {
             <div class="my-front-input"></div>
             <div>
               <div>{{ i18n("webview.control.linkFrameSize") }}</div>
-              <input type="range" min="0.01" max="1.0" step="0.01" v-model="visualSettings.linkFrameSize"
-                class="du-range du-range-primary du-range-xs [--du-range-fill:0]" />
+              <input
+                type="range"
+                min="0.01"
+                max="1.0"
+                step="0.01"
+                v-model="visualSettings.linkFrameSize"
+                class="du-range du-range-primary du-range-xs [--du-range-fill:0]"
+              />
             </div>
           </label>
         </ul>
@@ -111,7 +219,10 @@ const onReloadClick = () => {
 
     <!-- 重置按钮 -->
     <VTooltip class="pointer-events-auto" :delay="0" :distance="8">
-      <button class="du-btn du-btn-outline du-btn-primary h-10" @click="onReloadClick">
+      <button
+        class="du-btn du-btn-outline du-btn-primary h-10"
+        @click="onReloadClick"
+      >
         <ReloadIcon class="w-5 h-5 mr-2" />
         {{ i18n("webview.reload") }}
       </button>
@@ -122,20 +233,24 @@ const onReloadClick = () => {
   </div>
 </template>
 <style scoped>
-@reference '@/styles/main.css';
+@reference "tailwindcss";
 
 :deep(.my-list-row) {
-  @apply p-0 items-center;
+  @apply p-0 items-center min-w-0;
   @apply hover:underline h-5 leading-5 mb-2;
 }
 
+:deep(.my-row-text) {
+  @apply flex-1 min-w-0 truncate;
+}
+
 :deep(.my-front-input) {
-  @apply h-4 w-4;
+  @apply h-4 w-4 shrink-0;
 }
 
 :deep(.my-hint-icon) {
-  @apply w-4 h-4 ml-1;
-  @apply text-base-content/60;
+  @apply w-4 h-4 ml-1 shrink-0;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
 }
 
 :deep(.title-bar) {

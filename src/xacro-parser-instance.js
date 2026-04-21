@@ -1,0 +1,412 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.xacroParser = void 0;
+exports.isNumber = isNumber;
+const fs = __importStar(require("fs"));
+const xacro_parser_1 = require("xacro-parser");
+const { DOMParser: XmldomDOMParser } = require("xmldom");
+function collectionToArray(collection) {
+    const items = [];
+    for (let i = 0; i < collection.length; i++) {
+        items.push(collection[i]);
+    }
+    return items;
+}
+function createEmptyNodeList(nodeListPrototype) {
+    const emptyNodeList = Object.create(nodeListPrototype ?? Object.prototype);
+    emptyNodeList.length = 0;
+    return emptyNodeList;
+}
+function installXmldomCompatibility(documentNode) {
+    const nodeListProto = documentNode.childNodes
+        ? Object.getPrototypeOf(documentNode.childNodes)
+        : Object.prototype;
+    const installTextContentStringCoercion = () => {
+        if (!documentNode.createTextNode) {
+            return;
+        }
+        const textPrototype = Object.getPrototypeOf(documentNode.createTextNode(""));
+        if (!textPrototype || Object.getOwnPropertyDescriptor(textPrototype, "textContent")) {
+            return;
+        }
+        Object.defineProperty(textPrototype, "textContent", {
+            get() {
+                return this.data ?? "";
+            },
+            set(data) {
+                const normalized = data === null || data === undefined ? "" : String(data);
+                this.data = normalized;
+                this.value = normalized;
+                this.nodeValue = normalized;
+                this.length = normalized.length;
+            },
+            configurable: true,
+        });
+    };
+    installTextContentStringCoercion();
+    if (nodeListProto && !nodeListProto[Symbol.iterator]) {
+        Object.defineProperty(nodeListProto, Symbol.iterator, {
+            value: function* () {
+                for (let i = 0; i < this.length; i++) {
+                    yield this[i];
+                }
+            },
+            configurable: true,
+        });
+    }
+    const normalizeNode = (node) => {
+        if (!node.childNodes) {
+            node.childNodes = createEmptyNodeList(nodeListProto);
+            return;
+        }
+        const children = collectionToArray(node.childNodes);
+        for (const child of children) {
+            normalizeNode(child);
+        }
+    };
+    const defineChildrenGetter = (target) => {
+        if (!target || Object.getOwnPropertyDescriptor(target, "children")) {
+            return;
+        }
+        Object.defineProperty(target, "children", {
+            get() {
+                return collectionToArray(this.childNodes ?? createEmptyNodeList(nodeListProto)).filter((child) => child.nodeType === this.ELEMENT_NODE);
+            },
+            configurable: true,
+        });
+    };
+    normalizeNode(documentNode);
+    defineChildrenGetter(Object.getPrototypeOf(documentNode));
+    defineChildrenGetter(Object.getPrototypeOf(documentNode.documentElement));
+}
+class CompatibleDOMParser {
+    parser = new XmldomDOMParser();
+    parseFromString(source, mimeType) {
+        const documentNode = this.parser.parseFromString(source, mimeType);
+        installXmldomCompatibility(documentNode);
+        return documentNode;
+    }
+}
+globalThis.DOMParser = CompatibleDOMParser;
+// 创建自定义表达式解析器
+// https://stackoverflow.com/a/175787
+function isNumber(str) {
+    return !isNaN(Number(str)) && !isNaN(parseFloat(str));
+}
+const expr_eval_1 = require("expr-eval");
+function normalizeExponentOperator(expression) {
+    let normalized = "";
+    let quote = null;
+    let escaped = false;
+    for (let i = 0; i < expression.length; i++) {
+        const char = expression[i];
+        const nextChar = expression[i + 1];
+        if (quote !== null) {
+            normalized += char;
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (char === "\\") {
+                escaped = true;
+                continue;
+            }
+            if (char === quote) {
+                quote = null;
+            }
+            continue;
+        }
+        if (char === "'" || char === '"' || char === "`") {
+            quote = char;
+            normalized += char;
+            continue;
+        }
+        if (char === "*" && nextChar === "*") {
+            normalized += "^";
+            i++;
+            continue;
+        }
+        normalized += char;
+    }
+    return normalized;
+}
+class ExpressionParser extends expr_eval_1.Parser {
+    constructor(...args) {
+        super(...args);
+        const parser = this;
+        parser.unaryOps = {
+            "-": parser.unaryOps["-"],
+            "+": parser.unaryOps["+"],
+            "!": parser.unaryOps["not"],
+            not: parser.unaryOps["not"],
+        };
+        parser.functions = {
+            abs: Math.abs,
+            sin: Math.sin,
+            cos: Math.cos,
+            tan: Math.tan,
+            asin: Math.asin,
+            asinh: Math.asinh,
+            acos: Math.acos,
+            acosh: Math.acosh,
+            atan: Math.atan,
+            atan2: Math.atan2,
+            atanh: Math.atanh,
+            log: (x, base = Math.E) => Math.log(x) / Math.log(base),
+            sqrt: Math.sqrt,
+            pow: Math.pow,
+            ceil: Math.ceil,
+            floor: Math.floor,
+            radians: (degrees) => {
+                return degrees * (Math.PI / 180);
+            },
+            degrees: (radians) => {
+                return radians * (180 / Math.PI);
+            },
+            comb: (n, k) => {
+                // 计算组合数 C(n, k)
+                if (k < 0 || k > n) {
+                    return 0;
+                }
+                if (k === 0 || k === n) {
+                    return 1;
+                }
+                if (k > n / 2) {
+                    k = n - k; // 利用对称性
+                }
+                let c = 1;
+                for (let i = 0; i < k; i++) {
+                    c = (c * (n - i)) / (i + 1);
+                }
+                return c;
+            },
+            copysign: (x, y) => {
+                // 返回 x 的符号与 y 相同的值
+                return Math.abs(x) * Math.sign(y);
+            },
+            dist: (p, q) => {
+                // 计算两点之间的距离
+                // python: sqrt(sum((px - qx) ** 2.0 for px, qx in zip(p, q)))
+                return Math.sqrt(p.reduce((sum, px, i) => sum + Math.pow(px - q[i], 2), 0));
+            },
+            expm1: Math.expm1,
+            fabs: Math.abs,
+            factorial: (n) => {
+                // 计算阶乘
+                if (n < 0) {
+                    throw new Error("Factorial is not defined for negative numbers");
+                }
+                if (n === 0 || n === 1) {
+                    return 1;
+                }
+                let result = 1;
+                for (let i = 2; i <= n; i++) {
+                    result *= i;
+                }
+                return result;
+            },
+            fmod: (x, y) => {
+                // 计算 x 除以 y 的余数
+                return x - y * Math.floor(x / y);
+            },
+            fsum: (iterable) => {
+                // 计算可迭代对象的总和,使用 Kahan 求和算法
+                let sum = 0;
+                let c = 0; // 误差
+                for (const x of iterable) {
+                    const y = x - c; // 先减去上次的误差
+                    const t = sum + y; // 先加上当前值
+                    c = t - sum - y; // 计算新的误差
+                    sum = t; // 更新总和
+                }
+                return sum;
+            },
+            gamma: (x) => {
+                // 计算伽马函数
+                // 使用 Lanczos 近似
+                const gamma_core = (x) => {
+                    const p = [
+                        676.5203681218851, -1259.1392167224028,
+                        771.3234287776536, -176.6150291498386,
+                        12.507343278686905, -0.1385710952657201,
+                        9.984369578019571e-6,
+                    ];
+                    let num = 0;
+                    let denom = 0;
+                    for (let i = 0; i < p.length; i++) {
+                        const coeff = p[i];
+                        num += coeff / (x + i + 1);
+                        denom += coeff / (x + i + 1);
+                    }
+                    return (Math.sqrt(2 * Math.PI) *
+                        Math.pow(x + 1, x + 0.5) *
+                        Math.exp(-x) *
+                        (num / denom));
+                };
+                if (x < 0.5) {
+                    // 使用反射公式
+                    return (Math.PI / (Math.sin(Math.PI * x) * gamma_core(1 - x)));
+                }
+                else {
+                    return gamma_core(x - 1);
+                }
+            },
+            gcd: (...args) => {
+                // 计算最大公约数
+                const gcd = (a, b) => {
+                    while (b !== 0) {
+                        const t = b;
+                        b = a % b;
+                        a = t;
+                    }
+                    return a;
+                };
+                return args.reduce(gcd);
+            },
+            lcm: (...args) => {
+                // 计算最小公倍数
+                const lcm = (a, b) => {
+                    return (a * b) / gcd(a, b);
+                };
+                const gcd = (a, b) => {
+                    while (b !== 0) {
+                        const t = b;
+                        b = a % b;
+                        a = t;
+                    }
+                    return a;
+                };
+                return args.reduce(lcm);
+            },
+            hypot: (...args) => {
+                // 计算欧几里得范数
+                // python: sqrt(sum(x ** 2 for x in args))
+                return Math.sqrt(args.reduce((sum, x) => sum + x * x, 0));
+            },
+            isinf: (x) => !isFinite(x),
+            isinfinite: (x) => !isFinite(x),
+            isnan: (x) => isNaN(x),
+            isqrt: (x) => Math.floor(Math.sqrt(x)),
+            log10: (x) => Math.log10(x),
+            log1p: (x) => Math.log1p(x), // log(1 + x)
+            log2: (x) => Math.log2(x),
+            modf: (x) => {
+                // 返回整数部分和小数部分
+                const intPart = Math.floor(x);
+                const fracPart = x - intPart;
+                return [fracPart, intPart];
+            },
+            perm: (n, k) => {
+                // 计算排列数 P(n, k)
+                if (k < 0 || k > n) {
+                    return 0;
+                }
+                if (k === 0) {
+                    return 1;
+                }
+                let p = 1;
+                for (let i = 0; i < k; i++) {
+                    p *= n - i;
+                }
+                return p;
+            },
+            prod: (iterable) => {
+                // 计算可迭代对象的乘积
+                return iterable.reduce((product, x) => product * x, 1);
+            },
+            __read_property__: (obj, ...args) => {
+                let curr = obj;
+                for (let i = 0, l = args.length; i < l; i++) {
+                    curr = curr[args[i]];
+                }
+                return curr;
+            },
+        };
+        // @ts-ignore
+        parser.binaryOps = {
+            // @ts-ignore
+            ...parser.binaryOps,
+            "+": (a, b) => {
+                if (isNumber(a)) {
+                    a = Number(a);
+                }
+                if (isNumber(b)) {
+                    b = Number(b);
+                }
+                return a + b;
+            },
+            in: (a, b) => {
+                if (Array.isArray(b)) {
+                    return b.includes(a);
+                }
+                else if (typeof b === "string") {
+                    return b.includes(a);
+                }
+                else {
+                    return a in b;
+                }
+            },
+            "||": (a, b) => Boolean(a || b),
+            // binary AND is not supported by expr-eval. See expr-eval issue #253.
+            // '&&': (a, b) => Boolean(a || b),
+        };
+        parser.consts = {
+            ...parser.consts,
+            pi: Math.PI,
+            e: Math.E,
+            True: true,
+            False: false,
+            inf: Infinity,
+            nan: NaN,
+            tau: Math.PI * 2,
+        };
+    }
+    evaluate(expr, values) {
+        const normalizedExpr = normalizeExponentOperator(expr);
+        return super.evaluate(normalizedExpr, values);
+    }
+}
+const xacroParser = new xacro_parser_1.XacroParser(); // xacro 解析器
+exports.xacroParser = xacroParser;
+// 在 xacroParser 中使用自定义的表达式解析器
+// @ts-ignore
+xacroParser.expressionParser = new ExpressionParser();
+// 在 xacroParser 中使用 fs 读取文件内容
+// @ts-ignore
+xacroParser.getFileContents = (filePath) => {
+    return fs.readFileSync(filePath, { encoding: "utf8" });
+};
+//# sourceMappingURL=xacro-parser-instance.js.map
