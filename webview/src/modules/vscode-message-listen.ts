@@ -92,6 +92,9 @@ window.addEventListener("message", (event) => {
         if (message.urdfText) {
             vscodeSettings.urdfText = message.urdfText;
         }
+        if (message.initialJointValues) {
+            vscodeSettings.initialJointValues = message.initialJointValues;
+        }
     }
 
     // 延迟创建 Vue 应用, 确保设置已应用

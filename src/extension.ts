@@ -1,19 +1,18 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import * as vscode from "vscode";
 import * as path from "path";
-import * as fs from "fs";
+import * as vscode from "vscode";
 import {
-    resolveVariablesInObject,
+    extractMissingPackageFromErrorMessage,
+    findMissingPackagesInUrdf,
     getWebviewContent,
     isUrdfOrXacroFile,
     isXacroFile,
-    findMissingPackagesInUrdf,
-    extractMissingPackageFromErrorMessage,
+    resolveVariablesInObject,
 } from "./extension-utils";
-const { XMLSerializer, XMLDocument } = require("xmldom");
-import { xacroParser } from "./xacro-parser-instance";
 import localize, { localizeInstance } from "./localize";
+import { xacroParser } from "./xacro-parser-instance";
+const { XMLSerializer, XMLDocument } = require("xmldom");
 
 interface WebviewVscodeSettingsPayload {
     cacheMesh?: boolean;
@@ -22,6 +21,7 @@ interface WebviewVscodeSettingsPayload {
     highlightLinkWhenHover?: boolean;
     cacheCameraView?: boolean;
     cacheJointValues?: boolean;
+    lockToPreviewedFile?: boolean;
 }
 
 interface WebviewVisualSettingsPayload {
@@ -147,6 +147,35 @@ function getWebviewSettingsPayload(
     };
 }
 
+// Pull <param name="initial_value">VALUE</param> out of
+// <state_interface name="position"> inside each <joint name="X"> inside any
+// <ros2_control> block. Values are radians for revolute joints / meters for
+// prismatic, per URDF/ROS convention — no unit conversion needed.
+function extractInitialJointValues(urdfText: string): Record<string, number> {
+    const out: Record<string, number> = {};
+    const blockRe =
+        /<ros2_control\b[\s\S]*?<\/ros2_control>/g;
+    const jointRe =
+        /<joint\b[^>]*\bname="([^"]+)"[^>]*>([\s\S]*?)<\/joint>/g;
+    const initRe =
+        /<state_interface\b[^>]*\bname="position"[^>]*>[\s\S]*?<param\b[^>]*\bname="initial_value"[^>]*>\s*([^<\s][^<]*?)\s*<\/param>/;
+
+    let block: RegExpExecArray | null;
+    while ((block = blockRe.exec(urdfText)) !== null) {
+        let joint: RegExpExecArray | null;
+        const jointScan = new RegExp(jointRe);
+        while ((joint = jointScan.exec(block[0])) !== null) {
+            const m = joint[2].match(initRe);
+            if (!m) continue;
+            const value = Number(m[1]);
+            if (Number.isFinite(value)) {
+                out[joint[1]] = value;
+            }
+        }
+    }
+    return out;
+}
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -160,6 +189,12 @@ export function activate(context: vscode.ExtensionContext) {
     let activePanel: vscode.WebviewPanel | null = null; // 保存当前打开的 Webview panel
 
     let previousDocument: vscode.TextDocument | null = null; // 保存上一个document
+
+    // When the lock is on, this holds the document the user explicitly locked
+    // onto; saves to any other file then re-render *this* doc instead. Set on
+    // lock-on (via configChange reconciliation), cleared on lock-off. Kept
+    // separate from previousDocument so the editor-switch logic stays clean.
+    let lockedDocument: vscode.TextDocument | null = null;
 
     let uriPrefix: string | null = null; // 保存当前文件的 URI 前缀
 
@@ -254,6 +289,46 @@ export function activate(context: vscode.ExtensionContext) {
         }
         // 发送 URDF 文件内容
         function sendURDF(urdfText: string) {
+            // Remove <visual>/<collision> blocks whose <geometry> is effectively
+            // empty (no child element; only whitespace and/or XML comments).
+            // URDFLoader does `geometry.children[0].nodeName` without a null-check
+            // and crashes the entire parse, dropping every link/joint after it.
+            // TODO: remove once gkjohnson/urdf-loaders adds null-check at
+            //       URDFLoader.js:~520 (`n.children[0].nodeName`).
+            urdfText = urdfText.replace(
+                /<(visual|collision)\b[^>]*>(?:(?!<\/\1>)[\s\S])*?<geometry>(?:\s|<!--[\s\S]*?-->)*<\/geometry>(?:(?!<\/\1>)[\s\S])*?<\/\1>/g,
+                ""
+            );
+
+            // Strip <gazebo> blocks. They carry ignition:/sdf: namespaced
+            // attributes whose prefix isn't declared in the merged output's
+            // root scope; URDFLoader trips on the dangling namespace ref.
+            urdfText = urdfText
+                .replace(/<gazebo\b[^>]*\/>/g, "")
+                .replace(/<gazebo\b[\s\S]*?<\/gazebo>/g, "");
+
+            // Rewrite file://<abs-path-of-a-known-package>/ -> package://<name>/.
+            // Python xacro emits file:// URLs from $(find pkg) in sim branches,
+            // and URDFLoader treats absolute file:// URLs as relative to the URDF
+            // dir, producing 404s. Routing them through the package resolver fixes
+            // it without modifying URDFLoader.
+            if (packagesResolved) {
+                for (const [pkgName, pkgDir] of Object.entries(
+                    packagesResolved as Record<string, string>
+                )) {
+                    if (!pkgDir) continue;
+                    urdfText = urdfText
+                        .split(`file://${pkgDir}/`)
+                        .join(`package://${pkgName}/`);
+                }
+            }
+
+            // Extract initial joint positions from <ros2_control> before we
+            // forget about them. ros2_control is non-standard URDF; the
+            // visualizer otherwise defaults every joint to 0. Values are in
+            // radians (for revolute) per URDF/ROS convention.
+            const initialJointValues = extractInitialJointValues(urdfText);
+
             const missingPackages = findMissingPackagesInUrdf(
                 urdfText,
                 packagesResolved as Record<string, string> | undefined
@@ -266,6 +341,7 @@ export function activate(context: vscode.ExtensionContext) {
                 packages: packagesResolved,
                 workingPath: workingPath,
                 filename: fileName,
+                initialJointValues,
                 ...other_params,
             });
         }
@@ -326,24 +402,41 @@ export function activate(context: vscode.ExtensionContext) {
                     // 监听 Webview 发送的消息
                     activePanel.webview.onDidReceiveMessage((message) => {
                         if (message.type === "webviewReady") {
-                            // Webview 已准备好, 发送初始化信息
+                            // Webview 已准备好, 发送初始化信息.
+                            // Inject runtime lock state on top of the config
+                            // payload so a webview reload picks up the
+                            // extension's current lockedDocument.
+                            const settingsPayload = getWebviewSettingsPayload(
+                                config
+                            );
+                            settingsPayload.vscodeSettings.lockToPreviewedFile =
+                                !!lockedDocument;
                             sendURDFContent(
                                 editor.document,
                                 {
                                     i18n: localizeInstance.bundle,
                                     reset_camera: true,
                                     uriPrefix: uriPrefix,
-                                    ...getWebviewSettingsPayload(config),
+                                    ...settingsPayload,
                                 },
                                 "init"
                             );
                         } else if (message.type === "getNewURDF") {
-                            // 获取新的 URDF 文件内容
-                            const editor = vscode.window.activeTextEditor;
-                            let document = previousDocument;
-                            if (editor && isUrdfOrXacroFile(editor.document)) {
-                                document = editor.document;
-                                previousDocument = document;
+                            // 获取新的 URDF 文件内容.
+                            // When locked, reload re-renders the locked doc
+                            // regardless of which editor is active.
+                            let document: vscode.TextDocument | null =
+                                lockedDocument;
+                            if (!document) {
+                                const editor = vscode.window.activeTextEditor;
+                                document = previousDocument;
+                                if (
+                                    editor &&
+                                    isUrdfOrXacroFile(editor.document)
+                                ) {
+                                    document = editor.document;
+                                    previousDocument = document;
+                                }
                             }
                             if (document) {
                                 sendURDFContent(document, {
@@ -351,6 +444,20 @@ export function activate(context: vscode.ExtensionContext) {
                                     uriPrefix: uriPrefix,
                                 });
                             }
+                        } else if (message.type === "toggleLockToPreviewedFile") {
+                            // Pure runtime state — no config persistence.
+                            // Lock-on captures the currently previewed doc;
+                            // lock-off clears it. Then broadcast the new
+                            // state so the badge UI reflects it.
+                            lockedDocument = lockedDocument
+                                ? null
+                                : previousDocument;
+                            activePanel?.webview.postMessage({
+                                type: "settings",
+                                vscodeSettings: {
+                                    lockToPreviewedFile: !!lockedDocument,
+                                },
+                            });
                         } else if (message.type === "error") {
                             // 报错
                             const missingPackage =
@@ -380,7 +487,10 @@ export function activate(context: vscode.ExtensionContext) {
                 document.languageId === "xml" &&
                 isUrdfOrXacroFile(document)
             ) {
-                sendURDFContent(document);
+                // When a lock target is set, always re-render it (so saving
+                // an included child xacro re-renders the top-level file).
+                // Otherwise, re-render whatever was just saved.
+                sendURDFContent(lockedDocument ?? document);
             }
         }
     );
@@ -392,6 +502,12 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
             if (previousDocument && previousDocument === editor.document) {
+                return;
+            }
+            // Lock pins the preview to one document; editor switches
+            // (including incidental focus changes from clicking the badge)
+            // must not swap the preview out.
+            if (lockedDocument) {
                 return;
             }
             if (

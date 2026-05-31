@@ -25,6 +25,10 @@ export interface VscodeSettings {
     cacheCameraView: boolean;
     /** 切换文件时是否缓存并恢复关节值 */
     cacheJointValues: boolean;
+    /** 来自 URDF <ros2_control> 的初始关节值 (弧度) */
+    initialJointValues?: Record<string, number>;
+    /** Lock preview to the top-level previewed file; saves to child includes re-render the top. */
+    lockToPreviewedFile: boolean;
 }
 
 export const vscodeSettings = reactive<VscodeSettings>({
@@ -40,4 +44,5 @@ export const vscodeSettings = reactive<VscodeSettings>({
     highlightLinkWhenHover: true,
     cacheCameraView: true,
     cacheJointValues: false,
+    lockToPreviewedFile: false,
 });

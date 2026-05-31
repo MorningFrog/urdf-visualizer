@@ -9,6 +9,7 @@ import type {
 } from "urdf-loader";
 
 import { JointType } from "@/utils/joint-type";
+import { visualSettings } from "@/stores/visual-settings";
 
 export type LinkTreeNode = {
     name: string;
@@ -76,11 +77,39 @@ export const setJointValue = (joint_name: string, value: number | string) => {
     urdfStore.jointValues[joint_name] = numericValue;
 };
 
+function applyOwnMeshVisibility(link: any, visible: boolean) {
+    for (const child of link.children as any[]) {
+        if (child.isURDFVisual) {
+            child.visible = visible && visualSettings.showVisual;
+        } else if (child.isURDFCollider) {
+            child.visible = visible && visualSettings.showCollision;
+        }
+    }
+    urdfStore.linkVisibility[link.name] = visible;
+}
+
+function applyMeshVisibilityRecursive(node: any, visible: boolean) {
+    for (const child of node.children as any[]) {
+        if (child.isURDFLink) {
+            applyOwnMeshVisibility(child, visible);
+            applyMeshVisibilityRecursive(child, visible);
+        } else if (child.isURDFJoint) {
+            applyMeshVisibilityRecursive(child, visible);
+        }
+    }
+}
+
+// Tree view: cascade through the kinematic chain.
 export const setLinkVisibility = (link_name: string, visible: boolean) => {
     const link: URDFLink | undefined = urdfStore.robot?.links[link_name];
-    if (!link) {
-        return;
-    }
-    link.visible = visible;
-    urdfStore.linkVisibility[link_name] = visible;
+    if (!link) return;
+    applyOwnMeshVisibility(link, visible);
+    applyMeshVisibilityRecursive(link, visible);
+};
+
+// Flat view: only this link's own meshes.
+export const setLinkMeshVisibility = (link_name: string, visible: boolean) => {
+    const link: URDFLink | undefined = urdfStore.robot?.links[link_name];
+    if (!link) return;
+    applyOwnMeshVisibility(link, visible);
 };

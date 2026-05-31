@@ -1,5 +1,7 @@
 import * as fs from "fs";
 
+import { Parser } from "expr-eval";
+import * as yaml from "js-yaml";
 import { XacroParser } from "xacro-parser";
 const { DOMParser: XmldomDOMParser } = require("xmldom");
 
@@ -138,9 +140,15 @@ class CompatibleDOMParser {
 export function isNumber(str) {
     return !isNaN(Number(str)) && !isNaN(parseFloat(str));
 }
-import { Parser } from "expr-eval";
 
 function normalizeExponentOperator(expression: string): string {
+    // Rewrite `xacro.load_yaml(` -> `load_yaml(` because expr-eval can't
+    // dispatch member calls on object consts.
+    expression = expression.replace(
+        /\bxacro\.load_yaml\s*\(/g,
+        "load_yaml("
+    );
+
     let normalized = "";
     let quote: string | null = null;
     let escaped = false;
@@ -179,6 +187,21 @@ function normalizeExponentOperator(expression: string): string {
             normalized += "^";
             i++;
             continue;
+        }
+
+        // Re-merge "a > = b" -> "a >= b". xacro-parser tokenizer bug.
+        // TODO: remove once fixed in gkjohnson/xacro-parser.
+        if (char === ">" || char === "<" || char === "=" || char === "!") {
+            if (nextChar === "=") {
+                normalized += char + "=";
+                i++;
+                continue;
+            }
+            if (nextChar === " " && expression[i + 2] === "=") {
+                normalized += char + "=";
+                i += 2;
+                continue;
+            }
         }
 
         normalized += char;
@@ -390,6 +413,14 @@ class ExpressionParser extends Parser {
 
                 return curr;
             },
+
+            // Python len() — strings and arrays both have .length in JS.
+            len: (x) => (x == null ? 0 : typeof x.length === "number" ? x.length : 0),
+
+            // xacro.load_yaml(path) — Python xacro builtin. See the rewrite in
+            // normalizeExponentOperator() that converts `xacro.load_yaml(` to `load_yaml(`.
+            load_yaml: (filePath: string) =>
+                yaml.load(fs.readFileSync(filePath, "utf8")),
         };
 
         // @ts-ignore
@@ -431,6 +462,11 @@ class ExpressionParser extends Parser {
             inf: Infinity,
             nan: NaN,
             tau: Math.PI * 2,
+            // Python xacro builtins, namespaced to match real-xacro shape.
+            // xacro: {
+            //     load_yaml: (filePath: string) =>
+            //         yaml.load(fs.readFileSync(filePath, "utf8")),
+            // },
         };
     }
 
@@ -441,6 +477,13 @@ class ExpressionParser extends Parser {
 }
 
 const xacroParser = new XacroParser(); // xacro 解析器
+
+// Default `localProperties = true` makes top-level <xacro:property> entries
+// store their value as raw text (lazy), so <xacro:property name="x" value="${expr}" />
+// keeps `x` as the literal string "${expr}". Real Python xacro evaluates them
+// eagerly with global scope, which is what most production xacros assume.
+// @ts-ignore
+xacroParser.localProperties = false;
 
 // 在 xacroParser 中使用自定义的表达式解析器
 // @ts-ignore

@@ -7,12 +7,12 @@ import * as path from "path";
 // as well as import your extension to test it
 import * as vscode from "vscode";
 import { XMLSerializer } from "xmldom";
-import { xacroParser } from "../xacro-parser-instance";
 import {
-    extractPackageNamesFromUrdf,
-    findMissingPackagesInUrdf,
-    extractMissingPackageFromErrorMessage,
+  extractMissingPackageFromErrorMessage,
+  extractPackageNamesFromUrdf,
+  findMissingPackagesInUrdf,
 } from "../extension-utils";
+import { xacroParser } from "../xacro-parser-instance";
 // import * as myExtension from '../../extension';
 
 suite("Extension Test Suite", () => {
@@ -116,6 +116,75 @@ suite("Extension Test Suite", () => {
         const serialized = new XMLSerializer().serializeToString(result);
 
         assert.match(serialized, /<link name="computed">1<\/link>/);
+    });
+
+    test("evaluates comparison operators (compound and standalone) after xacro-tokenizer whitespace fragmentation", async () => {
+        const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="cmp_test" params="n">
+    <!-- compound operators: fragmented by xacro-parser's tokenizer -->
+    <xacro:property name="ge" value="\${n >= 14}" />
+    <xacro:property name="le" value="\${n <= 14}" />
+    <xacro:property name="eq" value="\${n == 15}" />
+    <xacro:property name="ne" value="\${n != 14}" />
+    <!-- standalone operators: > and < aren't in xacro-parser's operator regex,
+         so they stay glued; included to confirm we don't regress them -->
+    <xacro:property name="gt" value="\${n > 14}" />
+    <xacro:property name="lt" value="\${n < 14}" />
+    <link name="cmp_\${ge}_\${le}_\${eq}_\${ne}_\${gt}_\${lt}" />
+  </xacro:macro>
+  <xacro:cmp_test n="15" />
+</robot>`);
+
+        const serialized = new XMLSerializer().serializeToString(result);
+        // n=15:  15>=14=T  15<=14=F  15==15=T  15!=14=T  15>14=T  15<14=F
+        assert.match(
+            serialized,
+            /<link name="cmp_true_false_true_true_true_false"\s*\/>/
+        );
+    });
+
+    test("implements xacro.load_yaml() and supports deep dict indexing", async () => {
+        const tempDir = fs.mkdtempSync(
+            path.join(os.tmpdir(), "urdf-visualizer-yaml-")
+        );
+        const yamlPath = path.join(tempDir, "initial_positions.yaml");
+
+        fs.writeFileSync(
+            yamlPath,
+            "uf850:\n  joint1: 1.23\n  joint2: -0.5\n",
+            "utf8"
+        );
+
+        try {
+            const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="initial_positions_file" value="${yamlPath}" />
+  <xacro:property name="initial_positions" value="\${xacro.load_yaml(initial_positions_file)}" />
+  <link name="j1_\${initial_positions['uf850']['joint1']}_j2_\${initial_positions['uf850']['joint2']}" />
+</robot>`);
+
+            const serialized = new XMLSerializer().serializeToString(result);
+            assert.match(serialized, /<link name="j1_1\.23_j2_-0\.5"\s*\/>/);
+        } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    test("evaluates Python len() in xacro expressions", async () => {
+        const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="len_test" params="robot_sn">
+    <xacro:property name="sn_len" value="\${len(robot_sn)}" />
+    <link name="len_\${sn_len}" />
+  </xacro:macro>
+  <xacro:len_test robot_sn="XI1304000000000" />
+</robot>`);
+
+        const serialized = new XMLSerializer().serializeToString(result);
+
+        // len("XI1304000000000") = 15
+        assert.match(serialized, /<link name="len_15"\s*\/>/);
     });
 
     test("extracts package names from urdf text", () => {

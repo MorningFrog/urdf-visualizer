@@ -1,34 +1,34 @@
 <script setup lang="ts">
-import { ref, watch, markRaw } from 'vue';
+import { markRaw, ref, watch } from 'vue';
 
-import * as THREE from 'three';
-import { LoadingManager } from "three";
-import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
-import URDFLoader from "urdf-loader";
-import type {
-    URDFRobot,
-    URDFJoint,
-    URDFVisual,
-    URDFLink,
-    URDFCollider,
-} from "urdf-loader";
 import {
-    LinkAxesHelper,
-    JointAxesHelper,
     BaseAxesHelper,
+    JointAxesHelper,
+    LinkAxesHelper,
     markAsFrameHelper,
 } from '@/utils/custom-axes';
-import { computeRobotBounds } from '@/utils/threejs-tools';
 import { computeEquivalentInertiaBox } from '@/utils/inertia-tools';
+import { computeRobotBounds } from '@/utils/threejs-tools';
+import * as THREE from 'three';
+import { LoadingManager } from "three";
+import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
+import type {
+    URDFCollider,
+    URDFJoint,
+    URDFLink,
+    URDFRobot,
+    URDFVisual,
+} from "urdf-loader";
+import URDFLoader from "urdf-loader";
 
-import { vscodeSettings } from '@/stores/vscode-settings';
+import { camera, controls, scene } from '@/stores/scene-store';
+import { setJointValue, urdfStore, type LinkTreeNode } from '@/stores/urdf-store';
 import { visualSettings } from '@/stores/visual-settings';
-import { urdfStore, setJointValue, type LinkTreeNode } from '@/stores/urdf-store';
-import { scene, camera, renderer, controls, dragControls } from '@/stores/scene-store';
-import { JointType, isFixedJoint, isDraggableJoint, isAngularJoint, isLinearJoint } from '@/utils/joint-type';
+import { vscodeSettings } from '@/stores/vscode-settings';
+import { JointType, isDraggableJoint, isFixedJoint } from '@/utils/joint-type';
 import { extractAlphaFromRgbString } from '@/utils/threejs-tools';
 import { vscode } from '@/utils/vscode-api';
 
@@ -819,7 +819,8 @@ const loadURDF = async () => {
     resolvePending = null;
     const jointValuesForCurrentFile = (
         currentJointWorkingPath === vscodeSettings.workingPath &&
-        currentJointFile === vscodeSettings.filename
+        currentJointFile === vscodeSettings.filename &&
+        Object.keys(urdfStore.jointValues).length > 0
     )
         ? { ...urdfStore.jointValues }
         : undefined;
@@ -841,7 +842,8 @@ const loadURDF = async () => {
             vscodeSettings.cacheJointValues
                 ? jointValuePoses.get(vscodeSettings.workingPath)?.get(vscodeSettings.filename)
                 : undefined
-        )
+        ) ??
+        vscodeSettings.initialJointValues
     );
     currentJointWorkingPath = vscodeSettings.workingPath;
     currentJointFile = vscodeSettings.filename;
