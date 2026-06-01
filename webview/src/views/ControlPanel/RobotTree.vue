@@ -89,8 +89,8 @@ const toggleAllLinksVisibility = () => {
           <button
             @click="flatView = !flatView"
             class="du-btn du-btn-ghost du-btn-sm px-1 py-0.5"
-            :title="flatView ? 'Switch to tree view' : 'Switch to flat list (RViz-style)'"
-          >{{ flatView ? "Tree" : "Flat" }}</button>
+            :title="flatView ? i18n('webview.control.treeView.hint') : i18n('webview.control.flatView.hint')"
+          >{{ flatView ? i18n("webview.control.treeView") : i18n("webview.control.flatView") }}</button>
           <VTooltip :delay="0" :distance="8">
             <button @click="toggleAllLinksVisibility" class="du-btn du-btn-ghost du-btn-sm px-1 py-0.5">
               {{
