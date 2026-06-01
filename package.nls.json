@@ -124,6 +124,8 @@
     "webview.settings.others": "Others",
     "webview.reload": "Reload",
     "webview.reload.hint": "Reload the URDF/Xacro model from the active editor.",
+    "webview.lock.locked.hint": "Locked. Saving an included child xacro re-renders this top-level file. Click to unlock.",
+    "webview.lock.unlocked.hint": "Unlocked. Saving any file switches the preview to it. Click to lock to this file.",
     "webview.dragControlJoint": "Drag to control the joint",
     "webview.dragRotatePerspective": "Drag to rotate the perspective",
     "webview.dragMovePerspective": "Drag to move the perspective",

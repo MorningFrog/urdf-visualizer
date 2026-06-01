@@ -246,10 +246,7 @@ const previewedBasename = computed(() => {
       </template>
     </VTooltip>
 
-    <!-- Centered file + lock toggle. `fixed` so it anchors to the viewport,
-         not the panel's own bounding box (ControlPanel is itself anchored
-         top-left, so `absolute` here would center on the panel, not the
-         viewport). -->
+    <!-- Centered file + lock toggle. `fixed` anchors to the viewport, not the panel. -->
     <div
       v-if="previewedBasename"
       class="fixed left-1/2 top-5 -translate-x-1/2 pointer-events-none z-10"
@@ -259,8 +256,7 @@ const previewedBasename = computed(() => {
           class="du-btn du-btn-sm du-btn-ghost h-10 gap-2 bg-base-100/80 border border-base-300 max-w-md"
           @click="onLockClick"
         >
-          <!-- One SVG with a rotating shackle. Body stays put, shackle swings
-               around its left base pivot (7, 11) for the open/close motion. -->
+          <!-- Body static; shackle rotates around (7, 11) on toggle. -->
           <svg
             class="w-4 h-4 shrink-0 transition-[color,opacity] duration-200"
             :class="
@@ -290,8 +286,8 @@ const previewedBasename = computed(() => {
           <div class="max-w-60">
             {{
               vscodeSettings.lockToPreviewedFile
-                ? "Locked. Saving an included child xacro re-renders this top-level file. Click to unlock."
-                : "Unlocked. Saving any file switches the preview to it. Click to lock to this file."
+                ? i18n("webview.lock.locked.hint")
+                : i18n("webview.lock.unlocked.hint")
             }}
           </div>
         </template>

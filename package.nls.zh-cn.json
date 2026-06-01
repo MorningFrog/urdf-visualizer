@@ -120,6 +120,8 @@
     "webview.settings.others": "其他",
     "webview.reload": "重新加载",
     "webview.reload.hint": "从活动编辑器重新加载 URDF/Xacro 模型.",
+    "webview.lock.locked.hint": "已锁定. 保存任何被包含的 xacro 子文件都会重新渲染该顶层文件. 单击解锁.",
+    "webview.lock.unlocked.hint": "未锁定. 保存任何文件都会将预览切换到该文件. 单击锁定到当前文件.",
     "webview.dragControlJoint": "按住鼠标左键拖动以控制关节",
     "webview.dragRotatePerspective": "按住鼠标左键拖动以旋转视角",
     "webview.dragMovePerspective": "按住鼠标右键拖动以移动视角",
