@@ -205,6 +205,26 @@ export function activate(context: vscode.ExtensionContext) {
         return packageNames.map((packageName) => `"${packageName}"`).join(", ");
     }
 
+    function postLockStateToWebview() {
+        activePanel?.webview.postMessage({
+            type: "settings",
+            vscodeSettings: {
+                lockToPreviewedFile: !!lockedDocument,
+            },
+        });
+    }
+
+    function clearLockedDocument(syncWebview = true) {
+        if (!lockedDocument) {
+            return;
+        }
+
+        lockedDocument = null;
+        if (syncWebview) {
+            postLockStateToWebview();
+        }
+    }
+
     async function promptMissingPackages(packageNames: string[]) {
         const newMissingPackages = packageNames.filter(
             (packageName) => !promptedMissingPackages.has(packageName)
@@ -357,7 +377,13 @@ export function activate(context: vscode.ExtensionContext) {
                     activePanel.reveal(vscode.ViewColumn.Beside);
                     // 更新 previousDocument
                     previousDocument = editor.document;
+                    if (lockedDocument && lockedDocument !== editor.document) {
+                        clearLockedDocument();
+                    } else {
+                        postLockStateToWebview();
+                    }
                 } else {
+                    clearLockedDocument(false);
                     // 还没有Webview panel, 则创建
                     activePanel = vscode.window.createWebviewPanel(
                         "urdfVisualizer",
@@ -372,6 +398,7 @@ export function activate(context: vscode.ExtensionContext) {
                     // 当用户关闭 Webview 时, 将 panel 设为 null
                     activePanel.onDidDispose(() => {
                         activePanel = null;
+                        lockedDocument = null;
                     });
 
                     // 渲染 HTML
@@ -411,8 +438,12 @@ export function activate(context: vscode.ExtensionContext) {
                             );
                             settingsPayload.vscodeSettings.lockToPreviewedFile =
                                 !!lockedDocument;
+                            const document =
+                                lockedDocument ??
+                                previousDocument ??
+                                editor.document;
                             sendURDFContent(
-                                editor.document,
+                                document,
                                 {
                                     i18n: localizeInstance.bundle,
                                     reset_camera: true,
@@ -452,12 +483,7 @@ export function activate(context: vscode.ExtensionContext) {
                             lockedDocument = lockedDocument
                                 ? null
                                 : previousDocument;
-                            activePanel?.webview.postMessage({
-                                type: "settings",
-                                vscodeSettings: {
-                                    lockToPreviewedFile: !!lockedDocument,
-                                },
-                            });
+                            postLockStateToWebview();
                         } else if (message.type === "error") {
                             // 报错
                             const missingPackage =
