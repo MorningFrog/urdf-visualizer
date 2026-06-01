@@ -222,6 +222,23 @@ function resolveLoadYamlPath(filePath: string): string {
     return realPath;
 }
 
+function evaluateDeferredExpression(
+    parser: Parser,
+    value: unknown,
+    values: Record<string, unknown>
+): unknown {
+    if (typeof value !== "string") {
+        return value;
+    }
+
+    const match = value.trim().match(/^\${([\s\S]+)}$/);
+    if (!match) {
+        return value;
+    }
+
+    return parser.evaluate(match[1], values as any);
+}
+
 function normalizeExponentOperator(expression: string): string {
     // Rewrite `xacro.load_yaml(` -> `load_yaml(` because expr-eval can't
     // dispatch member calls on object consts.
@@ -487,8 +504,12 @@ class ExpressionParser extends Parser {
             },
 
             __read_property__: (obj, ...args) => {
-                let curr = obj;
+                const values =
+                    (parser as unknown as { currentEvaluationValues?: Record<string, unknown> })
+                        .currentEvaluationValues ?? {};
+                let curr: any = evaluateDeferredExpression(parser, obj, values);
                 for (let i = 0, l = args.length; i < l; i++) {
+                    curr = evaluateDeferredExpression(parser, curr, values);
                     curr = curr[args[i]];
                 }
 
@@ -558,18 +579,28 @@ class ExpressionParser extends Parser {
 
     evaluate(expr, values) {
         const normalizedExpr = normalizeExponentOperator(expr);
-        return super.evaluate(normalizedExpr, values);
+        const previousValues = (
+            this as unknown as { currentEvaluationValues?: Record<string, unknown> }
+        ).currentEvaluationValues;
+        (
+            this as unknown as { currentEvaluationValues?: Record<string, unknown> }
+        ).currentEvaluationValues = values;
+        try {
+            return super.evaluate(normalizedExpr, values);
+        } finally {
+            (
+                this as unknown as { currentEvaluationValues?: Record<string, unknown> }
+            ).currentEvaluationValues = previousValues;
+        }
     }
 }
 
 const xacroParser = new XacroParser(); // xacro 解析器
 
-// Default `localProperties = true` makes top-level <xacro:property> entries
-// store their value as raw text (lazy), so <xacro:property name="x" value="${expr}" />
-// keeps `x` as the literal string "${expr}". Real Python xacro evaluates them
-// eagerly with global scope, which is what most production xacros assume.
+// Keep macro-local xacro properties scoped locally. Dictionary access below
+// handles lazily stored `${...}` property values, including load_yaml objects.
 // @ts-ignore
-xacroParser.localProperties = false;
+xacroParser.localProperties = true;
 
 // 在 xacroParser 中使用自定义的表达式解析器
 // @ts-ignore

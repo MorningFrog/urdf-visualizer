@@ -219,6 +219,24 @@ suite("Extension Test Suite", () => {
         }
     });
 
+    test("keeps macro-local xacro properties scoped locally", async () => {
+        const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="value" value="global" />
+  <xacro:macro name="scoped_value" params="">
+    <xacro:property name="value" value="local" />
+    <link name="inside_\${value}" />
+  </xacro:macro>
+  <xacro:scoped_value />
+  <link name="outside_\${value}" />
+</robot>`);
+
+        const serialized = new XMLSerializer().serializeToString(result);
+
+        assert.match(serialized, /<link name="inside_local"\s*\/>/);
+        assert.match(serialized, /<link name="outside_global"\s*\/>/);
+    });
+
     test("evaluates Python len() in xacro expressions", async () => {
         const result = await xacroParser.parse(`<?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
