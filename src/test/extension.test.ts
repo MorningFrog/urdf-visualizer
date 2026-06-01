@@ -191,6 +191,79 @@ suite("Extension Test Suite", () => {
         }
     });
 
+    test("eagerly evaluates top-level load_yaml properties with arg/find and dotted access", async () => {
+        const tempDir = fs.mkdtempSync(
+            path.join(os.tmpdir(), "urdf-visualizer-pr-preview-")
+        );
+        const packageDir = path.join(tempDir, "xacro_test");
+        const configDir = path.join(packageDir, "pr_preview", "config");
+        const includeDir = path.join(packageDir, "pr_preview", "include");
+        const yamlPath = path.join(configDir, "pr_preview.yaml");
+        const macroPath = path.join(includeDir, "pr_preview_macros.xacro");
+        const previousWorkingPath = xacroParser.workingPath;
+        const previousRospackCommands = xacroParser.rospackCommands;
+
+        fs.mkdirSync(configDir, { recursive: true });
+        fs.mkdirSync(includeDir, { recursive: true });
+
+        fs.writeFileSync(
+            yamlPath,
+            `robot:
+  prefix: "pr_"
+  colors:
+    base: "0.18 0.25 0.35 1"
+  dimensions:
+    base_radius: 0.14
+`,
+            "utf8"
+        );
+
+        fs.writeFileSync(
+            macroPath,
+            `<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="pr_preview_materials" params="">
+    <material name="\${prefix}base">
+      <color rgba="\${pr_cfg.robot.colors.base}" />
+    </material>
+    <link name="\${prefix}macro_base_\${pr_cfg.robot.dimensions.base_radius}" />
+  </xacro:macro>
+</robot>`,
+            "utf8"
+        );
+
+        try {
+            await withTemporaryWorkspaceFolder(tempDir, async () => {
+                xacroParser.workingPath = tempDir;
+                xacroParser.rospackCommands = {
+                    find: (pkg: string) => path.join(tempDir, pkg),
+                };
+
+                const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="config_file" default="$(find xacro_test)/pr_preview/config/pr_preview.yaml" />
+  <xacro:property name="config_file_path" value="$(arg config_file)" />
+  <xacro:property name="pr_cfg" value="\${xacro.load_yaml(config_file_path)}" />
+  <xacro:property name="prefix" value="\${pr_cfg.robot.prefix}" />
+  <xacro:include filename="$(find xacro_test)/pr_preview/include/pr_preview_macros.xacro" />
+  <xacro:pr_preview_materials />
+  <link name="\${prefix}top_base_\${pr_cfg.robot.dimensions.base_radius}" />
+</robot>`);
+
+                const serialized = new XMLSerializer().serializeToString(result);
+
+                assert.match(serialized, /<material name="pr_base">/);
+                assert.match(serialized, /<color rgba="0\.18 0\.25 0\.35 1"\s*\/>/);
+                assert.match(serialized, /<link name="pr_macro_base_0\.14"\s*\/>/);
+                assert.match(serialized, /<link name="pr_top_base_0\.14"\s*\/>/);
+            });
+        } finally {
+            xacroParser.workingPath = previousWorkingPath;
+            xacroParser.rospackCommands = previousRospackCommands;
+            fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
     test("rejects xacro.load_yaml() paths outside the workspace", async () => {
         const workspaceDir = fs.mkdtempSync(
             path.join(os.tmpdir(), "urdf-visualizer-workspace-")

@@ -6,7 +6,10 @@ import { Parser } from "expr-eval";
 import * as yaml from "js-yaml";
 import * as vscode from "vscode";
 import { XacroParser } from "xacro-parser";
-const { DOMParser: XmldomDOMParser } = require("xmldom");
+const {
+    DOMParser: XmldomDOMParser,
+    XMLSerializer: XmldomXMLSerializer,
+} = require("xmldom");
 
 type CompatNodeList<T> = {
     length: number;
@@ -308,6 +311,33 @@ function normalizeExponentOperator(expression: string): string {
     return normalized;
 }
 
+function markTopLevelPropertiesGlobal(xacroText: string): string {
+    const documentNode = new XmldomDOMParser().parseFromString(
+        xacroText,
+        "text/xml"
+    );
+    const root = documentNode.documentElement;
+    if (!root?.childNodes) {
+        return xacroText;
+    }
+
+    for (let i = 0; i < root.childNodes.length; i++) {
+        const child = root.childNodes[i];
+        if (child.nodeType !== child.ELEMENT_NODE) {
+            continue;
+        }
+        if (
+            (child.tagName === "xacro:property" ||
+                child.tagName === "property") &&
+            !child.hasAttribute("scope")
+        ) {
+            child.setAttribute("scope", "global");
+        }
+    }
+
+    return new XmldomXMLSerializer().serializeToString(documentNode);
+}
+
 class ExpressionParser extends Parser {
     constructor(...args) {
         super(...args);
@@ -597,8 +627,16 @@ class ExpressionParser extends Parser {
 
 const xacroParser = new XacroParser(); // xacro 解析器
 
-// Keep macro-local xacro properties scoped locally. Dictionary access below
-// handles lazily stored `${...}` property values, including load_yaml objects.
+const parseXacro = xacroParser.parse.bind(xacroParser);
+
+// Match Python xacro's eager top-level property behavior without disabling
+// local property scopes inside macros.
+// @ts-ignore
+xacroParser.parse = (data: string) =>
+    parseXacro(markTopLevelPropertiesGlobal(data));
+
+// Keep macro-local xacro properties scoped locally. Top-level properties are
+// marked global before parsing so load_yaml objects are eagerly evaluated.
 // @ts-ignore
 xacroParser.localProperties = true;
 
@@ -609,7 +647,9 @@ xacroParser.expressionParser = new ExpressionParser();
 // 在 xacroParser 中使用 fs 读取文件内容
 // @ts-ignore
 xacroParser.getFileContents = (filePath: string) => {
-    return fs.readFileSync(filePath, { encoding: "utf8" });
+    return markTopLevelPropertiesGlobal(
+        fs.readFileSync(filePath, { encoding: "utf8" })
+    );
 };
 
 export { xacroParser };
