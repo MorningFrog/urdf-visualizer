@@ -1,7 +1,10 @@
 import * as fs from "fs";
+import * as path from "path";
+import { fileURLToPath } from "url";
 
 import { Parser } from "expr-eval";
 import * as yaml from "js-yaml";
+import * as vscode from "vscode";
 import { XacroParser } from "xacro-parser";
 const { DOMParser: XmldomDOMParser } = require("xmldom");
 
@@ -139,6 +142,84 @@ class CompatibleDOMParser {
 // https://stackoverflow.com/a/175787
 export function isNumber(str) {
     return !isNaN(Number(str)) && !isNaN(parseFloat(str));
+}
+
+const MAX_LOAD_YAML_BYTES = 10 * 1024 * 1024;
+let loadYamlWorkspaceRootsForTests: string[] | null = null;
+
+export function setLoadYamlWorkspaceRootsForTests(
+    workspaceRoots: string[] | null
+) {
+    loadYamlWorkspaceRootsForTests = workspaceRoots;
+}
+
+function getLoadYamlWorkspaceRoots(): string[] {
+    return loadYamlWorkspaceRootsForTests ??
+        (vscode.workspace.workspaceFolders ?? []).map(
+            (folder) => folder.uri.fsPath
+        );
+}
+
+function normalizeForPlatform(filePath: string): string {
+    return process.platform === "win32" ? filePath.toLowerCase() : filePath;
+}
+
+function isPathInside(parentPath: string, childPath: string): boolean {
+    const relativePath = path.relative(
+        normalizeForPlatform(parentPath),
+        normalizeForPlatform(childPath)
+    );
+    return (
+        relativePath === "" ||
+        (
+            !relativePath.startsWith("..") &&
+            !path.isAbsolute(relativePath)
+        )
+    );
+}
+
+function resolveLoadYamlPath(filePath: string): string {
+    if (typeof filePath !== "string" || filePath.trim() === "") {
+        throw new Error("xacro.load_yaml() requires a non-empty file path.");
+    }
+
+    const workspaceRoots = getLoadYamlWorkspaceRoots().map((root) =>
+        fs.realpathSync.native(root)
+    );
+
+    if (workspaceRoots.length === 0) {
+        throw new Error(
+            "xacro.load_yaml() is disabled because no VS Code workspace is open."
+        );
+    }
+
+    let normalizedPath = filePath;
+    if (/^file:/i.test(normalizedPath)) {
+        normalizedPath = fileURLToPath(normalizedPath);
+    }
+
+    const absolutePath = path.isAbsolute(normalizedPath)
+        ? normalizedPath
+        : path.resolve(xacroParser.workingPath || "", normalizedPath);
+    const realPath = fs.realpathSync.native(absolutePath);
+
+    if (!workspaceRoots.some((root) => isPathInside(root, realPath))) {
+        throw new Error(
+            `xacro.load_yaml() can only read files inside the current workspace: ${filePath}`
+        );
+    }
+
+    const stat = fs.statSync(realPath);
+    if (!stat.isFile()) {
+        throw new Error(`xacro.load_yaml() path is not a file: ${filePath}`);
+    }
+    if (stat.size > MAX_LOAD_YAML_BYTES) {
+        throw new Error(
+            `xacro.load_yaml() refuses to read files larger than ${MAX_LOAD_YAML_BYTES} bytes: ${filePath}`
+        );
+    }
+
+    return realPath;
 }
 
 function normalizeExponentOperator(expression: string): string {
@@ -415,12 +496,17 @@ class ExpressionParser extends Parser {
             },
 
             // Python len() — strings and arrays both have .length in JS.
-            len: (x) => (x == null ? 0 : typeof x.length === "number" ? x.length : 0),
+            len: (x) =>
+                x === null || x === undefined
+                    ? 0
+                    : typeof x.length === "number"
+                        ? x.length
+                        : 0,
 
             // xacro.load_yaml(path) — Python xacro builtin. See the rewrite in
             // normalizeExponentOperator() that converts `xacro.load_yaml(` to `load_yaml(`.
             load_yaml: (filePath: string) =>
-                yaml.load(fs.readFileSync(filePath, "utf8")),
+                yaml.load(fs.readFileSync(resolveLoadYamlPath(filePath), "utf8")),
         };
 
         // @ts-ignore

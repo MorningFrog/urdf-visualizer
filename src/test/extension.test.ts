@@ -12,8 +12,24 @@ import {
   extractPackageNamesFromUrdf,
   findMissingPackagesInUrdf,
 } from "../extension-utils";
-import { xacroParser } from "../xacro-parser-instance";
+import {
+    setLoadYamlWorkspaceRootsForTests,
+    xacroParser,
+} from "../xacro-parser-instance";
 // import * as myExtension from '../../extension';
+
+async function withTemporaryWorkspaceFolder<T>(
+    folderPath: string,
+    run: () => Promise<T>
+): Promise<T> {
+    setLoadYamlWorkspaceRootsForTests([folderPath]);
+
+    try {
+        return await run();
+    } finally {
+        setLoadYamlWorkspaceRootsForTests(null);
+    }
+}
 
 suite("Extension Test Suite", () => {
     vscode.window.showInformationMessage("Start all tests.");
@@ -157,17 +173,49 @@ suite("Extension Test Suite", () => {
         );
 
         try {
-            const result = await xacroParser.parse(`<?xml version="1.0"?>
+            await withTemporaryWorkspaceFolder(tempDir, async () => {
+                xacroParser.workingPath = tempDir;
+
+                const result = await xacroParser.parse(`<?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:property name="initial_positions_file" value="${yamlPath}" />
+  <xacro:property name="initial_positions_file" value="initial_positions.yaml" />
   <xacro:property name="initial_positions" value="\${xacro.load_yaml(initial_positions_file)}" />
   <link name="j1_\${initial_positions['uf850']['joint1']}_j2_\${initial_positions['uf850']['joint2']}" />
 </robot>`);
 
-            const serialized = new XMLSerializer().serializeToString(result);
-            assert.match(serialized, /<link name="j1_1\.23_j2_-0\.5"\s*\/>/);
+                const serialized = new XMLSerializer().serializeToString(result);
+                assert.match(serialized, /<link name="j1_1\.23_j2_-0\.5"\s*\/>/);
+            });
         } finally {
             fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    test("rejects xacro.load_yaml() paths outside the workspace", async () => {
+        const workspaceDir = fs.mkdtempSync(
+            path.join(os.tmpdir(), "urdf-visualizer-workspace-")
+        );
+        const outsideDir = fs.mkdtempSync(
+            path.join(os.tmpdir(), "urdf-visualizer-outside-")
+        );
+        const outsideYamlPath = path.join(outsideDir, "secret.yaml");
+
+        fs.writeFileSync(outsideYamlPath, "secret: leaked\n", "utf8");
+
+        try {
+            await withTemporaryWorkspaceFolder(workspaceDir, async () => {
+                await assert.rejects(
+                    () => xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="secret" value="\${xacro.load_yaml('${outsideYamlPath}')}" />
+  <link name="\${secret['secret']}" />
+</robot>`),
+                    /can only read files inside the current workspace/
+                );
+            });
+        } finally {
+            fs.rmSync(workspaceDir, { recursive: true, force: true });
+            fs.rmSync(outsideDir, { recursive: true, force: true });
         }
     });
 
