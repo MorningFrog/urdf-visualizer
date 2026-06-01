@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-import ReloadIcon from "/public/icons/reload.svg";
 import HintIcon from "/public/icons/hint.svg";
+import ReloadIcon from "/public/icons/reload.svg";
 
 import i18n from "@/stores/i18n";
+import { urdfStore } from "@/stores/urdf-store";
 import { visualSettings } from "@/stores/visual-settings";
 import { vscodeSettings } from "@/stores/vscode-settings";
-import { urdfStore } from "@/stores/urdf-store";
 import { vscode } from "@/utils/vscode-api";
 
 import JointList from "./JointList.vue";
@@ -30,6 +30,11 @@ const previewedBasename = computed(() => {
   const slash = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
   return slash >= 0 ? path.slice(slash + 1) : path;
 });
+
+// xacro-only: plain URDF has no includes.
+const isXacroPreview = computed(() =>
+  (vscodeSettings.filename ?? "").toLowerCase().endsWith(".xacro")
+);
 </script>
 <template>
   <div class="flex items-start gap-2 pointer-events-none">
@@ -246,9 +251,10 @@ const previewedBasename = computed(() => {
       </template>
     </VTooltip>
 
-    <!-- Centered file + lock toggle. `fixed` anchors to the viewport, not the panel. -->
+    <!-- Centered file + lock toggle. `fixed` anchors to the viewport, not the panel.
+         Shown only for xacro files since plain URDFs have no includes to lock. -->
     <div
-      v-if="previewedBasename"
+      v-if="previewedBasename && isXacroPreview"
       class="fixed left-1/2 top-5 -translate-x-1/2 pointer-events-none z-10"
     >
       <VTooltip class="pointer-events-auto" :delay="0" :distance="8">
