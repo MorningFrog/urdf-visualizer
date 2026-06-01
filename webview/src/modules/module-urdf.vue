@@ -686,16 +686,35 @@ const resetCameraView = () => {
 /**
  * 处理 Visual 和 Collision 的显示切换
  */
+const getOwningLink = (object: THREE.Object3D): URDFLink | null => {
+    let parent = object.parent;
+    while (parent) {
+        // @ts-ignore
+        if (parent.isURDFLink) {
+            return parent as URDFLink;
+        }
+        parent = parent.parent;
+    }
+    return null;
+};
+
 const showVisualCollison = () => {
+    if (!urdfStore.robot) return;
+
     // @ts-ignore
     urdfStore.robot.traverse((child: THREE.Object3D) => {
+        const link = getOwningLink(child);
+        const linkVisible = link
+            ? urdfStore.linkVisibility[link.name] ?? true
+            : true;
+
         // @ts-ignore
         if (child.isURDFCollider) {
-            child.visible = visualSettings.showCollision;
+            child.visible = linkVisible && visualSettings.showCollision;
         }
         // @ts-ignore
         else if (child.isURDFVisual) {
-            child.visible = visualSettings.showVisual;
+            child.visible = linkVisible && visualSettings.showVisual;
         }
     });
 }
