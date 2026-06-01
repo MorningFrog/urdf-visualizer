@@ -37,7 +37,9 @@ const isXacroPreview = computed(() =>
 );
 </script>
 <template>
-  <div class="flex items-start gap-2 pointer-events-none">
+  <div
+    class="flex flex-wrap items-start gap-2 pointer-events-none max-w-[calc(100vw-2.5rem)]"
+  >
     <div
       class="du-collapse du-collapse-arrow bg-base-100/50 border border-base-300 text-base-content transition-[width] duration-300 w-32 has-[>_input:checked]:w-max has-[>_input:checked]:min-w-62 has-[>_input:checked]:max-w-lg overflow-hidden pointer-events-auto"
     >
@@ -251,54 +253,54 @@ const isXacroPreview = computed(() =>
       </template>
     </VTooltip>
 
-    <!-- Centered file + lock toggle. `fixed` anchors to the viewport, not the panel.
-         Shown only for xacro files since plain URDFs have no includes to lock. -->
-    <div
+    <!-- File lock toggle. Shown only for xacro files since plain URDFs have no includes to lock. -->
+    <VTooltip
       v-if="previewedBasename && isXacroPreview"
-      class="fixed left-1/2 top-5 -translate-x-1/2 pointer-events-none z-10"
+      class="pointer-events-auto min-w-0 max-w-full"
+      :delay="0"
+      :distance="8"
     >
-      <VTooltip class="pointer-events-auto" :delay="0" :distance="8">
-        <button
-          class="du-btn du-btn-sm du-btn-ghost h-10 gap-2 bg-base-100/80 border border-base-300 max-w-md"
-          @click="onLockClick"
+      <button
+        class="du-btn du-btn-sm du-btn-ghost h-10 gap-2 bg-base-100/80 border border-base-300 max-w-64 sm:max-w-md min-w-0"
+        @click="onLockClick"
+      >
+        <!-- Body static; shackle rotates around (7, 11) on toggle. -->
+        <svg
+          class="w-4 h-4 shrink-0 transition-[color,opacity] duration-200"
+          :class="
+            vscodeSettings.lockToPreviewedFile ? 'text-primary' : 'opacity-60'
+          "
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         >
-          <!-- Body static; shackle rotates around (7, 11) on toggle. -->
-          <svg
-            class="w-4 h-4 shrink-0 transition-[color,opacity] duration-200"
-            :class="
-              vscodeSettings.lockToPreviewedFile
-                ? 'text-primary'
-                : 'opacity-60'
-            "
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-            <path
-              class="lock-shackle"
-              :class="{ 'is-open': !vscodeSettings.lockToPreviewedFile }"
-              d="M7 11V7a5 5 0 0110 0v4"
-            />
-          </svg>
-          <span class="font-mono text-sm truncate normal-case">
-            {{ previewedBasename }}
-          </span>
-        </button>
-        <template #popper>
-          <div class="max-w-60">
-            {{
-              vscodeSettings.lockToPreviewedFile
-                ? i18n("webview.lock.locked.hint")
-                : i18n("webview.lock.unlocked.hint")
-            }}
-          </div>
-        </template>
-      </VTooltip>
-    </div>
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path
+            class="lock-shackle"
+            :class="{ 'is-open': !vscodeSettings.lockToPreviewedFile }"
+            d="M7 11V7a5 5 0 0110 0v4"
+          />
+        </svg>
+        <span
+          class="font-mono text-sm truncate normal-case min-w-0"
+          :title="previewedBasename"
+        >
+          {{ previewedBasename }}
+        </span>
+      </button>
+      <template #popper>
+        <div class="max-w-60">
+          {{
+            vscodeSettings.lockToPreviewedFile
+              ? i18n("webview.lock.locked.hint")
+              : i18n("webview.lock.unlocked.hint")
+          }}
+        </div>
+      </template>
+    </VTooltip>
   </div>
 </template>
 <style scoped>
