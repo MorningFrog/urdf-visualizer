@@ -128,12 +128,20 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
+### 5.2
+
+增加 (感谢 @legalaspro):
+
+- 改进 ROS 2 xacro 兼容性，支持更接近 Python xacro 的属性解析方式，包括局部属性作用域、惰性属性求值、顶层属性求值，以及带替换表达式的属性解析。
+- 支持 `xacro.load_yaml()`，可读取工作区内的 YAML 配置并在 xacro 表达式中使用。
+- xacro 预览锁定。锁定后，保存被包含的子 xacro 文件会重新渲染当前顶层预览，而不会切换到刚保存的子文件。
+- Link 列表支持树形视图和扁平视图切换。
+
 ### 5.1
 
 增加:
 
 - 惯性可视化支持, 相关设置项为 `urdf-visualizer.default.showInertia` 和 `urdf-visualizer.default.showInertiaWhenHover`.  
-
 
 ### 5.0
 

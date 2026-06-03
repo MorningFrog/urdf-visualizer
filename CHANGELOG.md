@@ -1,5 +1,27 @@
 # Change Log
 
+## [5.2.0]
+
+增加 (感谢 @legalaspro):
+
+Added (thanks to @legalaspro):
+
+- 改进 ROS 2 xacro 兼容性，支持更接近 Python xacro 的属性解析方式，包括局部属性作用域、惰性属性求值、顶层属性求值，以及带替换表达式的属性解析。
+
+  Improved ROS 2 xacro compatibility with property handling closer to Python xacro, including local property scoping, lazy property evaluation, top-level property evaluation, and substitution-aware property resolution.
+
+- 支持 `xacro.load_yaml()`，可读取工作区内的 YAML 配置并在 xacro 表达式中使用。
+
+  Support `xacro.load_yaml()` for reading YAML configuration files inside the workspace and using them in xacro expressions.
+
+- xacro 预览锁定。锁定后，保存被包含的子 xacro 文件会重新渲染当前顶层预览，而不会切换到刚保存的子文件。
+
+  Xacro preview lock. When locked, saving included child xacro files re-renders the current top-level preview instead of switching to the saved child file.
+
+- Link 列表支持树形视图和扁平视图切换。
+
+  Support switching the Link list between tree view and flat view.
+
 ## [5.1.0]
 
 增加:

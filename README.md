@@ -22,9 +22,10 @@ A VSCode extension for visualizing URDF files and xacro files.
 ![demonstration](media/images/demonstration.gif)
 
 - Preview and inspection: visualize URDF and Xacro files, switch visual/collision/inertia display, toggle each link, and inspect joint/link names and frames.
-- Interaction: drag joints directly in the viewer, keep the camera view between files, and optionally restore joint values.
+- Xacro compatibility: improved ROS 2-friendly xacro parsing, including scoped/lazy properties, top-level property evaluation, and `xacro.load_yaml()` support for workspace files.
+- Interaction: drag joints directly in the viewer, keep the camera view between files, optionally restore joint values, and lock a xacro preview while editing included child files.
 - Measurement: measure coordinates, distance, angle, and area, with configurable defaults.
-- Interface and localization: new UI with dedicated Control, Links, Joints, and Settings panels, plus English and Simplified Chinese support.
+- Interface and localization: new UI with dedicated Control, Links, Joints, and Settings panels, tree/flat Link views, plus English and Simplified Chinese support.
   > If you need more language support, you can raise it in the issue of the repository
 
 ## Extension Settings
@@ -126,6 +127,15 @@ There are three installation methods:
 - When measuring area, if concave polygons appear, the area result may be incorrect
 
 ## Release Notes
+
+### 5.2
+
+Added (thanks to @legalaspro):
+
+- Improved ROS 2 xacro compatibility with property handling closer to Python xacro, including local property scoping, lazy property evaluation, top-level property evaluation, and substitution-aware property resolution.
+- Support `xacro.load_yaml()` for reading YAML configuration files inside the workspace and using them in xacro expressions.
+- Xacro preview lock. When locked, saving included child xacro files re-renders the current top-level preview instead of switching to the saved child file.
+- Support switching the Link list between tree view and flat view.
 
 ### 5.1
 
