@@ -80,11 +80,12 @@ jobs:
         if: inputs.prerelease == true && inputs.dry_run != true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NOTES: ${{ steps.changelog.outputs.notes }}
         run: |
           gh release create "${{ steps.version.outputs.version }}-pre" \
             "urdf-visualizer-${{ steps.version.outputs.version }}-pre.vsix" \
             --title "urdf-visualizer-${{ steps.version.outputs.version }}-pre" \
-            --notes "${{ steps.changelog.outputs.notes }}" \
+            --notes "$RELEASE_NOTES" \
             --prerelease
 
       - name: Create GitHub Prerelease (Dry Run)
@@ -123,11 +124,12 @@ jobs:
         if: inputs.prerelease != true && inputs.dry_run != true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NOTES: ${{ steps.changelog.outputs.notes }}
         run: |
           gh release create "${{ steps.version.outputs.version }}" \
             "urdf-visualizer-${{ steps.version.outputs.version }}.vsix" \
             --title "urdf-visualizer-${{ steps.version.outputs.version }}" \
-            --notes "${{ steps.changelog.outputs.notes }}"
+            --notes "$RELEASE_NOTES"
 
       - name: Create GitHub Release (Dry Run)
         if: inputs.prerelease != true && inputs.dry_run == true
