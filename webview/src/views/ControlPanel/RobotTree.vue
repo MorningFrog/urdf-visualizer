@@ -13,21 +13,37 @@ import i18n from '@/stores/i18n';
 import InvisibleIcon from '/public/icons/invisible.svg';
 import VisibleIcon from '/public/icons/visible.svg';
 import HintIcon from '/public/icons/hint.svg';
-import { urdfStore, setLinkVisibility } from '@/stores/urdf-store';
+import { urdfStore, setLinkVisibility, setLinkMeshVisibility } from '@/stores/urdf-store';
 
 import TreeNodeComponent from './tree-node-component/TreeNodeComponent.vue';
 
-// Create computed models for all links for v-model compatibility
+// Flat sorted list of link names (RViz-style).
+const flatLinkNames = computed(() => Object.keys(urdfStore.linkVisibility).sort());
+
+// View mode toggle: tree (default) or flat list (RViz-style).
+const flatView = ref(false);
+
+// Two model maps, one per view mode. Each row's v-model binds to the model
+// that corresponds to its view, so the setter (cascading vs single-link)
+// is encoded right there in the binding.
 const linkVisibilityModels = ref<Record<string, typeof computed<boolean>>>({});
+const flatLinkVisibilityModels = ref<Record<string, typeof computed<boolean>>>({});
+
 watch(() => urdfStore.linkVisibility, (newLinkVisibility) => {
-  const models: Record<string, typeof computed<boolean>> = {};
+  const cascading: Record<string, typeof computed<boolean>> = {};
+  const single: Record<string, typeof computed<boolean>> = {};
   for (const link_name in newLinkVisibility) {
-    models[link_name] = computed<boolean>({
+    cascading[link_name] = computed<boolean>({
       get: () => urdfStore.linkVisibility[link_name] ?? true,
       set: (val) => setLinkVisibility(link_name, val),
     });
+    single[link_name] = computed<boolean>({
+      get: () => urdfStore.linkVisibility[link_name] ?? true,
+      set: (val) => setLinkMeshVisibility(link_name, val),
+    });
   }
-  linkVisibilityModels.value = models;
+  linkVisibilityModels.value = cascading;
+  flatLinkVisibilityModels.value = single;
 }, { immediate: true });
 
 /** 是否有隐藏的 link */
@@ -69,8 +85,12 @@ const toggleAllLinksVisibility = () => {
       <div class="du-collapse-title font-semibold after:start-2 after:end-auto pe-4 ps-16 py-0"></div>
       <div class="du-collapse-content w-full p-0">
         <!-- Link操作 -->
-        <div class="flex justify-between">
-          <div></div>
+        <div class="flex justify-between items-center">
+          <button
+            @click="flatView = !flatView"
+            class="du-btn du-btn-ghost du-btn-sm px-1 py-0.5"
+            :title="flatView ? i18n('webview.control.treeView.hint') : i18n('webview.control.flatView.hint')"
+          >{{ flatView ? i18n("webview.control.treeView") : i18n("webview.control.flatView") }}</button>
           <VTooltip :delay="0" :distance="8">
             <button @click="toggleAllLinksVisibility" class="du-btn du-btn-ghost du-btn-sm px-1 py-0.5">
               {{
@@ -91,9 +111,25 @@ const toggleAllLinksVisibility = () => {
           </VTooltip>
         </div>
 
-        <!-- Link列表内容 -->
-        <ul v-if="urdfStore.linkTree" class="du-menu bg-transparent w-full p-0">
+        <!-- Tree view (kinematic hierarchy) -->
+        <ul v-if="!flatView && urdfStore.linkTree" class="du-menu bg-transparent w-full p-0">
           <TreeNodeComponent :node="urdfStore.linkTree" :models="linkVisibilityModels" :key="urdfStore.linkTree.name" />
+        </ul>
+
+        <!-- Flat list (RViz-style) — same row design as TreeNodeComponent -->
+        <ul v-else class="du-menu bg-transparent w-full p-0">
+          <li v-for="name in flatLinkNames" :key="name">
+            <div class="flex items-center justify-between w-full p-0"
+              @mouseenter="urdfStore.hoveredLinkName = name"
+              @mouseleave="urdfStore.hoveredLinkName = null">
+              <span :class="{ 'link-hovered': urdfStore.hoveredLinkName === name }">{{ name }}</span>
+              <label class="du-toggle du-toggle-sm text-primary bg-transparent">
+                <input type="checkbox" v-model="flatLinkVisibilityModels[name]" />
+                <InvisibleIcon aria-label="disabled" class="w-4 h-4" />
+                <VisibleIcon aria-label="enabled" class="w-4 h-4" />
+              </label>
+            </div>
+          </li>
         </ul>
       </div>
     </div>

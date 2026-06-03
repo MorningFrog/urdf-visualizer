@@ -7,13 +7,29 @@ import * as path from "path";
 // as well as import your extension to test it
 import * as vscode from "vscode";
 import { XMLSerializer } from "xmldom";
-import { xacroParser } from "../xacro-parser-instance";
 import {
-    extractPackageNamesFromUrdf,
-    findMissingPackagesInUrdf,
-    extractMissingPackageFromErrorMessage,
+  extractMissingPackageFromErrorMessage,
+  extractPackageNamesFromUrdf,
+  findMissingPackagesInUrdf,
 } from "../extension-utils";
+import {
+    setLoadYamlWorkspaceRootsForTests,
+    xacroParser,
+} from "../xacro-parser-instance";
 // import * as myExtension from '../../extension';
+
+async function withTemporaryWorkspaceFolder<T>(
+    folderPath: string,
+    run: () => Promise<T>
+): Promise<T> {
+    setLoadYamlWorkspaceRootsForTests([folderPath]);
+
+    try {
+        return await run();
+    } finally {
+        setLoadYamlWorkspaceRootsForTests(null);
+    }
+}
 
 suite("Extension Test Suite", () => {
     vscode.window.showInformationMessage("Start all tests.");
@@ -116,6 +132,391 @@ suite("Extension Test Suite", () => {
         const serialized = new XMLSerializer().serializeToString(result);
 
         assert.match(serialized, /<link name="computed">1<\/link>/);
+    });
+
+    test("evaluates comparison operators (compound and standalone) after xacro-tokenizer whitespace fragmentation", async () => {
+        const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="cmp_test" params="n">
+    <!-- compound operators: fragmented by xacro-parser's tokenizer -->
+    <xacro:property name="ge" value="\${n >= 14}" />
+    <xacro:property name="le" value="\${n <= 14}" />
+    <xacro:property name="eq" value="\${n == 15}" />
+    <xacro:property name="ne" value="\${n != 14}" />
+    <!-- standalone operators: > and < aren't in xacro-parser's operator regex,
+         so they stay glued; included to confirm we don't regress them -->
+    <xacro:property name="gt" value="\${n > 14}" />
+    <xacro:property name="lt" value="\${n < 14}" />
+    <link name="cmp_\${ge}_\${le}_\${eq}_\${ne}_\${gt}_\${lt}" />
+  </xacro:macro>
+  <xacro:cmp_test n="15" />
+</robot>`);
+
+        const serialized = new XMLSerializer().serializeToString(result);
+        // n=15:  15>=14=T  15<=14=F  15==15=T  15!=14=T  15>14=T  15<14=F
+        assert.match(
+            serialized,
+            /<link name="cmp_true_false_true_true_true_false"\s*\/>/
+        );
+    });
+
+    test("implements xacro.load_yaml() and supports deep dict indexing", async () => {
+        const tempDir = fs.mkdtempSync(
+            path.join(os.tmpdir(), "urdf-visualizer-yaml-")
+        );
+        const yamlPath = path.join(tempDir, "initial_positions.yaml");
+
+        fs.writeFileSync(
+            yamlPath,
+            "uf850:\n  joint1: 1.23\n  joint2: -0.5\n",
+            "utf8"
+        );
+
+        try {
+            await withTemporaryWorkspaceFolder(tempDir, async () => {
+                xacroParser.workingPath = tempDir;
+
+                const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="initial_positions_file" value="initial_positions.yaml" />
+  <xacro:property name="initial_positions" value="\${xacro.load_yaml(initial_positions_file)}" />
+  <link name="j1_\${initial_positions['uf850']['joint1']}_j2_\${initial_positions['uf850']['joint2']}" />
+</robot>`);
+
+                const serialized = new XMLSerializer().serializeToString(result);
+                assert.match(serialized, /<link name="j1_1\.23_j2_-0\.5"\s*\/>/);
+            });
+        } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    test("eagerly evaluates top-level load_yaml properties with arg/find and dotted access", async () => {
+        const tempDir = fs.mkdtempSync(
+            path.join(os.tmpdir(), "urdf-visualizer-pr-preview-")
+        );
+        const packageDir = path.join(tempDir, "xacro_test");
+        const configDir = path.join(packageDir, "pr_preview", "config");
+        const includeDir = path.join(packageDir, "pr_preview", "include");
+        const yamlPath = path.join(configDir, "pr_preview.yaml");
+        const macroPath = path.join(includeDir, "pr_preview_macros.xacro");
+        const previousWorkingPath = xacroParser.workingPath;
+        const previousRospackCommands = xacroParser.rospackCommands;
+
+        fs.mkdirSync(configDir, { recursive: true });
+        fs.mkdirSync(includeDir, { recursive: true });
+
+        fs.writeFileSync(
+            yamlPath,
+            `robot:
+  prefix: "pr_"
+  colors:
+    base: "0.18 0.25 0.35 1"
+  dimensions:
+    base_radius: 0.14
+`,
+            "utf8"
+        );
+
+        fs.writeFileSync(
+            macroPath,
+            `<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="pr_preview_materials" params="">
+    <material name="\${prefix}base">
+      <color rgba="\${pr_cfg.robot.colors.base}" />
+    </material>
+    <link name="\${prefix}macro_base_\${pr_cfg.robot.dimensions.base_radius}" />
+  </xacro:macro>
+</robot>`,
+            "utf8"
+        );
+
+        try {
+            await withTemporaryWorkspaceFolder(tempDir, async () => {
+                xacroParser.workingPath = tempDir;
+                xacroParser.rospackCommands = {
+                    find: (pkg: string) => path.join(tempDir, pkg),
+                };
+
+                const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="config_file" default="$(find xacro_test)/pr_preview/config/pr_preview.yaml" />
+  <xacro:property name="config_file_path" value="$(arg config_file)" />
+  <xacro:property name="pr_cfg" value="\${xacro.load_yaml(config_file_path)}" />
+  <xacro:property name="prefix" value="\${pr_cfg.robot.prefix}" />
+  <xacro:include filename="$(find xacro_test)/pr_preview/include/pr_preview_macros.xacro" />
+  <xacro:pr_preview_materials />
+  <link name="\${prefix}top_base_\${pr_cfg.robot.dimensions.base_radius}" />
+</robot>`);
+
+                const serialized = new XMLSerializer().serializeToString(result);
+
+                assert.match(serialized, /<material name="pr_base">/);
+                assert.match(serialized, /<color rgba="0\.18 0\.25 0\.35 1"\s*\/>/);
+                assert.match(serialized, /<link name="pr_macro_base_0\.14"\s*\/>/);
+                assert.match(serialized, /<link name="pr_top_base_0\.14"\s*\/>/);
+            });
+        } finally {
+            xacroParser.workingPath = previousWorkingPath;
+            xacroParser.rospackCommands = previousRospackCommands;
+            fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    test("resolves lazy macro-local load_yaml substitutions", async () => {
+        const tempDir = fs.mkdtempSync(
+            path.join(os.tmpdir(), "urdf-visualizer-lazy-yaml-")
+        );
+        const packageDir = path.join(tempDir, "my_pkg");
+        const previousWorkingPath = xacroParser.workingPath;
+        const previousRospackCommands = xacroParser.rospackCommands;
+        const previousArguments = xacroParser.arguments;
+        const previousEnv = process.env.URDF_VISUALIZER_TEST_CFG_DIR;
+
+        fs.mkdirSync(packageDir, { recursive: true });
+        fs.writeFileSync(
+            path.join(packageDir, "init.yaml"),
+            "robot:\n  name: find_bot\n",
+            "utf8"
+        );
+        fs.writeFileSync(
+            path.join(packageDir, "arg.yaml"),
+            "robot:\n  name: arg_bot\n",
+            "utf8"
+        );
+        fs.writeFileSync(
+            path.join(tempDir, "link1.yaml"),
+            "robot:\n  name: var_bot\n",
+            "utf8"
+        );
+        fs.writeFileSync(
+            path.join(tempDir, "link2.yaml"),
+            "robot:\n  name: expr_bot\n",
+            "utf8"
+        );
+        fs.writeFileSync(
+            path.join(tempDir, "env.yaml"),
+            "robot:\n  name: env_bot\n",
+            "utf8"
+        );
+
+        try {
+            await withTemporaryWorkspaceFolder(tempDir, async () => {
+                process.env.URDF_VISUALIZER_TEST_CFG_DIR = tempDir;
+                xacroParser.workingPath = tempDir;
+                xacroParser.arguments = {};
+                xacroParser.rospackCommands = {
+                    find: (pkg: string) => path.join(tempDir, pkg),
+                };
+
+                const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="cfg_path" default="$(find my_pkg)/arg.yaml" />
+  <xacro:macro name="lazy_yaml" params="">
+    <xacro:property name="name" value="link1" />
+    <xacro:property name="base" value="1" />
+    <xacro:property name="idx" value="1" />
+    <xacro:property name="cfg_find" value="\${xacro.load_yaml('$(find my_pkg)/init.yaml')}" />
+    <xacro:property name="cfg_var" value="\${xacro.load_yaml('\${name}.yaml')}" />
+    <xacro:property name="cfg_arg" value="\${xacro.load_yaml('$(arg cfg_path)')}" />
+    <xacro:property name="cfg_env" value="\${xacro.load_yaml('$(env URDF_VISUALIZER_TEST_CFG_DIR)/env.yaml')}" />
+    <xacro:property name="cfg_expr" value="\${xacro.load_yaml('link\${base + idx}.yaml')}" />
+    <link name="dotted_\${cfg_find.robot.name}_\${cfg_var.robot.name}_\${cfg_arg.robot.name}_\${cfg_env.robot.name}_\${cfg_expr.robot.name}" />
+    <link name="bracket_\${cfg_find['robot']['name']}_\${cfg_arg['robot']['name']}" />
+  </xacro:macro>
+  <xacro:lazy_yaml />
+</robot>`);
+
+                const serialized = new XMLSerializer().serializeToString(result);
+
+                assert.match(
+                    serialized,
+                    /<link name="dotted_find_bot_var_bot_arg_bot_env_bot_expr_bot"\s*\/>/
+                );
+                assert.match(
+                    serialized,
+                    /<link name="bracket_find_bot_arg_bot"\s*\/>/
+                );
+            });
+        } finally {
+            if (previousEnv === undefined) {
+                delete process.env.URDF_VISUALIZER_TEST_CFG_DIR;
+            } else {
+                process.env.URDF_VISUALIZER_TEST_CFG_DIR = previousEnv;
+            }
+            xacroParser.workingPath = previousWorkingPath;
+            xacroParser.rospackCommands = previousRospackCommands;
+            xacroParser.arguments = previousArguments;
+            fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    test("resolves load_yaml paths relative to included xacro files", async () => {
+        const tempDir = fs.mkdtempSync(
+            path.join(os.tmpdir(), "urdf-visualizer-include-yaml-")
+        );
+        const packageDir = path.join(tempDir, "my_pkg");
+        const configDir = path.join(packageDir, "config");
+        const includeDir = path.join(packageDir, "include");
+        const previousWorkingPath = xacroParser.workingPath;
+        const previousRospackCommands = xacroParser.rospackCommands;
+
+        fs.mkdirSync(configDir, { recursive: true });
+        fs.mkdirSync(includeDir, { recursive: true });
+        fs.writeFileSync(
+            path.join(configDir, "rel.yaml"),
+            "robot:\n  name: include_bot\n",
+            "utf8"
+        );
+        fs.writeFileSync(
+            path.join(includeDir, "macros.xacro"),
+            `<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="rel_yaml" params="">
+    <xacro:property name="cfg_rel" value="\${xacro.load_yaml('../config/rel.yaml')}" />
+    <xacro:property name="cfg_dirname" value="\${xacro.load_yaml('$(dirname)/../config/rel.yaml')}" />
+    <link name="rel_\${cfg_rel.robot.name}_\${cfg_dirname.robot.name}" />
+  </xacro:macro>
+</robot>`,
+            "utf8"
+        );
+
+        try {
+            await withTemporaryWorkspaceFolder(tempDir, async () => {
+                xacroParser.workingPath = tempDir;
+                xacroParser.rospackCommands = {
+                    find: (pkg: string) => path.join(tempDir, pkg),
+                };
+
+                const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="$(find my_pkg)/include/macros.xacro" />
+  <xacro:rel_yaml />
+</robot>`);
+
+                const serialized = new XMLSerializer().serializeToString(result);
+
+                assert.match(
+                    serialized,
+                    /<link name="rel_include_bot_include_bot"\s*\/>/
+                );
+            });
+        } finally {
+            xacroParser.workingPath = previousWorkingPath;
+            xacroParser.rospackCommands = previousRospackCommands;
+            fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    test("rejects xacro.load_yaml() paths outside the workspace", async () => {
+        const workspaceDir = fs.mkdtempSync(
+            path.join(os.tmpdir(), "urdf-visualizer-workspace-")
+        );
+        const outsideDir = fs.mkdtempSync(
+            path.join(os.tmpdir(), "urdf-visualizer-outside-")
+        );
+        const outsideYamlPath = path.join(outsideDir, "secret.yaml");
+
+        fs.writeFileSync(outsideYamlPath, "secret: leaked\n", "utf8");
+
+        try {
+            await withTemporaryWorkspaceFolder(workspaceDir, async () => {
+                await assert.rejects(
+                    () => xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="secret" value="\${xacro.load_yaml('${outsideYamlPath}')}" />
+  <link name="\${secret['secret']}" />
+</robot>`),
+                    /can only read files inside the current workspace/
+                );
+            });
+        } finally {
+            fs.rmSync(workspaceDir, { recursive: true, force: true });
+            fs.rmSync(outsideDir, { recursive: true, force: true });
+        }
+    });
+
+    test("keeps macro-local xacro properties scoped locally", async () => {
+        const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="value" value="global" />
+  <xacro:macro name="scoped_value" params="">
+    <xacro:property name="value" value="local" />
+    <link name="inside_\${value}" />
+  </xacro:macro>
+  <xacro:scoped_value />
+  <link name="outside_\${value}" />
+</robot>`);
+
+        const serialized = new XMLSerializer().serializeToString(result);
+
+        assert.match(serialized, /<link name="inside_local"\s*\/>/);
+        assert.match(serialized, /<link name="outside_global"\s*\/>/);
+    });
+
+    test("keeps local properties lazy and detects circular references", async () => {
+        const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="lazy_value" params="">
+    <xacro:property name="first" value="\${second}" />
+    <xacro:property name="second" value="later" />
+    <link name="lazy_\${first}" />
+  </xacro:macro>
+  <xacro:lazy_value />
+</robot>`);
+
+        const serialized = new XMLSerializer().serializeToString(result);
+        assert.match(serialized, /<link name="lazy_later"\s*\/>/);
+
+        await assert.rejects(
+            () => xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="cycle" params="">
+    <xacro:property name="a" value="\${b}" />
+    <xacro:property name="b" value="\${a}" />
+    <link name="\${a}" />
+  </xacro:macro>
+  <xacro:cycle />
+</robot>`),
+            /Circular xacro property reference/
+        );
+    });
+
+    test("supports eager local properties with lazy_eval false", async () => {
+        const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="snapshot_value" params="">
+    <xacro:property name="value" value="early" />
+    <xacro:property name="snapshot" value="\${value}" lazy_eval="false" />
+    <xacro:property name="value" value="late" />
+    <link name="snapshot_\${snapshot}_current_\${value}" />
+  </xacro:macro>
+  <xacro:snapshot_value />
+</robot>`);
+
+        const serialized = new XMLSerializer().serializeToString(result);
+
+        assert.match(
+            serialized,
+            /<link name="snapshot_early_current_late"\s*\/>/
+        );
+    });
+
+    test("evaluates Python len() in xacro expressions", async () => {
+        const result = await xacroParser.parse(`<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="len_test" params="robot_sn">
+    <xacro:property name="sn_len" value="\${len(robot_sn)}" />
+    <link name="len_\${sn_len}" />
+  </xacro:macro>
+  <xacro:len_test robot_sn="XI1304000000000" />
+</robot>`);
+
+        const serialized = new XMLSerializer().serializeToString(result);
+
+        // len("XI1304000000000") = 15
+        assert.match(serialized, /<link name="len_15"\s*\/>/);
     });
 
     test("extracts package names from urdf text", () => {

@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import ReloadIcon from "/public/icons/reload.svg";
+import { computed } from "vue";
+
 import HintIcon from "/public/icons/hint.svg";
+import ReloadIcon from "/public/icons/reload.svg";
 
 import i18n from "@/stores/i18n";
-import { visualSettings } from "@/stores/visual-settings";
 import { urdfStore } from "@/stores/urdf-store";
+import { visualSettings } from "@/stores/visual-settings";
+import { vscodeSettings } from "@/stores/vscode-settings";
+import { vscode } from "@/utils/vscode-api";
 
 import JointList from "./JointList.vue";
 import RobotTree from "./RobotTree.vue";
@@ -15,11 +19,29 @@ const onReloadClick = () => {
   // 设置需要重新加载标志, module-urdf 会监听该标志并执行重新加载
   urdfStore.requireReload = true;
 };
+
+const onLockClick = () => {
+  vscode.postMessage({ type: "toggleLockToPreviewedFile" });
+};
+
+const previewedBasename = computed(() => {
+  const path = vscodeSettings.filename ?? "";
+  if (!path) return "";
+  const slash = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+  return slash >= 0 ? path.slice(slash + 1) : path;
+});
+
+// xacro-only: plain URDF has no includes.
+const isXacroPreview = computed(() =>
+  (vscodeSettings.filename ?? "").toLowerCase().endsWith(".xacro")
+);
 </script>
 <template>
-  <div class="flex items-start gap-2 pointer-events-none">
+  <div
+    class="flex flex-wrap items-start gap-2 pointer-events-none max-w-[calc(100vw-2.5rem)]"
+  >
     <div
-      class="du-collapse du-collapse-arrow bg-base-100/50 border border-base-300 text-base-content transition-[width] duration-300 w-32 has-[>_input:checked]:w-62 overflow-hidden pointer-events-auto"
+      class="du-collapse du-collapse-arrow bg-base-100/50 border border-base-300 text-base-content transition-[width] duration-300 w-32 has-[>_input:checked]:w-max has-[>_input:checked]:min-w-62 has-[>_input:checked]:max-w-lg overflow-hidden pointer-events-auto"
     >
       <input type="checkbox" class="peer" />
       <div
@@ -30,7 +52,7 @@ const onReloadClick = () => {
         </span>
       </div>
       <div
-        class="my-collapse-content du-collapse-content w-62 overflow-y-scroll pr-1 min-h-0"
+        class="my-collapse-content du-collapse-content w-max min-w-62 max-w-lg overflow-y-scroll overflow-x-hidden pr-1 min-h-0"
         style="max-height: calc(100vh - 5rem)"
       >
         <ul class="du-list p-0">
@@ -230,6 +252,55 @@ const onReloadClick = () => {
         {{ i18n("webview.reload.hint") }}
       </template>
     </VTooltip>
+
+    <!-- File lock toggle. Shown only for xacro files since plain URDFs have no includes to lock. -->
+    <VTooltip
+      v-if="previewedBasename && isXacroPreview"
+      class="pointer-events-auto min-w-0 max-w-full"
+      :delay="0"
+      :distance="8"
+    >
+      <button
+        class="du-btn du-btn-sm du-btn-ghost h-10 gap-2 bg-base-100/80 border border-base-300 max-w-64 sm:max-w-md min-w-0"
+        @click="onLockClick"
+      >
+        <!-- Body static; shackle rotates around (7, 11) on toggle. -->
+        <svg
+          class="w-4 h-4 shrink-0 transition-[color,opacity] duration-200"
+          :class="
+            vscodeSettings.lockToPreviewedFile ? 'text-primary' : 'opacity-60'
+          "
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path
+            class="lock-shackle"
+            :class="{ 'is-open': !vscodeSettings.lockToPreviewedFile }"
+            d="M7 11V7a5 5 0 0110 0v4"
+          />
+        </svg>
+        <span
+          class="font-mono text-sm truncate normal-case min-w-0"
+          :title="previewedBasename"
+        >
+          {{ previewedBasename }}
+        </span>
+      </button>
+      <template #popper>
+        <div class="max-w-60">
+          {{
+            vscodeSettings.lockToPreviewedFile
+              ? i18n("webview.lock.locked.hint")
+              : i18n("webview.lock.unlocked.hint")
+          }}
+        </div>
+      </template>
+    </VTooltip>
   </div>
 </template>
 <style scoped>
@@ -263,5 +334,18 @@ const onReloadClick = () => {
 
 :deep(.my-collapse-content) {
   scrollbar-width: thin;
+}
+
+/* Lock shackle swings around its left base point (7, 11 in viewBox coords).
+   transform-box: view-box anchors the origin in user-space, not the path's
+   bounding box. */
+.lock-shackle {
+  transform-box: view-box;
+  transform-origin: 7px 11px;
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lock-shackle.is-open {
+  transform: rotate(-28deg);
 }
 </style>

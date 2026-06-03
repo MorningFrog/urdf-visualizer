@@ -28,7 +28,7 @@ const models = computed(() => props.models);
   <li>
     <div class="flex items-center justify-between w-full p-0" @mouseenter="urdfStore.hoveredLinkName = node.name"
       @mouseleave="urdfStore.hoveredLinkName = null">
-      <span :class="{ 'font-bold!': urdfStore.hoveredLinkName === node.name }">{{ node.name }}</span>
+      <span :class="{ 'link-hovered': urdfStore.hoveredLinkName === node.name }">{{ node.name }}</span>
       <label class="du-toggle du-toggle-sm text-primary bg-transparent">
         <input type="checkbox" v-model="models[node.name]" />
         <InvisibleIcon aria-label="disabled" class="w-4 h-4" />
@@ -40,3 +40,4 @@ const models = computed(() => props.models);
     </ul>
   </li>
 </template>
+
