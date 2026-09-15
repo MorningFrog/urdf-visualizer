@@ -73,3 +73,9 @@ Validation after integration:
 - The VSIX contains the extension bundle and frontend assets without development scripts, test sources or `node_modules`. Its manifest retains version 5.2.1, VS Code `^1.70.0`, and has no test-generated `__metadata`.
 - An additional `cd webview && npx vue-tsc --build` check remains failing on pre-existing frontend types: 66 diagnostics before the update, 62 after fixing four loader import paths, no new diagnostics. These errors are not suppressed and no existing check was disabled. Build success must not be interpreted as full frontend type-check success. The existing Vite large-chunk warning also remains.
 - Browser checks use Linux Chromium with software rendering and do not establish measurement accuracy or coverage across all GPUs/operating systems. The updated GitHub workflows have been validated through their local commands; a remote run still requires pushing these commits.
+
+## Compatible dependency refresh (2026-09-15)
+
+The next manual refresh keeps extension 5.2.1, VS Code 1.70 and build Node 22. Stage 1 updates ESLint utilities/eslintrc/ESLint to 4.10.1/3.3.7/10.10.0, ts-loader to 9.6.2, TypeScript to 6.0.3, webpack/webpack-cli to 5.111.0/7.2.3 and fs-extra to 11.4.0. VS Code API types are pinned to exactly 1.70.0 rather than allowing the caret range to resolve newer APIs. TypeScript 7, js-yaml 5 and root Node 26 types remain deferred.
+
+Stage 1 validation: Node 22 clean installation of both lockfiles, official audits (zero vulnerabilities), root dependency-tree validation, lint, development/production builds, 20 stable VS Code tests, four tooling tests, VS Code 1.70 activation/preview smoke and VSIX packaging passed. Tracked-file hashes remained unchanged after installation, tests and packaging. The pre-update baseline also passed all 21 tests with external models; the frontend has 62 pre-existing type diagnostics, recorded individually for comparison.
