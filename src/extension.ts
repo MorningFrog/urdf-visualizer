@@ -12,7 +12,7 @@ import {
 } from "./extension-utils";
 import localize, { localizeInstance } from "./localize";
 import { xacroParser } from "./xacro-parser-instance";
-const { XMLSerializer, XMLDocument } = require("xmldom");
+import { XMLSerializer, type Document as XmlDocument } from "@xmldom/xmldom";
 
 interface WebviewVscodeSettingsPayload {
     cacheMesh?: boolean;
@@ -297,12 +297,14 @@ export function activate(context: vscode.ExtensionContext) {
             xacroParser.workingPath = workingPath;
             xacroParser
                 .parse(document.getText())
-                .catch((error: { message: string }) => {
-                    vscode.window.showErrorMessage(error.message);
-                })
                 // @ts-ignore
-                .then((data: XMLDocument) => {
-                    sendURDF(serializer.serializeToString(data));
+                .then((data: XmlDocument) => {
+                    sendURDF(serializer.serializeToString(data, { requireWellFormed: true }));
+                })
+                .catch((error: unknown) => {
+                    vscode.window.showErrorMessage(
+                        error instanceof Error ? error.message : String(error)
+                    );
                 });
         } else {
             sendURDF(document.getText());

@@ -6,7 +6,14 @@ import * as path from "path";
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
 import * as vscode from "vscode";
-import { XMLSerializer } from "xmldom";
+import { XMLSerializer as XmldomXMLSerializer } from "@xmldom/xmldom";
+
+// Exercise the same strict serialization mode used by the preview.
+class XMLSerializer extends XmldomXMLSerializer {
+    override serializeToString(node: Parameters<XmldomXMLSerializer["serializeToString"]>[0]) {
+        return super.serializeToString(node, { requireWellFormed: true });
+    }
+}
 import {
   extractMissingPackageFromErrorMessage,
   extractPackageNamesFromUrdf,

@@ -280,13 +280,13 @@
         "webpack-cli": "^7.0.2"
     },
     "dependencies": {
+        "@xmldom/xmldom": "^0.9.12",
         "expr-eval": "^2.0.2",
         "fs-extra": "^11.3.4",
         "js-yaml": "^4.2.0",
         "jsdom": "^29.0.2",
         "three": "^0.184.0",
         "urdf-loader": "^0.12.7",
-        "xacro-parser": "^0.3.9",
-        "xmldom": "^0.6.0"
+        "xacro-parser": "^0.3.9"
     }
 }

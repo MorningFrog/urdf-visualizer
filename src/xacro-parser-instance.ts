@@ -6,9 +6,11 @@ import { Parser } from "expr-eval";
 import * as yaml from "js-yaml";
 import * as vscode from "vscode";
 import { XacroParser } from "xacro-parser";
-const {
-    DOMParser: XmldomDOMParser,
-} = require("xmldom");
+import {
+    DOMParser as XmldomDOMParser,
+    onWarningStopParsing,
+    type Document as XmlDocument,
+} from "@xmldom/xmldom";
 
 type CompatNodeList<T> = {
     length: number;
@@ -18,10 +20,10 @@ type CompatNodeList<T> = {
 
 type CompatNode = {
     childNodes: CompatNodeList<CompatNode> | null;
-    children?: CompatNode[];
+    children?: CompatNodeList<CompatNode>;
     nodeType: number;
     ELEMENT_NODE: number;
-    documentElement?: CompatNode;
+    documentElement?: CompatNode | null;
     createTextNode?: (data: string) => CompatNode;
 };
 
@@ -122,23 +124,70 @@ function installXmldomCompatibility(documentNode: CompatNode) {
 
     normalizeNode(documentNode);
     defineChildrenGetter(Object.getPrototypeOf(documentNode));
-    defineChildrenGetter(Object.getPrototypeOf(documentNode.documentElement));
+    if (documentNode.documentElement) {
+        defineChildrenGetter(Object.getPrototypeOf(documentNode.documentElement));
+    }
 }
 
 class CompatibleDOMParser {
-    private readonly parser = new XmldomDOMParser();
+    private readonly parser = new XmldomDOMParser({ onError: onWarningStopParsing });
 
-    parseFromString(source: string, mimeType: string) {
+    parseFromString(source: string, mimeType: Parameters<XmldomDOMParser["parseFromString"]>[1]) {
         const documentNode = this.parser.parseFromString(
-            source,
+            normalizeXacroXml(source),
             mimeType
-        ) as CompatNode;
+        );
         installXmldomCompatibility(documentNode);
         return documentNode;
     }
 }
 
 (globalThis as any).DOMParser = CompatibleDOMParser;
+
+// Existing Xacro files may use literal '<' comparisons inside ${...} attribute
+// expressions. Escape those before XML parsing without accepting malformed tags
+// or arbitrary unescaped attribute content.
+function normalizeXacroXml(source: string): string {
+    let result = "";
+    let inTag = false;
+    let quote: string | null = null;
+    for (let i = 0; i < source.length; i++) {
+        if (!inTag) {
+            const terminator = source.startsWith("<!--", i) ? "-->"
+                : source.startsWith("<![CDATA[", i) ? "]]>"
+                : source.startsWith("<?", i) ? "?>" : null;
+            if (terminator) {
+                const end = source.indexOf(terminator, i + 2);
+                if (end === -1) {
+                    return result + source.slice(i); // Let the XML parser report it.
+                }
+                result += source.slice(i, end + terminator.length);
+                i = end + terminator.length - 1;
+                continue;
+            }
+        }
+        const char = source[i];
+        if (inTag && quote && source.startsWith("${", i)) {
+            const expression = readBalancedExpression(source, i);
+            result += source.slice(i, expression.end).replace(/</g, "&lt;");
+            i = expression.end - 1;
+            continue;
+        }
+        if (inTag && (char === '"' || char === "'")) {
+            if (quote === null) {
+                quote = char;
+            } else if (quote === char) {
+                quote = null;
+            }
+        } else if (quote === null && char === "<") {
+            inTag = true;
+        } else if (quote === null && char === ">") {
+            inTag = false;
+        }
+        result += char;
+    }
+    return result;
+}
 
 // 创建自定义表达式解析器
 // https://stackoverflow.com/a/175787
@@ -1772,7 +1821,10 @@ async function parseXacroCompat(this: any, data: string) {
     return processXacro(content, globalProperties, globalMacros, workingPath);
 }
 
-const xacroParser = new XacroParser(); // xacro 解析器
+// The upstream types describe a browser DOM; this instance uses xmldom.
+const xacroParser = new XacroParser() as unknown as Omit<XacroParser, "parse"> & {
+    parse(data: string): Promise<XmlDocument>;
+};
 
 // @ts-ignore
 xacroParser.parse = parseXacroCompat.bind(xacroParser);
