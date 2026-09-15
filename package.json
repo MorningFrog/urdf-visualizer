@@ -240,7 +240,7 @@
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
         "pretest": "npm run webview:build && npm run compile-tests && npm run compile && npm run lint",
-        "lint": "eslint src",
+        "lint": "eslint \"src/**/*.ts\"",
         "test": "vscode-test",
         "vscode:prepublish": "npm run webview:build && npm run package",
         "vscode:package": "vsce package --no-dependencies",
@@ -248,6 +248,7 @@
         "postinstall": "npm run webview:install",
         "ci:install": "npm ci --ignore-scripts && npm ci --prefix webview",
         "audit:all": "npm audit --registry=https://registry.npmjs.org && npm audit --prefix webview --registry=https://registry.npmjs.org",
+        "test:tooling": "node --test scripts/*.test.cjs",
         "test:smoke": "node scripts/run-vscode-smoke.cjs"
     },
     "devDependencies": {

@@ -24,3 +24,13 @@ Dependabot checks `/` and `/webview`. The security workflow audits, builds, runs
 - A Chromium check of the production Webview loaded the PR preview's STL resource, changed its shoulder joint from 0.35 to 0.7 radians and verified the displayed angle, exercised the four measurement-mode toggles/cancel, and switched to plain URDF and the GLB texture model without page errors. This checks mode selection, not measurement accuracy or every GPU/platform combination.
 - The VSIX packages the extension bundle and frontend assets without `node_modules`; development scripts and security test fixtures are excluded.
 - Local VS Code 1.70 download was blocked by a TLS connection failure. The minimum-version smoke is included in CI; a successful local stable-version test does not substitute for that compatibility check.
+
+## CI checkout isolation
+
+Stable tests and the VS Code 1.70 smoke test use independent temporary copies of the release files, collected with VSCE's `listFiles` and `PackageManager.None`. Test entry points stay in the source checkout. Each run has separate user-data and extensions directories, removed when the runner exits. VS Code can write extension metadata into the copy without changing the original manifest. `npm run test:tooling` checks that behavior and the packaging exclusions.
+
+CI checks tracked files after installation, tests and packaging; it never restores files to conceal mutations. ESLint checks maintained `src/**/*.ts` sources, including the existing `eqeqeq` rule, rather than legacy generated JavaScript. Both workflows use `setup-node@v6`; the action's Node runtime is separate from the Node.js 22 build version selected by `.nvmrc` and the Node.js 16 extension host in VS Code 1.70.
+
+Security CI runs on master pushes, pull requests, manual requests and the weekly schedule. New runs for the same PR cancel older runs. Pushing a PR branch no longer starts a duplicate push check.
+
+CI isolation validation: clean lockfile installation, lint, compilation, 20 stable tests (VS Code 1.137.0), the optional 21-test fixture run, snapshot regression, minimum VS Code 1.70.0 smoke (Node 16.13.2), both official audits and VSIX packaging passed locally. Build checks were repeated with Node 22.19.0. The 1.70 archive was fetched from Microsoft's official download service and checked against its published SHA-256 after the normal download stalled. No test or packaging step changed tracked source files.

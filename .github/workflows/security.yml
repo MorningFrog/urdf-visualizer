@@ -2,6 +2,7 @@ name: Security and compatibility
 
 on:
   push:
+    branches: [master]
   pull_request:
   workflow_dispatch:
   schedule:
@@ -10,12 +11,16 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: security-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -23,11 +28,16 @@ jobs:
             package-lock.json
             webview/package-lock.json
       - run: npm run ci:install
+      - name: Verify checkout after installation
+        run: git diff --exit-code
       - run: npm run audit:all
       - name: Build, lint and test in stable VS Code
         run: xvfb-run -a npm test -- --code-version stable
+      - run: npm run test:tooling
       - name: Smoke test the minimum supported VS Code
         run: xvfb-run -a npm run test:smoke -- 1.70.0
+      - name: Verify checkout after tests
+        run: git diff --exit-code
       - name: Package VSIX
         run: npm run vscode:package -- --out security-check.vsix
       - name: Verify tracked files are unchanged
