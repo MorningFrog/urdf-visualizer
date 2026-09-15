@@ -1,10 +1,17 @@
 # Change Log
 
-## [Unreleased]
+## [5.2.1]
+
+修复:
+
+Fixed:
 
 - 修复 Xacro XML/YAML 解析及表达式属性访问中的安全问题，保留现有宏、include、惰性属性和正常字典访问功能。
+
   Harden Xacro XML/YAML parsing and expression property access while preserving macros, includes, lazy properties and normal dictionary access.
+
 - 更新存在漏洞的构建与测试依赖，增加双项目锁文件安装、安全审计和 VS Code 兼容性检查。
+
   Update vulnerable build/test dependencies and add locked installation, security audits and VS Code compatibility checks for both projects.
 
 ## [5.2.0]
