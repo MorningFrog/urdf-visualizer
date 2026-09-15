@@ -1,0 +1,34 @@
+name: Security and compatibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            webview/package-lock.json
+      - run: npm run ci:install
+      - run: npm run audit:all
+      - name: Build, lint and test in stable VS Code
+        run: xvfb-run -a npm test -- --code-version stable
+      - name: Smoke test the minimum supported VS Code
+        run: xvfb-run -a npm run test:smoke -- 1.70.0
+      - name: Package VSIX
+        run: npm run vscode:package -- --out security-check.vsix
+      - name: Verify tracked files are unchanged
+        run: git diff --exit-code

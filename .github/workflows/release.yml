@@ -24,8 +24,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Install dependencies
-        run: npm install
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            webview/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm run ci:install
+
+      - name: Audit dependencies
+        run: npm run audit:all
 
       - name: Extract version from package.json
         id: version
@@ -58,9 +70,6 @@ jobs:
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "$changelog_content" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Install VSCE
-        run: npm install @vscode/vsce -g
 
       - name: Compile Extension
         run: npm run compile

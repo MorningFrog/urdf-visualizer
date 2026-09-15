@@ -4,6 +4,9 @@
 out/**
 node_modules/**
 src/**
+scripts/**
+SECURITY.md
+.nvmrc
 release/**
 media_origin/**
 media/images/**

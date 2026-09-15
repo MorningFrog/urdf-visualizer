@@ -243,9 +243,12 @@
         "lint": "eslint src",
         "test": "vscode-test",
         "vscode:prepublish": "npm run webview:build && npm run package",
-        "vscode:package": "npx @vscode/vsce package --no-dependencies",
-        "vscode:publish": "npx @vscode/vsce publish --no-dependencies",
-        "postinstall": "npm run webview:install"
+        "vscode:package": "vsce package --no-dependencies",
+        "vscode:publish": "vsce publish --no-dependencies",
+        "postinstall": "npm run webview:install",
+        "ci:install": "npm ci --ignore-scripts && npm ci --prefix webview",
+        "audit:all": "npm audit --registry=https://registry.npmjs.org && npm audit --prefix webview --registry=https://registry.npmjs.org",
+        "test:smoke": "node scripts/run-vscode-smoke.cjs"
     },
     "devDependencies": {
         "@eslint-community/eslint-utils": "^4.9.1",
