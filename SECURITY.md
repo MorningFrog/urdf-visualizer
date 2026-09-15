@@ -42,3 +42,34 @@ CI isolation validation: clean lockfile installation, lint, compilation, 20 stab
 The weekly/manual security workflow only reports audit results and validates the committed versions. It does not modify manifests, lockfiles or create upgrade PRs. For an update, select compatible target versions explicitly, update each affected manifest and lockfile together, inspect the dependency diff, and run `npm run ci:install`, `npm run audit:all`, `npm test -- --code-version stable`, `npm run test:tooling`, `npm run test:smoke -- 1.70.0` and `npm run vscode:package`. Review the final Git diff before committing. Avoid `npm audit fix --force`.
 
 Ordinary `npm install` retains the frontend postinstall convenience and may resolve newer versions allowed by package ranges. Use `npm run ci:install` for a reproducible installation of both committed lockfiles. The installation and dependency-upgrade operations are separate from Git synchronization.
+
+## Reviewed dependency PRs (2026-09-15)
+
+These versions are integrated locally; the remote PRs have not been merged or closed.
+
+| PR | Dependency | Decision |
+| --- | --- | --- |
+| #24 | `@typescript-eslint/visitor-keys` | Updated to 8.70.0 |
+| #25 | Webview `urdf-loader` | Updated to 0.13.1 and adapted the four-argument mesh callback |
+| #26 | Webview TypeScript 7.0.2 | Deferred; retain TypeScript 6.0.3 |
+| #27 | `@typescript-eslint/parser` | Updated to 8.70.0 |
+| #28 | Webview `hotkeys-js` | Updated to 4.0.8 |
+| #29 | `@vscode/test-electron` | Updated to 3.1.0; build runner requires Node 22+, minimum extension host remains Node 16 |
+| #30 | Webview `@tsconfig/node22` | Updated to 22.0.6 |
+| #31 | `@eslint/plugin-kit` | Updated to 0.7.3 |
+| #32 | Webview Vue | Updated to 3.5.42 with its matching internal packages |
+| #33 | `@typescript-eslint/utils` | Updated to 8.70.0 |
+
+All coupled TypeScript ESLint packages are synchronized to 8.70.0. No unrelated package versions were upgraded. The root lockfile's stale project version was synchronized from 5.2.0 to the existing manifest version 5.2.1; the extension version and VS Code minimum declaration were not changed.
+
+`vue-tsc` 3.2.7 still loads `typescript/lib/tsc`, which TypeScript 7 removed. Reconsider #26 only after the checker supports the new compiler and both type checking and the production build have been validated. Vite transpilation alone does not detect this incompatibility.
+
+The mesh callback receives `(path, manager, material, onComplete)`. STL and OBJ without authored vertex colors receive a clone of the URDF material. GLB/GLTF and DAE preserve their embedded materials and textures; OBJ vertex colors remain supported. Cached templates retain their original appearance, while each visual gets independent material objects. Geometry and textures may be shared without changing other visuals' material properties.
+
+Validation after integration:
+
+- Node 22.19.0 clean installation of both lockfiles, both official npm audits (zero vulnerabilities), source lint, extension compilation, production frontend build, stable VS Code 1.137.0 tests (20 self-contained / 21 with external models), four tooling/material tests, minimum VS Code 1.70.0 smoke and VSIX packaging passed. Hash checks after installation, tests and packaging found no unexpected tracked-file changes.
+- The external collection retained 51 byte-identical successful Xacro results and seven expected failures. Browser validation of the production build covered the STL/YAML/include example, ordinary URDF, textured GLB, joint movement, measurement-mode selection and visual/collision toggles, with no page errors. Two differently colored visuals reused the cached STL without another resource request; screenshot pixel checks confirmed red and blue persisted independently and returned after visibility toggling.
+- The VSIX contains the extension bundle and frontend assets without development scripts, test sources or `node_modules`. Its manifest retains version 5.2.1, VS Code `^1.70.0`, and has no test-generated `__metadata`.
+- An additional `cd webview && npx vue-tsc --build` check remains failing on pre-existing frontend types: 66 diagnostics before the update, 62 after fixing four loader import paths, no new diagnostics. These errors are not suppressed and no existing check was disabled. Build success must not be interpreted as full frontend type-check success. The existing Vite large-chunk warning also remains.
+- Browser checks use Linux Chromium with software rendering and do not establish measurement accuracy or coverage across all GPUs/operating systems. The updated GitHub workflows have been validated through their local commands; a remote run still requires pushing these commits.

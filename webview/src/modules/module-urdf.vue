@@ -8,13 +8,14 @@ import {
     markAsFrameHelper,
 } from '@/utils/custom-axes';
 import { computeEquivalentInertiaBox } from '@/utils/inertia-tools';
+import { instantiateMesh } from '@/utils/mesh-materials';
 import { computeRobotBounds } from '@/utils/threejs-tools';
 import * as THREE from 'three';
 import { LoadingManager } from "three";
-import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
-import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
+import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import type {
     URDFCollider,
     URDFJoint,
@@ -264,19 +265,21 @@ const { collisionMaterial,
     loaderURDF.loadMeshCb = (
         path: string,
         manager: LoadingManager,
+        material: THREE.Material,
         onComplete: (mesh: THREE.Object3D, err?: Error) => void
     ) => {
-        // 如果缓存中有该 mesh, 则直接返回
+        const ext = path.split(/[?#]/, 1)[0]?.split(/\./g).pop()?.toLowerCase();
+        const useUrdfMaterial = ext === "stl" || ext === "obj";
+
+        // 每个 visual 使用独立材质, 缓存只保存原始网格模板.
         if (vscodeSettings.cacheMesh && meshCache.has(path)) {
-            const cachedMesh = meshCache.get(path)!.clone();
+            const cachedMesh = instantiateMesh(meshCache.get(path)!, material, useUrdfMaterial);
             onComplete(cachedMesh);
             return;
         }
         // 否则, 通过相应的 loader 加载 mesh
 
         const webview_path = path;
-        // 扩展名
-        const ext = webview_path?.split(/\./g)?.pop()?.toLowerCase();
 
         // 封装处理函数
         const handleComplete = (
@@ -285,10 +288,11 @@ const { collisionMaterial,
         ) => {
             if (vscodeSettings.cacheMesh && mesh) {
                 // 成功时缓存结果
-                meshCache.set(path, mesh.clone());
+                meshCache.set(path, mesh);
             }
-            // @ts-ignore: 符合URDFLoader的回调签名
-            onComplete(mesh, err);
+            // Upstream accepts null on failure, but its callback type omits it.
+            // @ts-expect-error: URDFLoader checks obj before adding it to the robot.
+            onComplete(mesh ? instantiateMesh(mesh, material, useUrdfMaterial) : null, err);
 
             // 只影响“当前这次 load”
             if (loadId !== activeLoadId) return;
