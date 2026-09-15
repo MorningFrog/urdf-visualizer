@@ -268,8 +268,9 @@
         "@typescript-eslint/typescript-estree": "^8.59.0",
         "@typescript-eslint/utils": "^8.59.0",
         "@typescript-eslint/visitor-keys": "^8.59.0",
-        "@vscode/test-cli": "^0.0.12",
+        "@vscode/test-cli": "^0.0.15",
         "@vscode/test-electron": "^2.4.1",
+        "@vscode/vsce": "^4.0.0",
         "eslint": "^10.2.0",
         "eslint-scope": "^9.1.2",
         "eslint-visitor-keys": "^5.0.1",
@@ -284,9 +285,13 @@
         "expr-eval-fork": "^3.0.3",
         "fs-extra": "^11.3.4",
         "js-yaml": "^4.3.2",
-        "jsdom": "^29.0.2",
         "three": "^0.184.0",
         "urdf-loader": "^0.12.7",
         "xacro-parser": "^0.3.9"
+    },
+    "overrides": {
+        "@vscode/test-cli": {
+            "mocha": "^12.0.1"
+        }
     }
 }
