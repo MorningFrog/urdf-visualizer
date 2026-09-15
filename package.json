@@ -264,7 +264,7 @@
         "@types/three": "^0.184.0",
         "@types/vscode": "^1.70.0",
         "@typescript-eslint/eslint-plugin": "^8.59.0",
-        "@typescript-eslint/parser": "^8.59.0",
+        "@typescript-eslint/parser": "^8.70.0",
         "@typescript-eslint/scope-manager": "^8.59.0",
         "@typescript-eslint/type-utils": "^8.59.0",
         "@typescript-eslint/types": "^8.59.0",
