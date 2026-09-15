@@ -174,3 +174,7 @@ A VSCode extension for visualizing URDF files and xacro files.
 ### 1.x
 
 Initial release of URDF Visualizer.
+
+## 开发与依赖维护
+
+构建使用 Node.js 22（见 `.nvmrc`），扩展仍支持 VS Code 1.70 及以上。执行 `npm run ci:install` 按两个已提交的锁文件安装，再执行 `npm test -- --code-version stable`。普通 `npm install` 仍会自动安装前端，方便开发。依赖升级改为手动执行；`git pull` 只同步 Git 内容，定期安全审计只报告问题，不修改依赖。完整检查流程见[维护说明](SECURITY.md)。

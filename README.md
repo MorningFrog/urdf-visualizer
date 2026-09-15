@@ -174,3 +174,7 @@ Added:
 ### 1.x
 
 Initial release of URDF Visualizer.
+
+## Development and dependency maintenance
+
+Build with Node.js 22 (`.nvmrc`); the extension continues to support VS Code 1.70 or later. Use `npm run ci:install` to install both committed lockfiles, then `npm test -- --code-version stable`. Ordinary `npm install` also installs the frontend for convenience. Dependency upgrades are manual. Git synchronization and scheduled security audits do not upgrade packages; see [maintenance instructions](SECURITY.md) for the full validation procedure.

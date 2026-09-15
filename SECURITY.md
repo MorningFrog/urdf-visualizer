@@ -13,7 +13,7 @@ Run `npm run ci:install` to install both lockfiles without the root postinstall 
 
 VSCE is a locked local development dependency. The root `@vscode/test-cli` override selects Mocha 12 because the runner's declared Mocha 11 dependency still brings vulnerable `diff` and `serialize-javascript` versions. Full extension tests validate this override. Remove it once the runner supports a fixed dependency chain directly; do not replace it with an automatic runner downgrade.
 
-Dependabot checks `/` and `/webview`. The security workflow audits, builds, runs stable VS Code tests and minimum-version smoke, and packages the VSIX. Release installation also uses the lockfiles and runs both audits. No advisories are currently suppressed.
+Dependency updates are manual; there is no Dependabot version-update configuration. The security workflow audits both `/` and `/webview`, builds, runs stable VS Code tests and minimum-version smoke, and packages the VSIX. Release installation also uses the lockfiles and runs both audits. No advisories are currently suppressed.
 
 ## Verification record (2026-09-15)
 
@@ -34,3 +34,11 @@ CI checks tracked files after installation, tests and packaging; it never restor
 Security CI runs on master pushes, pull requests, manual requests and the weekly schedule. New runs for the same PR cancel older runs. Pushing a PR branch no longer starts a duplicate push check.
 
 CI isolation validation: clean lockfile installation, lint, compilation, 20 stable tests (VS Code 1.137.0), the optional 21-test fixture run, snapshot regression, minimum VS Code 1.70.0 smoke (Node 16.13.2), both official audits and VSIX packaging passed locally. Build checks were repeated with Node 22.19.0. The 1.70 archive was fetched from Microsoft's official download service and checked against its published SHA-256 after the normal download stalled. No test or packaging step changed tracked source files.
+
+## Manual dependency update policy
+
+`git pull` synchronizes commits and remote branch references. It does not run Dependabot or upgrade npm dependencies. The ten existing bump PRs were created by the former weekly Dependabot configuration (up to five PRs per project); they were not automatically merged. Removing that configuration stops scheduled version PRs after this change reaches the default branch. Existing remote PRs and branches are left for the maintainer to handle. Automatic security-update PRs and automatic merging remain disabled in the current repository settings.
+
+The weekly/manual security workflow only reports audit results and validates the committed versions. It does not modify manifests, lockfiles or create upgrade PRs. For an update, select compatible target versions explicitly, update each affected manifest and lockfile together, inspect the dependency diff, and run `npm run ci:install`, `npm run audit:all`, `npm test -- --code-version stable`, `npm run test:tooling`, `npm run test:smoke -- 1.70.0` and `npm run vscode:package`. Review the final Git diff before committing. Avoid `npm audit fix --force`.
+
+Ordinary `npm install` retains the frontend postinstall convenience and may resolve newer versions allowed by package ranges. Use `npm run ci:install` for a reproducible installation of both committed lockfiles. The installation and dependency-upgrade operations are separate from Git synchronization.
