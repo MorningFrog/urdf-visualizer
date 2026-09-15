@@ -9,3 +9,5 @@ node_modules
 npminstall-debug.log
 TODO.md
 
+# Local maintenance notes and verification archives
+/.docs/

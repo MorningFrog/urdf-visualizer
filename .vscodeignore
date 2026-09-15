@@ -5,7 +5,7 @@ out/**
 node_modules/**
 src/**
 scripts/**
-SECURITY.md
+.docs/**
 .nvmrc
 release/**
 media_origin/**
