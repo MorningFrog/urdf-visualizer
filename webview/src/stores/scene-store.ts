@@ -1,6 +1,6 @@
 import { watch } from "vue";
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { vscodeSettings } from "@/stores/vscode-settings";
 import { visualSettings } from "@/stores/visual-settings";
 import { CustomURDFDragControls } from "@/utils/CustomURDFDragControls";
@@ -34,7 +34,7 @@ export const {
     renderer.setClearColor(0xffffff);
     renderer.setClearAlpha(0);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     const dirLight = new THREE.DirectionalLight(0xffffff, Math.PI);

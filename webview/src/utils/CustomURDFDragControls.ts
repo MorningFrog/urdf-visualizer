@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 // @ts-ignore
 import { PointerURDFDragControls } from "urdf-loader/src/URDFDragControls";
 import type {

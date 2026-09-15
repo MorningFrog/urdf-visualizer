@@ -10,6 +10,7 @@ import svgLoader from "vite-svg-loader";
 export default defineConfig({
     plugins: [tailwindcss(), vue(), vueDevTools(), svgLoader()],
     resolve: {
+        dedupe: ["three"],
         alias: {
             "@": fileURLToPath(new URL("./src", import.meta.url)),
         },

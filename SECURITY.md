@@ -79,3 +79,19 @@ Validation after integration:
 The next manual refresh keeps extension 5.2.1, VS Code 1.70 and build Node 22. Stage 1 updates ESLint utilities/eslintrc/ESLint to 4.10.1/3.3.7/10.10.0, ts-loader to 9.6.2, TypeScript to 6.0.3, webpack/webpack-cli to 5.111.0/7.2.3 and fs-extra to 11.4.0. VS Code API types are pinned to exactly 1.70.0 rather than allowing the caret range to resolve newer APIs. TypeScript 7, js-yaml 5 and root Node 26 types remain deferred.
 
 Stage 1 validation: Node 22 clean installation of both lockfiles, official audits (zero vulnerabilities), root dependency-tree validation, lint, development/production builds, 20 stable VS Code tests, four tooling tests, VS Code 1.70 activation/preview smoke and VSIX packaging passed. Tracked-file hashes remained unchanged after installation, tests and packaging. The pre-update baseline also passed all 21 tests with external models; the frontend has 62 pre-existing type diagnostics, recorded individually for comparison.
+
+Stage 2 aligns root and frontend Three.js and its types at 0.186.0, declares the frontend dependencies explicitly, deduplicates Three.js in Vite, and aligns root URDFLoader with frontend 0.13.1. OrbitControls imports now include the package's `.js` suffix. The renderer uses `PCFShadowMap` because r186 removes `PCFSoftShadowMap` and otherwise emits a fallback warning. The four-argument mesh callback and per-visual material isolation remain in place.
+
+Stage 2 validation: both clean lockfile installs, audits (zero vulnerabilities), dependency-tree checks, 21 stable tests including external Xacro fixtures, four tooling/material tests, minimum-version smoke, production build and VSIX packaging passed without unexpected tracked-file changes. The frontend type-check baseline improved from 62 to 59 diagnostics with no new diagnostic identities. A build-time module inspection found one Three.js package root. Production-browser screenshots retained the STL and textured GLB appearance.
+
+The optional `scripts/check-webview.cjs` browser regression serves the real frontend with a test-only Vite module exposing existing stores. This module is never part of a shipping build and does not alter extension messages or public APIs. The test checks STL colors/opacity, OBJ vertex colors, DAE embedded material, optional external GLB textures, cache on/off/reuse, real mouse raycasts for 1 m distance / 90 degree angle / 0.5 square meter area, unit changes, cancellation cleanup, joint sliders and dragging, camera orbit/zoom, display/frame toggles, tooltips and settings inputs. Numeric measurements allow 0.5% relative or 0.005 absolute error because mouse positions are quantized to screen pixels. All these checks passed on Chromium with software rendering.
+
+To run this optional browser suite without adding another project dependency, install Playwright 1.63.0 into a separate tools directory, install its Chromium, and run:
+
+```sh
+npm install --prefix /tmp/urdf-browser-tools --no-save playwright@1.63.0
+/tmp/urdf-browser-tools/node_modules/.bin/playwright install chromium
+NODE_PATH=/tmp/urdf-browser-tools/node_modules node scripts/check-webview.cjs
+```
+
+Set `URDF_VISUALIZER_FIXTURES` to the external model collection to include its textured GLB, and optionally set `CHROMIUM_EXECUTABLE` to use an existing browser. The suite cleans up its browser and server. The small STL/OBJ/DAE fixtures are committed under `scripts/fixtures` and are excluded from the VSIX along with the test runner.
