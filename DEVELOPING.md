@@ -28,7 +28,7 @@
    npm install
    ```
 
-   根项目的 `postinstall` 会安装前端依赖，无需重复安装。CI 或需要严格复现锁文件时使用：
+   根项目的 `postinstall` 会安装前端依赖，无需重复安装。发布工作流或需要严格复现锁文件时使用：
 
    ```bash
    npm run ci:install
@@ -45,7 +45,7 @@
 
 5. 测试扩展：在 VSCode 中按 `F5` 启动扩展开发主机进行测试。如果更新了代码，可以通过在测试主机中按 `Ctrl+R` (或 `Cmd+R` 在 MacOS 上) 来重新加载扩展。
 
-自动化验证：
+本地手动运行验证：
 
 ```bash
 npm test -- --code-version stable
@@ -72,14 +72,14 @@ URDF_VISUALIZER_FIXTURES=/path/to/urdf-visualizer-test npm test -- --code-versio
 
 ## 依赖维护
 
-依赖升级由维护者手动选择目标版本，依赖清单与锁文件一起提交。`git pull` 只同步 Git 内容；定期安全工作流只审计和验证已提交的版本，不更新依赖或创建升级 PR。
+依赖升级由维护者手动选择目标版本，依赖清单与锁文件一起提交。`git pull` 只同步 Git 内容。GitHub Actions 仅保留通过 `workflow_dispatch` 手动触发的发布流程，不在 push、PR 或定时任务中自动运行检测。
 普通 `npm install` 可能解析范围内的新版本；复现已提交的依赖使用 `npm run ci:install`。升级后运行上述完整验证，检查依赖差异，不使用 `npm audit fix --force`。
 
 根项目为 `@vscode/test-cli` 配置 Mocha 12 override，以避开其 Mocha 11 依赖链中的已知漏洞。测试运行器直接支持修复后的依赖链时，再验证并移除 override。
 VS Code API 类型固定在最低支持版本，Three.js 运行库与类型保持配套。更新 TypeScript 时同时验证 `vue-tsc` 和 `ts-loader`；Vite 构建成功不代表完整类型检查通过。
 
 稳定版扩展测试和最低版本 smoke 均加载发布文件的临时副本，并使用独立的用户数据、扩展目录。测试入口仍来自源码仓库，临时目录在退出时清理。
-CI 在安装、测试和打包后检查受 Git 跟踪的文件，避免测试宿主写入元数据或安装过程改变源码与锁文件。
+发布工作流负责安装锁定依赖、构建、打包和发布，不运行依赖审计、测试、lint、工作区差异检查或凭据预检查；依赖安装也关闭 npm 的隐式审计。发布前可在本地运行上述验证命令，并检查 Git 差异。
 
 ## 浏览器回归
 

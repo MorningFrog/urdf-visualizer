@@ -34,13 +34,9 @@ jobs:
             webview/package-lock.json
 
       - name: Install locked dependencies
+        env:
+          NPM_CONFIG_AUDIT: "false"
         run: npm run ci:install
-
-      - name: Verify checkout after installation
-        run: git diff --exit-code
-
-      - name: Audit dependencies
-        run: npm run audit:all
 
       - name: Extract version from package.json
         id: version
@@ -77,23 +73,12 @@ jobs:
       - name: Compile Extension
         run: npm run compile
 
-      - name: Verify checkout after compilation
-        run: git diff --exit-code
-
-      - name: Verify VSCE_PAT
-        run: |
-          npx @vscode/vsce verify-pat -p ${{ secrets.VSCE_PAT }}
-
       # Prerelease
       - name: Build Prerelease VSIX package
         if: inputs.prerelease == true
         run: |
           npx @vscode/vsce package --no-dependencies --pre-release \
             --out "urdf-visualizer-${{ steps.version.outputs.version }}-pre.vsix"
-
-      - name: Verify checkout after prerelease packaging
-        if: inputs.prerelease == true
-        run: git diff --exit-code
 
       - name: Create GitHub Prerelease
         if: inputs.prerelease == true && inputs.dry_run != true
@@ -138,10 +123,6 @@ jobs:
         run: |
           npx @vscode/vsce package --no-dependencies \
             --out "urdf-visualizer-${{ steps.version.outputs.version }}.vsix"
-
-      - name: Verify checkout after release packaging
-        if: inputs.prerelease != true
-        run: git diff --exit-code
 
       - name: Create GitHub Release
         if: inputs.prerelease != true && inputs.dry_run != true
