@@ -270,7 +270,7 @@
         "@typescript-eslint/types": "^8.59.0",
         "@typescript-eslint/typescript-estree": "^8.59.0",
         "@typescript-eslint/utils": "^8.59.0",
-        "@typescript-eslint/visitor-keys": "^8.59.0",
+        "@typescript-eslint/visitor-keys": "^8.70.0",
         "@vscode/test-cli": "^0.0.15",
         "@vscode/test-electron": "^2.4.1",
         "@vscode/vsce": "^4.0.0",
