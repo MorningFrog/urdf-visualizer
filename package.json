@@ -281,9 +281,9 @@
     },
     "dependencies": {
         "@xmldom/xmldom": "^0.9.12",
-        "expr-eval": "^2.0.2",
+        "expr-eval-fork": "^3.0.3",
         "fs-extra": "^11.3.4",
-        "js-yaml": "^4.2.0",
+        "js-yaml": "^4.3.2",
         "jsdom": "^29.0.2",
         "three": "^0.184.0",
         "urdf-loader": "^0.12.7",

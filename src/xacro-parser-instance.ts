@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
-import { Parser } from "expr-eval";
+import { Parser } from "expr-eval-fork";
 import * as yaml from "js-yaml";
 import * as vscode from "vscode";
 import { XacroParser } from "xacro-parser";
@@ -990,15 +990,6 @@ function rewriteDictionaryAccessors(expression: string): string {
             return null;
         }
 
-        while (expression[index] === ".") {
-            const dotIndex = index;
-            index++;
-            if (!readIdentifier()) {
-                index = dotIndex;
-                break;
-            }
-        }
-
         return {
             root: expression.slice(start, index),
             end: index,
@@ -1015,7 +1006,7 @@ function rewriteDictionaryAccessors(expression: string): string {
         }
 
         const identifier = readIdentifierPath(i);
-        if (!identifier || expression[identifier.end] !== "[") {
+        if (!identifier || !["[", "."].includes(expression[identifier.end])) {
             result += char;
             i++;
             continue;
@@ -1023,13 +1014,22 @@ function rewriteDictionaryAccessors(expression: string): string {
 
         const keys: string[] = [];
         let end = identifier.end;
-        while (expression[end] === "[") {
-            const bracket = readBalancedBracket(expression, end);
-            keys.push(bracket.content);
-            end = bracket.end;
+        while (expression[end] === "[" || expression[end] === ".") {
+            if (expression[end] === ".") {
+                const member = /^[A-Za-z_$][A-Za-z0-9_$]*/.exec(expression.slice(end + 1));
+                if (!member) {
+                    break;
+                }
+                keys.push(JSON.stringify(member[0]));
+                end += member[0].length + 1;
+            } else {
+                const bracket = readBalancedBracket(expression, end);
+                keys.push(rewriteDictionaryAccessors(bracket.content));
+                end = bracket.end;
+            }
         }
 
-        result += `__read_property__( ${identifier.root},${keys.join(",")} )`;
+        result += keys.length ? `__read_property__( ${identifier.root},${keys.join(",")} )` : identifier.root;
         i = end;
     }
 
@@ -1050,7 +1050,9 @@ function evaluateExpression(
         basePath,
         stack
     );
-    const expressionWithAccessors = rewriteDictionaryAccessors(expressionWithSubstitutions);
+    const expressionWithAccessors = rewriteDictionaryAccessors(
+        normalizeExponentOperator(expressionWithSubstitutions)
+    );
     const cleanExpression = normalizeExpression(expressionWithAccessors);
     const previousBasePath = currentLoadYamlBasePath;
     currentLoadYamlBasePath = basePath;
@@ -1331,7 +1333,18 @@ class ExpressionParser extends Parser {
             __read_property__: (obj, ...args) => {
                 let curr: any = obj;
                 for (let i = 0, l = args.length; i < l; i++) {
-                    curr = curr[args[i]];
+                    const key = args[i];
+                    if (typeof key !== "string" && typeof key !== "number") {
+                        throw new Error("Xacro property keys must be strings or numbers.");
+                    }
+                    if (["__proto__", "prototype", "constructor"].includes(String(key))) {
+                        throw new Error(`Unsafe Xacro property access: ${key}`);
+                    }
+                    if (curr === null || curr === undefined ||
+                        !Object.prototype.hasOwnProperty.call(curr, key)) {
+                        throw new Error(`Unknown Xacro property: ${key}`);
+                    }
+                    curr = curr[key];
                 }
 
                 return curr;
@@ -1348,7 +1361,10 @@ class ExpressionParser extends Parser {
             // xacro.load_yaml(path) — Python xacro builtin. See the rewrite in
             // normalizeExponentOperator() that converts `xacro.load_yaml(` to `load_yaml(`.
             load_yaml: (filePath: string) =>
-                yaml.load(fs.readFileSync(resolveLoadYamlPath(filePath), "utf8")),
+                yaml.load(fs.readFileSync(resolveLoadYamlPath(filePath), "utf8"), {
+                    maxDepth: 100,
+                    maxTotalMergeKeys: 10000,
+                }),
         };
 
         // @ts-ignore

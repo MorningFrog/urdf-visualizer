@@ -1,8 +1,10 @@
 import * as assert from "assert";
 import { execFileSync } from "child_process";
 import * as path from "path";
+import * as fs from "fs";
+import * as os from "os";
 import { DOMImplementation, XMLSerializer } from "@xmldom/xmldom";
-import { xacroParser } from "../xacro-parser-instance";
+import { xacroParser, setLoadYamlWorkspaceRootsForTests } from "../xacro-parser-instance";
 
 suite("Parser security", () => {
     test("rejects malformed XML instead of recovering a partial model", async () => {
@@ -44,7 +46,7 @@ suite("Parser security", () => {
         assert.throws(serialize);
     });
 
-    test("parses hostile XML within a bounded subprocess", function () {
+    test("bounds hostile XML and YAML in a subprocess", function () {
         this.timeout(15000);
         const output = execFileSync(process.execPath, [
             "--max-old-space-size=192",
@@ -55,5 +57,33 @@ suite("Parser security", () => {
             encoding: "utf8",
         });
         assert.match(output, /XML resource checks passed/);
+        assert.match(output, /YAML resource checks passed/);
+    });
+
+    test("preserves YAML merges and own properties while rejecting prototype access", async () => {
+        const directory = fs.mkdtempSync(path.join(os.tmpdir(), "urdf-security-"));
+        const previousPath = xacroParser.workingPath;
+        fs.writeFileSync(path.join(directory, "config.yaml"),
+            'base: &base {joint: 2}\ncfg: {<<: *base, positions: [1, 3], label: arm}\n');
+        setLoadYamlWorkspaceRootsForTests([directory]);
+        xacroParser.workingPath = directory;
+        const parse = (expression: string) => xacroParser.parse(`<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+            <xacro:property name="data" value="\${xacro.load_yaml('config.yaml')}"/>
+            <link name="\${${expression}}"/>
+        </robot>`);
+        try {
+            const doc = await parse("data.cfg.joint + data['cfg'].positions[1] + data.cfg.label.length");
+            assert.equal(doc.getElementsByTagName("link")[0].getAttribute("name"), "8");
+            for (const expression of [
+                "data['__proto__']", "data.cfg.constructor", "data['cfg']['prototype']",
+                "data['cfg']['con' + 'structor']", "data.cfg.toString", "data.cfg.positions['constructor']",
+            ]) {
+                await assert.rejects(() => parse(expression), /Unsafe Xacro property|Unknown Xacro property|prototype access/);
+            }
+        } finally {
+            xacroParser.workingPath = previousPath;
+            setLoadYamlWorkspaceRootsForTests(null);
+            fs.rmSync(directory, { recursive: true, force: true });
+        }
     });
 });
