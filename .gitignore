@@ -11,3 +11,7 @@ TODO.md
 
 # Local maintenance notes and verification archives
 /.docs/
+
+# Syncthing files
+/.stignore*
+/.stfolder/
