@@ -168,6 +168,25 @@ async function main() {
         assert(zero.finite);
         console.log('Capsule core/end-cap dimensions, origin/RPY, opacity, source preservation and zero core passed');
 
+        const extensionsFixture = fs.readFileSync(path.join(__dirname, 'fixtures/capsule-extensions.urdf'), 'utf8');
+        await load(extensionsFixture.replace(/<robot name="capsule_extensions">|<\/robot>\s*$/g, ''), 2);
+        const extensionState = await page.evaluate(source => {
+            const { robot } = window.bridge.urdfStore;
+            const original = new DOMParser().parseFromString(source, 'text/xml');
+            const ignored = node => Array.from(node.querySelectorAll('gazebo, extension'), child => child.outerHTML);
+            return {
+                types: [robot.visual.scoped_visual, robot.colliders.scoped_collision].map(node => node.children[0].geometry.type),
+                min: new window.bridge.Box3().setFromObject(robot.visual.scoped_visual).min.toArray(),
+                max: new window.bridge.Box3().setFromObject(robot.colliders.scoped_collision).max.toArray(),
+                links: Object.keys(robot.links), unchanged: JSON.stringify(ignored(robot.urdfRobotNode)) === JSON.stringify(ignored(original)),
+            };
+        }, extensionsFixture);
+        assert.deepEqual(extensionState.types, ['CapsuleGeometry', 'CapsuleGeometry']);
+        assert.deepEqual(extensionState.links, ['base_link']);
+        close(extensionState.min, [-0.1, -0.1, -0.3]); close(extensionState.max, [0.1, 0.1, 0.3]);
+        assert(extensionState.unchanged, 'ignored extensions remain untouched');
+        console.log('Robot/link extension capsules ignored and nested extension cylinders cannot hide direct capsules');
+
 
         // A known plane provides real raycast intersections for numeric measurements.
         await load('<link name="base_link"><visual><origin xyz="0 0 -0.025"/><geometry><box size="4 4 0.05"/></geometry></visual></link>', 1);

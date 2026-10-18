@@ -6,7 +6,7 @@ import type { URDFCollider, URDFRobot, URDFVisual } from "urdf-loader/src/URDFCl
 export function parseUrdfWithCapsules(loader: URDFLoader, text: string): URDFRobot {
     const document = new DOMParser().parseFromString(text, "text/xml");
     const replacements = new Map<Element, { capsule: Element; radius: number; length: number }>();
-    for (const capsule of document.querySelectorAll("geometry > capsule")) {
+    for (const capsule of document.querySelectorAll(":root > link > :is(visual, collision) > geometry > capsule")) {
         const kind = capsule.parentElement?.parentElement?.tagName;
         if (!(kind === "visual" && loader.parseVisual) && !(kind === "collision" && loader.parseCollision)) continue;
         const radiusText = capsule.getAttribute("radius");
@@ -28,7 +28,7 @@ export function parseUrdfWithCapsules(loader: URDFLoader, text: string): URDFRob
         const robot = loader.parse(document);
         robot.traverse((object: Object3D) => {
             if (!("isURDFVisual" in object) && !("isURDFCollider" in object)) return;
-            const shape = (object as URDFVisual | URDFCollider).urdfNode?.querySelector("geometry > cylinder");
+            const shape = (object as URDFVisual | URDFCollider).urdfNode?.querySelector(":scope > geometry > cylinder");
             const spec = shape ? replacements.get(shape) : undefined;
             if (!spec) return;
             const mesh = object.children[0] as Mesh | undefined;
