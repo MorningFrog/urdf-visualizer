@@ -128,6 +128,13 @@ There are three installation methods:
 
 ## Release Notes
 
+### 5.2.2
+
+Fixed (thanks to @Mr-tooth, #34):
+
+- Fix missing capsule geometry in URDF/Xacro previews while preserving visual/collision dimensions, transforms, materials and opacity.
+- Fix previews being cleared without an error message when capsule parameters are invalid; keep the last successfully loaded model and show the error.
+
 ### 5.2
 
 Added (thanks to @legalaspro):

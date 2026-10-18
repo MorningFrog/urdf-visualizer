@@ -24,6 +24,7 @@ import type {
     URDFVisual,
 } from "urdf-loader";
 import URDFLoader from "urdf-loader";
+import { parseUrdfWithCapsules } from "../utils/parse-urdf";
 
 import { camera, controls, scene } from '@/stores/scene-store';
 import { setJointValue, urdfStore, type LinkTreeNode } from '@/stores/urdf-store';
@@ -36,12 +37,9 @@ import { vscode } from '@/utils/vscode-api';
 /** 全局尺寸, 用于缩放坐标系 */
 const globalScale = ref(1.0);
 
-/** 正在进行的 mesh 加载进程 id */
-let activeLoadId = 0;
-/** 正在加载的 mesh 数量 */
-let pendingMeshes = 0;
-/**  */
-let resolvePending: (() => void) | null = null;
+type MeshLoad = { pending: number; resolve: (() => void) | null };
+let activeMeshLoad: MeshLoad = { pending: 0, resolve: null };
+let awaitingReload = false;
 
 // 记录当前 load robot 时初始的相机位姿
 const initialTarget = new THREE.Vector3();
@@ -295,14 +293,14 @@ const { collisionMaterial,
             onComplete(mesh ? instantiateMesh(mesh, material, useUrdfMaterial) : null, err);
 
             // 只影响“当前这次 load”
-            if (loadId !== activeLoadId) return;
+            if (meshLoad !== activeMeshLoad) return;
 
-            pendingMeshes--;
-            if (pendingMeshes === 0) resolvePending?.();
+            meshLoad.pending--;
+            if (meshLoad.pending === 0) meshLoad.resolve?.();
         };
 
-        const loadId = activeLoadId;
-        pendingMeshes++;
+        const meshLoad = activeMeshLoad;
+        meshLoad.pending++;
         switch (ext) {
             case "gltf":
             case "glb":
@@ -811,12 +809,10 @@ const constructLinkStructure = () => {
 }
 
 /** 等待所有 mesh 加载完成 */
-const waitPendingMeshes = (loadId: number) =>
+const waitPendingMeshes = (meshLoad: MeshLoad) =>
     new Promise<void>((resolve) => {
-        if (pendingMeshes <= 0) return resolve();
-        resolvePending = () => {
-            if (loadId === activeLoadId) resolve();
-        };
+        if (meshLoad.pending <= 0) return resolve();
+        meshLoad.resolve = resolve;
     });
 
 /** 删除机器人 */
@@ -836,10 +832,24 @@ const removeRobot = () => {
 }
 
 const loadURDF = async () => {
-    // 设置新的 mesh 加载进程 id
-    const loadId = ++activeLoadId;
-    pendingMeshes = 0;
-    resolvePending = null;
+    // Parse before replacing the preview. A rejected update must not cancel
+    // pending meshes belonging to the previous model.
+    const previousMeshLoad = activeMeshLoad;
+    const meshLoad: MeshLoad = { pending: 0, resolve: null };
+    activeMeshLoad = meshLoad;
+    let robot: URDFRobot;
+    try {
+        robot = parseUrdfWithCapsules(loaderURDF, vscodeSettings.urdfText);
+    } catch (error) {
+        activeMeshLoad = previousMeshLoad;
+        vscode.postMessage({
+            type: "error",
+            message: `${vscodeSettings.filename}: ${error instanceof Error ? error.message : String(error)}`,
+        });
+        return;
+    }
+    // Release a superseded load; its continuation checks activeMeshLoad.
+    previousMeshLoad.resolve?.();
     const jointValuesForCurrentFile = (
         currentJointWorkingPath === vscodeSettings.workingPath &&
         currentJointFile === vscodeSettings.filename &&
@@ -852,8 +862,6 @@ const loadURDF = async () => {
 
     // 删除已有机器人
     removeRobot();
-    // 解析 URDF
-    const robot = loaderURDF.parse(vscodeSettings.urdfText);
     urdfStore.robot = robot;
     // 添加到场景中
     scene.add(markRaw(robot));
@@ -872,8 +880,8 @@ const loadURDF = async () => {
     currentJointFile = vscodeSettings.filename;
 
     // 等待 mesh 加载完成
-    await waitPendingMeshes(loadId);
-    if (loadId !== activeLoadId) return; // 已被新加载替代
+    await waitPendingMeshes(meshLoad);
+    if (meshLoad !== activeMeshLoad) return; // 已被新加载替代
 
     // 为 collider 设置默认材质
     robot.traverse(
@@ -905,9 +913,10 @@ watch(
     () => vscodeSettings.urdfText,
     (newUrdfText) => {
         if (!newUrdfText) {
-            removeRobot();
+            if (!awaitingReload) removeRobot();
             return;
         }
+        awaitingReload = false;
         loadURDF();
     },
     { immediate: true }
@@ -943,7 +952,9 @@ watch(
             meshCache.clear();
             // 重置标志
             urdfStore.requireReload = false;
-            // 清空机器人
+            // Force the next response to reload even if the source is unchanged,
+            // while retaining the preview until that response parses successfully.
+            awaitingReload = true;
             vscodeSettings.urdfText = "";
 
             // 请求新 URDF 内容

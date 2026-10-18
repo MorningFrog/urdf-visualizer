@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<robot name="capsule_demo">
+  <link name="base">
+    <visual name="capsule_visual">
+      <origin xyz="-0.35 0 0.3"/>
+      <geometry><capsule radius="0.1" length="0.4"/></geometry>
+      <material name="blue"><color rgba="0 0 1 0.8"/></material>
+    </visual>
+    <collision name="capsule_collision">
+      <origin xyz="0.35 0 0.15" rpy="0 1.5707963267948966 0"/>
+      <geometry><capsule radius="0.1" length="0.4"/></geometry>
+    </collision>
+    <visual name="ordinary_cylinder">
+      <origin xyz="0 -0.4 0.2"/>
+      <geometry><cylinder radius="0.1" length="0.4"/></geometry>
+      <material name="gray"><color rgba="0.5 0.5 0.5 1"/></material>
+    </visual>
+  </link>
+</robot>

@@ -1,5 +1,19 @@
 # Change Log
 
+## [5.2.2] - Unreleased
+
+修复 (感谢 @Mr-tooth, #34):
+
+Fixed (thanks to @Mr-tooth, #34):
+
+- 修复 URDF/Xacro 预览中胶囊几何体缺失的问题，保留 visual/collision 的尺寸、位姿、材质和透明度。
+
+  Fix missing capsule geometry in URDF/Xacro previews while preserving visual/collision dimensions, transforms, materials and opacity.
+
+- 修复胶囊参数无效时预览被清空且没有错误提示的问题，保留上一次成功加载的模型并显示错误信息。
+
+  Fix previews being cleared without an error message when capsule parameters are invalid; keep the last successfully loaded model and show the error.
+
 ## [5.2.1]
 
 修复:
