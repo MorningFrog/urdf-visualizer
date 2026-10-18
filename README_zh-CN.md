@@ -178,3 +178,13 @@ Initial release of URDF Visualizer.
 ## 开发与依赖维护
 
 构建使用 Node.js 22（见 `.nvmrc`），扩展仍支持 VS Code 1.70 及以上。执行 `npm run ci:install` 按两个已提交的锁文件安装，再执行 `npm test -- --code-version stable`。普通 `npm install` 仍会自动安装前端，方便开发。依赖升级和验证均由维护者手动执行；`git pull` 只同步 Git 内容，GitHub Actions 仅保留手动触发的发布流程。完整检查流程见[维护说明](DEVELOPING.md)。
+
+
+### 胶囊几何扩展
+
+visual 和 collision 的 geometry 支持 MuJoCo 风格的
+`<capsule radius="0.05" length="0.2"/>`。`length` 表示圆柱段长度，
+胶囊总长为 `length + 2 * radius`；沿局部 Z 轴，再应用 URDF 的 origin/RPY。
+零柱段退化为球体；半径须为正、长度非负，且均为有限值。
+胶囊使用连续单网格，保留 URDF 材质、透明度和碰撞层颜色控制。
+这是查看器的兼容扩展，不改变 ROS 标准 URDF 格式。

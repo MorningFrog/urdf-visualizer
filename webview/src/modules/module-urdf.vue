@@ -24,6 +24,7 @@ import type {
     URDFVisual,
 } from "urdf-loader";
 import URDFLoader from "urdf-loader";
+import { parseUrdfWithCapsules } from "../utils/parse-urdf";
 
 import { camera, controls, scene } from '@/stores/scene-store';
 import { setJointValue, urdfStore, type LinkTreeNode } from '@/stores/urdf-store';
@@ -853,7 +854,7 @@ const loadURDF = async () => {
     // 删除已有机器人
     removeRobot();
     // 解析 URDF
-    const robot = loaderURDF.parse(vscodeSettings.urdfText);
+    const robot = parseUrdfWithCapsules(loaderURDF, vscodeSettings.urdfText);
     urdfStore.robot = robot;
     // 添加到场景中
     scene.add(markRaw(robot));

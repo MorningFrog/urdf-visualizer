@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
 
 const root = path.resolve(__dirname, '..');
 const bridgeSource = `
-export { Vector3, REVISION } from 'three';
+export { Vector3, Box3, REVISION } from 'three';
 export * from '/src/stores/scene-store.ts';
 export { urdfStore } from '/src/stores/urdf-store.ts';
 export { vscodeSettings } from '/src/stores/vscode-settings.ts';
@@ -129,6 +129,45 @@ async function main() {
             assert.notEqual(embedded.color, 'ff0000');
         }
         console.log('STL, OBJ, DAE, optional GLB and cache/material checks passed');
+
+        const capsuleFixture = fs.readFileSync(path.join(__dirname, 'fixtures/capsules.urdf'), 'utf8');
+        await load(capsuleFixture.replace(/<\?xml[^>]*\?>|<\/?robot[^>]*>/g, ''), 3);
+        const capsuleState = await page.evaluate(() => {
+            const { robot } = window.bridge.urdfStore;
+            function geometry(node) {
+                const mesh = node.children[0];
+                const bounds = new window.bridge.Box3().setFromObject(node);
+                return { type: mesh.geometry.type, min: bounds.min.toArray(), max: bounds.max.toArray() };
+            }
+            return {
+                visual: geometry(robot.visual.capsule_visual),
+                collision: geometry(robot.colliders.capsule_collision),
+                cylinder: geometry(robot.visual.ordinary_cylinder),
+                retainedSourceCapsules: robot.urdfRobotNode.querySelectorAll('geometry > capsule').length,
+            };
+        });
+        const close = (actual, expected) => actual.forEach((value, index) => assert(Math.abs(value - expected[index]) < 1e-6));
+        assert.equal(capsuleState.visual.type, 'CapsuleGeometry');
+        close(capsuleState.visual.min, [-0.45, -0.1, 0]);
+        close(capsuleState.visual.max, [-0.25, 0.1, 0.6]);
+        close(capsuleState.collision.min, [0.05, -0.1, 0.05]);
+        close(capsuleState.collision.max, [0.65, 0.1, 0.25]);
+        assert.equal(capsuleState.cylinder.type, 'CylinderGeometry');
+        assert.equal(capsuleState.retainedSourceCapsules, 2);
+        assert.equal((await material('capsule_visual')).color, '0000ff');
+        assert.equal((await material('capsule_visual')).opacity, 0.8);
+        await load('<link name="base_link"><visual name="zero"><geometry><capsule radius="0.1" length="0"/></geometry></visual></link>', 1);
+        const zero = await page.evaluate(() => {
+            const node = window.bridge.urdfStore.robot.visual.zero;
+            const mesh = node.children[0];
+            const box = new window.bridge.Box3().setFromObject(node);
+            return { min: box.min.toArray(), max: box.max.toArray(),
+                finite: ['position', 'normal'].every(key => Array.from(mesh.geometry.getAttribute(key).array).every(Number.isFinite)) };
+        });
+        close(zero.min, [-0.1, -0.1, -0.1]); close(zero.max, [0.1, 0.1, 0.1]);
+        assert(zero.finite);
+        console.log('Capsule core/end-cap dimensions, origin/RPY, opacity, source preservation and zero core passed');
+
 
         // A known plane provides real raycast intersections for numeric measurements.
         await load('<link name="base_link"><visual><origin xyz="0 0 -0.025"/><geometry><box size="4 4 0.05"/></geometry></visual></link>', 1);

@@ -178,3 +178,17 @@ Initial release of URDF Visualizer.
 ## Development and dependency maintenance
 
 Build with Node.js 22 (`.nvmrc`); the extension continues to support VS Code 1.70 or later. Use `npm run ci:install` to install both committed lockfiles, then `npm test -- --code-version stable`. Ordinary `npm install` also installs the frontend for convenience. Dependency upgrades and validation are manual. GitHub Actions only provides a manually triggered release workflow; see [maintenance instructions](DEVELOPING.md) for the full validation procedure.
+
+
+### Capsule geometry extension
+
+Visual and collision geometry may use MuJoCo-style
+`<capsule radius="0.05" length="0.2"/>`. `length` is the cylindrical core,
+so the total end-to-end length is `length + 2 * radius`. The local axis is Z
+before the URDF origin/RPY transform. A zero-length core renders as a sphere;
+radius must be positive, length nonnegative, and both finite. The single
+continuous mesh preserves URDF material/opacity and the usual collision color
+controls. This extends the viewer; it does not change the standard ROS URDF schema.
+
+Open the [capsule example](scripts/fixtures/capsules.urdf) to compare a visual capsule, a rotated
+collision capsule and an ordinary cylinder.
