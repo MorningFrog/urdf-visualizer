@@ -1,0 +1,27 @@
+<robot name="capsule_extensions">
+    <gazebo>
+        <plugin name="sdf_payload">
+            <visual><geometry><capsule><radius>0.1</radius><length>0.4</length></capsule></geometry></visual>
+            <collision><geometry><capsule radius="invalid" length="-1"/></geometry></collision>
+            <robot name="nested"><link name="ignored">
+                <visual><geometry><capsule><radius>0.1</radius><length>0.4</length></capsule></geometry></visual>
+            </link></robot>
+        </plugin>
+    </gazebo>
+    <link name="base_link">
+        <gazebo>
+            <plugin name="link_payload">
+                <visual><geometry><capsule><radius>0.1</radius><length>0.4</length></capsule></geometry></visual>
+                <collision><geometry><capsule radius="invalid" length="-1"/></geometry></collision>
+            </plugin>
+        </gazebo>
+        <visual name="scoped_visual">
+            <extension><geometry><cylinder radius="5" length="10"/></geometry></extension>
+            <geometry><capsule radius="0.1" length="0.4"/></geometry>
+        </visual>
+        <collision name="scoped_collision">
+            <extension><geometry><cylinder radius="5" length="10"/></geometry></extension>
+            <geometry><capsule radius="0.1" length="0.4"/></geometry>
+        </collision>
+    </link>
+</robot>

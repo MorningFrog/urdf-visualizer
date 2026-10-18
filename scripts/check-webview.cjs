@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
 
 const root = path.resolve(__dirname, '..');
 const bridgeSource = `
-export { Vector3, REVISION } from 'three';
+export { Vector3, Box3, REVISION } from 'three';
 export * from '/src/stores/scene-store.ts';
 export { urdfStore } from '/src/stores/urdf-store.ts';
 export { vscodeSettings } from '/src/stores/vscode-settings.ts';
@@ -57,12 +57,15 @@ async function main() {
                 return fillText.apply(this, args);
             };
         });
+        let releaseMesh;
+        let delayedMesh;
         await page.route('https://models.test/**', async route => {
             const name = new URL(route.request().url()).pathname.slice(1);
             requests.push(name);
+            if (name === 'delayed.stl') await delayedMesh;
             const filename = name === 'texture.glb' && process.env.URDF_VISUALIZER_FIXTURES
                 ? path.join(process.env.URDF_VISUALIZER_FIXTURES, 'glb_texture/arml7.glb')
-                : path.join(__dirname, 'fixtures', path.basename(name));
+                : path.join(__dirname, 'fixtures', name === 'delayed.stl' ? 'triangle.stl' : path.basename(name));
             await route.fulfill({ body: fs.readFileSync(filename), headers: { 'access-control-allow-origin': '*' } });
         });
         await page.goto(server.resolvedUrls.local[0]);
@@ -70,9 +73,18 @@ async function main() {
         await page.evaluate(async () => { window.bridge = await import('/__test_bridge'); });
         const i18n = JSON.parse(fs.readFileSync(path.join(root, 'package.nls.json'), 'utf8'));
         await page.evaluate(i18n => window.postMessage({
-            type: 'init', urdfText: '<robot name="initial"><link name="base_link"/></robot>',
+            type: 'init', urdfText: '<robot name="initial"><link name="base_link"><visual><geometry><capsule radius="-1" length="0.4"/></geometry></visual></link></robot>',
             filename: 'initial.urdf', workingPath: '', uriPrefix: 'models.test', packages: {}, i18n,
         }, '*'), i18n);
+        await page.waitForFunction(() => window.vscodeMessages.some(m => m.type === 'error'), null, { polling: 100 });
+        const initialFailure = await page.evaluate(() => ({
+            robot: window.bridge.urdfStore.robot,
+            messages: window.vscodeMessages.filter(m => m.type === 'error'),
+        }));
+        assert.equal(initialFailure.robot, null);
+        assert.equal(initialFailure.messages.length, 1);
+        assert.match(initialFailure.messages[0].message, /initial\.urdf:.*Capsule geometry/);
+        await page.evaluate(() => { window.vscodeMessages = window.vscodeMessages.filter(m => m.type !== 'error'); });
         let serial = 0;
         async function load(body, meshCount) {
             const name = `browser_${++serial}`;
@@ -129,6 +141,126 @@ async function main() {
             assert.notEqual(embedded.color, 'ff0000');
         }
         console.log('STL, OBJ, DAE, optional GLB and cache/material checks passed');
+
+        const capsuleFixture = fs.readFileSync(path.join(__dirname, 'fixtures/capsules.urdf'), 'utf8');
+        await load(capsuleFixture.replace(/<\?xml[^>]*\?>|<\/?robot[^>]*>/g, ''), 3);
+        const capsuleState = await page.evaluate(() => {
+            const { robot } = window.bridge.urdfStore;
+            function geometry(node) {
+                const mesh = node.children[0];
+                const bounds = new window.bridge.Box3().setFromObject(node);
+                return { type: mesh.geometry.type, min: bounds.min.toArray(), max: bounds.max.toArray() };
+            }
+            return {
+                visual: geometry(robot.visual.capsule_visual),
+                collision: geometry(robot.colliders.capsule_collision),
+                cylinder: geometry(robot.visual.ordinary_cylinder),
+                retainedSourceCapsules: robot.urdfRobotNode.querySelectorAll('geometry > capsule').length,
+            };
+        });
+        const close = (actual, expected) => actual.forEach((value, index) => assert(Math.abs(value - expected[index]) < 1e-6));
+        assert.equal(capsuleState.visual.type, 'CapsuleGeometry');
+        close(capsuleState.visual.min, [-0.45, -0.1, 0]);
+        close(capsuleState.visual.max, [-0.25, 0.1, 0.6]);
+        close(capsuleState.collision.min, [0.05, -0.1, 0.05]);
+        close(capsuleState.collision.max, [0.65, 0.1, 0.25]);
+        assert.equal(capsuleState.cylinder.type, 'CylinderGeometry');
+        assert.equal(capsuleState.retainedSourceCapsules, 2);
+        assert.equal((await material('capsule_visual')).color, '0000ff');
+        assert.equal((await material('capsule_visual')).opacity, 0.8);
+        await load('<link name="base_link"><visual name="zero"><geometry><capsule radius="0.1" length="0"/></geometry></visual></link>', 1);
+        const zero = await page.evaluate(() => {
+            const node = window.bridge.urdfStore.robot.visual.zero;
+            const mesh = node.children[0];
+            const box = new window.bridge.Box3().setFromObject(node);
+            return { min: box.min.toArray(), max: box.max.toArray(),
+                finite: ['position', 'normal'].every(key => Array.from(mesh.geometry.getAttribute(key).array).every(Number.isFinite)) };
+        });
+        close(zero.min, [-0.1, -0.1, -0.1]); close(zero.max, [0.1, 0.1, 0.1]);
+        assert(zero.finite);
+        console.log('Capsule core/end-cap dimensions, origin/RPY, opacity, source preservation and zero core passed');
+
+        const extensionsFixture = fs.readFileSync(path.join(__dirname, 'fixtures/capsule-extensions.urdf'), 'utf8');
+        await load(extensionsFixture.replace(/<robot name="capsule_extensions">|<\/robot>\s*$/g, ''), 2);
+        const extensionState = await page.evaluate(source => {
+            const { robot } = window.bridge.urdfStore;
+            const original = new DOMParser().parseFromString(source, 'text/xml');
+            const ignored = node => Array.from(node.querySelectorAll('gazebo, extension'), child => child.outerHTML);
+            return {
+                types: [robot.visual.scoped_visual, robot.colliders.scoped_collision].map(node => node.children[0].geometry.type),
+                min: new window.bridge.Box3().setFromObject(robot.visual.scoped_visual).min.toArray(),
+                max: new window.bridge.Box3().setFromObject(robot.colliders.scoped_collision).max.toArray(),
+                links: Object.keys(robot.links), unchanged: JSON.stringify(ignored(robot.urdfRobotNode)) === JSON.stringify(ignored(original)),
+            };
+        }, extensionsFixture);
+        assert.deepEqual(extensionState.types, ['CapsuleGeometry', 'CapsuleGeometry']);
+        assert.deepEqual(extensionState.links, ['base_link']);
+        close(extensionState.min, [-0.1, -0.1, -0.3]); close(extensionState.max, [0.1, 0.1, 0.3]);
+        assert(extensionState.unchanged, 'ignored extensions remain untouched');
+        console.log('Robot/link extension capsules ignored and nested extension cylinders cannot hide direct capsules');
+
+
+        // Reject bad updates through the real message/watch path, preserving
+        // the old robot, camera and editable joint state without page errors.
+        const jointBody = '<link name="base_link"/><link name="arm"><visual><geometry><box size="1 0.2 0.2"/></geometry></visual></link><joint name="retained_joint" type="revolute"><parent link="base_link"/><child link="arm"/><axis xyz="0 0 1"/><limit lower="-1" upper="1" effort="1" velocity="1"/></joint>';
+        await load(jointBody, 1);
+        await page.evaluate(() => {
+            window.bridge.urdfStore.jointValues.retained_joint = 0.4;
+            window.bridge.urdfStore.robot.setJointValue('retained_joint', 0.4);
+        });
+        async function rejectUpdate(attributes, reload = false) {
+            const before = await page.evaluate(() => ({
+                uuid: window.bridge.urdfStore.robot.uuid,
+                camera: window.bridge.camera.position.toArray(),
+                joints: { ...window.bridge.urdfStore.jointValues },
+            }));
+            if (reload) {
+                await page.evaluate(() => { window.bridge.urdfStore.requireReload = true; });
+                await page.waitForFunction(() => window.vscodeMessages.some(m => m.type === 'getNewURDF'), null, { polling: 100 });
+                assert.equal(await page.evaluate(() => window.bridge.urdfStore.robot.uuid), before.uuid);
+            }
+            await page.evaluate(attributes => window.postMessage({
+                type: 'urdf', filename: 'invalid-capsule.urdf', reset_camera: true,
+                urdfText: `<robot name="invalid"><link name="base_link"><visual><geometry><box size="1 1 1"/></geometry></visual><collision><geometry><capsule ${attributes}/></geometry></collision></link></robot>`,
+            }, '*'), attributes);
+            await page.waitForFunction(() => window.vscodeMessages.some(m => m.type === 'error'), null, { polling: 100 });
+            const after = await page.evaluate(() => ({
+                uuid: window.bridge.urdfStore.robot.uuid,
+                camera: window.bridge.camera.position.toArray(),
+                joints: { ...window.bridge.urdfStore.jointValues },
+                inScene: window.bridge.scene.children.some(c => c.uuid === window.bridge.urdfStore.robot.uuid),
+                messages: window.vscodeMessages.filter(m => m.type === 'error'),
+            }));
+            assert.equal(after.uuid, before.uuid);
+            assert.deepEqual(after.camera, before.camera);
+            assert.deepEqual(after.joints, before.joints);
+            assert(after.inScene);
+            assert.equal(after.messages.length, 1);
+            assert.match(after.messages[0].message, /invalid-capsule\.urdf:.*Capsule geometry/);
+            assert.deepEqual(errors, [], 'invalid dimensions must not cause unhandled errors');
+            await page.evaluate(() => { window.vscodeMessages = window.vscodeMessages.filter(m => !['error', 'getNewURDF'].includes(m.type)); });
+        }
+        for (const attributes of [
+            'radius="-1" length="0.4"', 'radius="0" length="0.4"',
+            'radius="NaN" length="0.4"', 'radius="Infinity" length="0.4"',
+            'radius="0.1" length="-1"', 'radius="0.1" length="Infinity"',
+            'radius="0.1"', 'length="0.4"', 'radius=" " length="0.4"',
+        ]) await rejectUpdate(attributes);
+        await rejectUpdate('radius="0.1" length="NaN"', true);
+        await load(jointBody, 1);
+
+        // A failed update must not orphan the old model's asynchronous mesh load.
+        delayedMesh = new Promise(resolve => { releaseMesh = resolve; });
+        await page.evaluate(() => { window.bridge.vscodeSettings.cacheMesh = false; });
+        await load('<link name="base_link"><visual><geometry><box size="1 1 1"/></geometry></visual><collision name="delayed_collision"><geometry><mesh filename="delayed.stl"/></geometry></collision></link>', 1);
+        await rejectUpdate('radius="-1" length="0.4"');
+        releaseMesh();
+        await page.waitForFunction(() => {
+            const collider = window.bridge.urdfStore.robot.colliders.delayed_collision;
+            return collider.children.length === 1 && collider.children[0].material.opacity === 0.35;
+        }, null, { polling: 100 });
+        await page.evaluate(() => { window.bridge.vscodeSettings.cacheMesh = true; });
+        console.log('Invalid initial load, update, reload, recovery and pending mesh preservation passed');
 
         // A known plane provides real raycast intersections for numeric measurements.
         await load('<link name="base_link"><visual><origin xyz="0 0 -0.025"/><geometry><box size="4 4 0.05"/></geometry></visual></link>', 1);

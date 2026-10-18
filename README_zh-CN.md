@@ -128,6 +128,13 @@ A VSCode extension for visualizing URDF files and xacro files.
 
 ## Release Notes
 
+### 5.2.2
+
+修复 (感谢 @Mr-tooth, #34):
+
+- 修复 URDF/Xacro 预览中胶囊几何体缺失的问题，保留 visual/collision 的尺寸、位姿、材质和透明度。
+- 修复胶囊参数无效时预览被清空且没有错误提示的问题，保留上一次成功加载的模型并显示错误信息。
+
 ### 5.2
 
 增加 (感谢 @legalaspro):
