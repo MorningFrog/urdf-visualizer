@@ -1,6 +1,6 @@
 # Change Log
 
-## [5.2.2] - Unreleased
+## [5.2.2]
 
 修复 (感谢 @Mr-tooth, #34):
 
